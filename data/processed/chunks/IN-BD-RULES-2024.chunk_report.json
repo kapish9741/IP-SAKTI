@@ -1,5 +1,6 @@
 {
   "document_id": "IN-BD-RULES-2024",
+  "chunking_version": "0.2.0",
   "units": 48,
   "chunks": 61,
   "rejected": 1,
@@ -7,6 +8,10 @@
     "below the minimum retrievable length": 1
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 60,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "B",
+  "source_status": "SOURCE_UNAVAILABLE",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 0,
   "chunks_from_ocr": 0,

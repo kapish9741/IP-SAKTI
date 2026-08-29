@@ -80,7 +80,7 @@ def downgrade_unreliable(record: dict[str, Any], subdivision_count: int) -> None
     "provision" that runs for tens of thousands of characters without ever
     subdividing.
     """
-    if record["unit_type"] != "provision":
+    if record["unit_type"] not in ("provision", "schedule_item"):
         return
     # OCR cannot tell a printed provision number from a table row number: both
     # are just digits followed by a full stop. On pages the audit proved are
@@ -107,7 +107,9 @@ def downgrade_unreliable(record: dict[str, Any], subdivision_count: int) -> None
         else "text is not prose — function-word density below the statutory floor"
     )
     record["number"] = None
-    for key in ("section", "rule", "regulation", "paragraph"):
+    # The container — Schedule, Form, Chapter — is not withdrawn: it was read
+    # from its own heading and is still true. Only the entry number goes.
+    for key in ("section", "rule", "regulation", "paragraph", "item"):
         record["locator"][key] = None
     record["structural_path"] = ""
 

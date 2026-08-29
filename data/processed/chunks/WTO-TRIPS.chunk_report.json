@@ -1,5 +1,6 @@
 {
   "document_id": "WTO-TRIPS",
+  "chunking_version": "0.2.0",
   "units": 94,
   "chunks": 74,
   "rejected": 20,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 20
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 73,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "B",
+  "source_status": "OFFICIAL_SOURCE_FOUND_REPLACEMENT_AVAILABLE",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 0,
   "chunks_from_ocr": 0,

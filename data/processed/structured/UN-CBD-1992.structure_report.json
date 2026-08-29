@@ -6,13 +6,13 @@
   "pages_excluded": {
     "empty": 2
   },
-  "units": 29,
+  "units": 68,
   "units_by_type": {
     "preamble": 1,
-    "article": 26,
+    "article": 65,
     "annexure": 2
   },
-  "units_with_locator": 28,
+  "units_with_locator": 67,
   "units_locator_downgraded": 0,
-  "characters": 65742
+  "characters": 65703
 }

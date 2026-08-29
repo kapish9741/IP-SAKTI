@@ -11,8 +11,9 @@
   "units_by_type": {
     "front_matter": 1,
     "heading": 21,
-    "provision": 202,
-    "schedule": 1
+    "provision": 176,
+    "schedule": 1,
+    "schedule_item": 26
   },
   "units_with_locator": 224,
   "units_locator_downgraded": 0,

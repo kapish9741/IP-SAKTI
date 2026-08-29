@@ -38,6 +38,16 @@ def build_citation(
         if label:
             return f"{short_title} — {label}", False
 
+    # A numbered entry inside a Schedule, Form or Annexure is cited through its
+    # container — "Patents Act, 1970 — Schedule, item 3" — never as a section of
+    # the parent instrument. The container is what makes the entry findable; an
+    # entry number on its own identifies nothing.
+    if unit_type == "schedule_item" and locator.get("item"):
+        label = _structural_label(locator, unit_type)
+        if label:
+            return f"{short_title} — {label}, item {locator['item']}", False
+        return f"{short_title} — unlocated text", True
+
     for key in ("section", "rule", "regulation", "article", "paragraph"):
         number = locator.get(key)
         if not number:

@@ -40,6 +40,8 @@ from ingest.common import (  # noqa: E402
     read_jsonl,
     sha256_file,
 )
+from ingest.parsers.statutory import LABEL_TO_KEY  # noqa: E402
+from ingest.provenance import EVIDENCE_LEVELS  # noqa: E402
 
 VALID_JURISDICTIONS = {"IN", "international"}
 VALID_DOMAINS = {
@@ -54,6 +56,81 @@ VALID_DOCUMENT_TYPES = {
 #: The unit kinds that must carry a legal locator. Front matter and text whose
 #: locator was withdrawn on evidence are exempt — that is the honest outcome.
 LOCATOR_REQUIRED_UNIT_TYPES = {"provision", "article"}
+
+#: Locator keys that name a container rather than a provision. A container is
+#: read from its own heading ("THE SCHEDULE", "FORM 4"), so it is always its own
+#: evidence.
+CONTAINER_KEYS = ("schedule", "form", "annexure")
+#: Locator keys that name a position *inside* a provision. One of these is only
+#: a citation when the provision it sits inside is also known.
+DEPENDENT_KEYS = ("subsection", "sub_rule", "clause", "paragraph", "subparagraph")
+
+
+def provision_key_for(doc: Any) -> str:
+    """The locator key this instrument's own provisions are numbered under."""
+    if doc.parser == "treaty":
+        return "article"
+    return LABEL_TO_KEY.get(doc.provision_label, "section")
+
+
+def unsupported_locator(chunk: dict[str, Any], doc: Any) -> str | None:
+    """Why this chunk's locator is not supported by structure, or ``None``.
+
+    Phase 5 §3. Every citation IP-SAKTI prints has to be checkable by a reader
+    holding the PDF, and the failure mode this catches is the one Phase 4 found
+    in the CBD: a numbered line inside unlocated running text became "CBD —
+    Paragraph 3", a provision that does not exist. A locator naming a position
+    inside a provision is evidence of nothing unless the provision is known too.
+    """
+    locator = chunk["locator"]
+    containers = [key for key in CONTAINER_KEYS if locator.get(key)]
+    provision_key = provision_key_for(doc)
+
+    if locator.get("item") and not containers:
+        return "item number with no Schedule, Form or Annexure to number within"
+    if locator.get(provision_key) or containers:
+        return None
+    dependent = [key for key in DEPENDENT_KEYS
+                 if key != provision_key and locator.get(key)]
+    if dependent:
+        return (f"{'/'.join(dependent)} with no {provision_key} to sit inside — "
+                f"a sub-unit locator is not a citation on its own")
+    return None
+
+
+def locator_defects(chunk: dict[str, Any], doc: Any) -> list[tuple[str, str]]:
+    """Phase 5 §3 — the three ways a locator can be wrong rather than absent.
+
+    A wrong locator is more dangerous than a missing one. The Phase 3 invariant
+    only guards chunks that admit they have no locator, so a confidently
+    incorrect citation walks straight past it and reaches a reader as a checkable
+    promise that does not check out.
+    """
+    found: list[tuple[str, str]] = []
+    locator = chunk.get("locator") or {}
+    containers = [key for key in CONTAINER_KEYS if locator.get(key)]
+    provision_key = provision_key_for(doc)
+
+    if doc.parser == "statutory" and containers and locator.get(provision_key):
+        found.append((
+            "schedule_masquerading_as_provision",
+            f"{'/'.join(containers)} entry also carries {provision_key} "
+            f"{locator[provision_key]}; a Schedule entry is not a {provision_key} "
+            f"of the parent instrument"))
+
+    if (doc.parser == "treaty"
+            and chunk.get("unit_type") in ("preamble", "front_matter")
+            and any(locator.get(key) for key in ("article", *DEPENDENT_KEYS))):
+        found.append((
+            "treaty_preamble_locator",
+            "preamble text carries an Article or paragraph locator; treaty "
+            "Articles must be parsed as Articles, never numbered off the preamble"))
+
+    unsupported = unsupported_locator(chunk, doc)
+    if unsupported and chunk.get("citable"):
+        found.append(("unsupported_locator", unsupported))
+    return found
+
 
 CID_RE = re.compile(r"\(cid:\d+\)")
 REPLACEMENT_CHAR = "�"
@@ -133,6 +210,30 @@ def run(verbose: bool = True) -> dict[str, Any]:
                 fatal.append({"check": "locator_declared", "document_id": doc.document_id,
                               "chunk_id": cid,
                               "detail": "empty locator not declared as locator_unavailable"})
+
+            # Phase 3 §9 — hard safety invariant. A chunk whose locator could not
+            # be established stays retrievable but must never be citable, because
+            # a citation is a promise the reader can verify against the source.
+            if "citable" not in chunk or "retrievable" not in chunk:
+                fatal.append({"check": "citability_declared", "document_id": doc.document_id,
+                              "chunk_id": cid, "detail": "citable/retrievable not declared"})
+            elif chunk["locator_unavailable"] and chunk["citable"]:
+                fatal.append({"check": "citability_invariant", "document_id": doc.document_id,
+                              "chunk_id": cid,
+                              "detail": "locator_unavailable chunk is marked citable"})
+            elif not chunk["locator_unavailable"] and not chunk["citable"]:
+                fatal.append({"check": "citability_invariant", "document_id": doc.document_id,
+                              "chunk_id": cid,
+                              "detail": "located chunk is marked not citable"})
+            # Phase 5 §3 — a locator that is wrong rather than absent.
+            for check, detail in locator_defects(chunk, doc):
+                fatal.append({"check": check, "document_id": doc.document_id,
+                              "chunk_id": cid, "detail": detail})
+
+            if chunk.get("source_evidence_level") not in EVIDENCE_LEVELS:
+                fatal.append({"check": "evidence_level", "document_id": doc.document_id,
+                              "chunk_id": cid,
+                              "detail": str(chunk.get("source_evidence_level"))})
 
             text = chunk.get("text", "")
             if len(text.strip()) < MIN_CHUNK_CHARS:

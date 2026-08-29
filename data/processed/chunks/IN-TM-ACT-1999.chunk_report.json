@@ -1,5 +1,6 @@
 {
   "document_id": "IN-TM-ACT-1999",
+  "chunking_version": "0.2.0",
   "units": 185,
   "chunks": 179,
   "rejected": 12,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 12
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 178,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "B",
+  "source_status": "SOURCE_UNAVAILABLE",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 101,
   "chunks_from_ocr": 0,

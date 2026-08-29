@@ -1,18 +1,23 @@
 {
   "document_id": "IN-DC-RULES-1945",
-  "units": 1212,
-  "chunks": 916,
-  "rejected": 579,
+  "chunking_version": "0.2.0",
+  "units": 1198,
+  "chunks": 920,
+  "rejected": 558,
   "rejected_by_reason": {
     "structural heading with no body text": 11,
-    "below the minimum retrievable length": 568
+    "below the minimum retrievable length": 547
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 919,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "A",
+  "source_status": "OFFICIAL_SOURCE_FOUND_REPLACEMENT_AVAILABLE",
   "chunks_with_tables": 1,
   "chunks_with_amendment_notes": 395,
   "chunks_from_ocr": 0,
-  "characters": 1588393,
-  "mean_chunk_characters": 1734.1,
+  "characters": 1588945,
+  "mean_chunk_characters": 1727.1,
   "max_chunk_characters": 4997,
   "rejected_chunks": [
     {
@@ -95,297 +100,255 @@
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 290,
-      "reason": "below the minimum retrievable length",
-      "character_count": 32
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 291,
-      "reason": "below the minimum retrievable length",
-      "character_count": 31
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 292,
-      "reason": "below the minimum retrievable length",
-      "character_count": 18
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 293,
-      "reason": "below the minimum retrievable length",
-      "character_count": 18
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 295,
-      "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 296,
-      "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 297,
-      "reason": "below the minimum retrievable length",
-      "character_count": 15
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 298,
-      "reason": "below the minimum retrievable length",
-      "character_count": 34
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 299,
-      "reason": "below the minimum retrievable length",
-      "character_count": 23
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 300,
-      "reason": "below the minimum retrievable length",
-      "character_count": 30
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 301,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 302,
-      "reason": "below the minimum retrievable length",
-      "character_count": 21
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 304,
-      "reason": "below the minimum retrievable length",
-      "character_count": 32
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 305,
-      "reason": "below the minimum retrievable length",
-      "character_count": 22
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 306,
-      "reason": "below the minimum retrievable length",
-      "character_count": 37
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 307,
-      "reason": "below the minimum retrievable length",
-      "character_count": 27
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 308,
-      "reason": "below the minimum retrievable length",
-      "character_count": 25
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 309,
-      "reason": "below the minimum retrievable length",
-      "character_count": 36
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 313,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 315,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 316,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 401,
+      "unit_order": 387,
       "reason": "below the minimum retrievable length",
       "character_count": 8
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 482,
+      "unit_order": 468,
       "reason": "below the minimum retrievable length",
       "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 483,
+      "unit_order": 469,
       "reason": "below the minimum retrievable length",
       "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 485,
+      "unit_order": 471,
       "reason": "below the minimum retrievable length",
       "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 487,
+      "unit_order": 473,
       "reason": "below the minimum retrievable length",
       "character_count": 35
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 488,
+      "unit_order": 474,
       "reason": "below the minimum retrievable length",
       "character_count": 37
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 490,
+      "unit_order": 476,
       "reason": "below the minimum retrievable length",
       "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 491,
+      "unit_order": 477,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 492,
+      "unit_order": 478,
       "reason": "below the minimum retrievable length",
       "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 525,
+      "unit_order": 511,
       "reason": "below the minimum retrievable length",
       "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 532,
+      "unit_order": 518,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 541,
+      "unit_order": 527,
       "reason": "below the minimum retrievable length",
       "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 542,
+      "unit_order": 528,
       "reason": "below the minimum retrievable length",
       "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 546,
+      "unit_order": 532,
       "reason": "below the minimum retrievable length",
       "character_count": 37
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 547,
+      "unit_order": 533,
       "reason": "below the minimum retrievable length",
       "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 548,
+      "unit_order": 534,
       "reason": "below the minimum retrievable length",
       "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 549,
+      "unit_order": 535,
       "reason": "below the minimum retrievable length",
       "character_count": 37
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 557,
+      "unit_order": 543,
       "reason": "below the minimum retrievable length",
       "character_count": 38
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 560,
+      "unit_order": 546,
       "reason": "below the minimum retrievable length",
       "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 563,
+      "unit_order": 549,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 565,
+      "unit_order": 551,
       "reason": "below the minimum retrievable length",
       "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 566,
+      "unit_order": 552,
       "reason": "below the minimum retrievable length",
       "character_count": 35
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 567,
+      "unit_order": 553,
       "reason": "below the minimum retrievable length",
       "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 572,
+      "unit_order": 558,
       "reason": "below the minimum retrievable length",
       "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 573,
+      "unit_order": 559,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 574,
+      "unit_order": 560,
       "reason": "below the minimum retrievable length",
       "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 575,
+      "unit_order": 561,
       "reason": "below the minimum retrievable length",
       "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 576,
+      "unit_order": 562,
       "reason": "below the minimum retrievable length",
       "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 564,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 565,
+      "reason": "below the minimum retrievable length",
+      "character_count": 13
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 566,
+      "reason": "below the minimum retrievable length",
+      "character_count": 17
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 567,
+      "reason": "below the minimum retrievable length",
+      "character_count": 12
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 568,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 569,
+      "reason": "below the minimum retrievable length",
+      "character_count": 14
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 570,
+      "reason": "below the minimum retrievable length",
+      "character_count": 19
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 571,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 572,
+      "reason": "below the minimum retrievable length",
+      "character_count": 28
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 573,
+      "reason": "below the minimum retrievable length",
+      "character_count": 28
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 574,
+      "reason": "below the minimum retrievable length",
+      "character_count": 29
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 575,
+      "reason": "below the minimum retrievable length",
+      "character_count": 31
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 576,
+      "reason": "below the minimum retrievable length",
+      "character_count": 24
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 577,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -397,115 +360,109 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 579,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 35
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 580,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 581,
       "reason": "below the minimum retrievable length",
-      "character_count": 12
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 582,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 583,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 584,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 585,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 586,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 587,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 588,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 26
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 589,
       "reason": "below the minimum retrievable length",
-      "character_count": 31
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 590,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 591,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 592,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 593,
       "reason": "below the minimum retrievable length",
-      "character_count": 35
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 594,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 595,
-      "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 596,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 597,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -517,91 +474,97 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 599,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 600,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 601,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 602,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 603,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 604,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 605,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 606,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 607,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 608,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 14
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 609,
+      "reason": "below the minimum retrievable length",
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 610,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 611,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 612,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 613,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 26
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 614,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -613,85 +576,85 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 616,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 617,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 618,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 619,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 620,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 621,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 622,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 623,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 624,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 625,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 626,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 627,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 628,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 629,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -703,19 +666,19 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 631,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 632,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 633,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -727,61 +690,61 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 635,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 636,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 637,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 638,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 639,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 640,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 641,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 642,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 643,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 644,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -793,73 +756,73 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 646,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 647,
       "reason": "below the minimum retrievable length",
-      "character_count": 32
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 648,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 649,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 650,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 651,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 652,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 653,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 654,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 655,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 656,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 657,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -871,133 +834,133 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 659,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 660,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 661,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 662,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 663,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 664,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 665,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 666,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 667,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 668,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 669,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 37
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 670,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 671,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 672,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 673,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 26
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 674,
       "reason": "below the minimum retrievable length",
-      "character_count": 12
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 675,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 676,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 677,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 678,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 679,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 680,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1009,79 +972,73 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 682,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 683,
       "reason": "below the minimum retrievable length",
-      "character_count": 37
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 684,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 685,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 686,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 687,
-      "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 688,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 689,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 690,
       "reason": "below the minimum retrievable length",
-      "character_count": 32
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 691,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 692,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 693,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 694,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1093,259 +1050,259 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 696,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 697,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 698,
-      "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 699,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 700,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 702,
-      "reason": "below the minimum retrievable length",
-      "character_count": 30
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 703,
-      "reason": "below the minimum retrievable length",
-      "character_count": 22
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 704,
-      "reason": "below the minimum retrievable length",
-      "character_count": 13
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 705,
-      "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 706,
-      "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 707,
-      "reason": "below the minimum retrievable length",
-      "character_count": 22
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 708,
-      "reason": "below the minimum retrievable length",
-      "character_count": 19
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 709,
-      "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 710,
-      "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 711,
-      "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 713,
-      "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 714,
-      "reason": "below the minimum retrievable length",
       "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 715,
+      "unit_order": 701,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 716,
+      "unit_order": 702,
       "reason": "below the minimum retrievable length",
       "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 717,
+      "unit_order": 703,
       "reason": "below the minimum retrievable length",
       "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 718,
+      "unit_order": 704,
       "reason": "below the minimum retrievable length",
       "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 719,
+      "unit_order": 705,
       "reason": "below the minimum retrievable length",
       "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 720,
+      "unit_order": 706,
       "reason": "below the minimum retrievable length",
       "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 721,
+      "unit_order": 707,
       "reason": "below the minimum retrievable length",
       "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 722,
+      "unit_order": 708,
       "reason": "below the minimum retrievable length",
       "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 723,
+      "unit_order": 709,
       "reason": "below the minimum retrievable length",
       "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 724,
+      "unit_order": 710,
       "reason": "below the minimum retrievable length",
       "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 725,
+      "unit_order": 711,
       "reason": "below the minimum retrievable length",
       "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 726,
+      "unit_order": 712,
       "reason": "below the minimum retrievable length",
       "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 727,
+      "unit_order": 713,
       "reason": "below the minimum retrievable length",
       "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 728,
+      "unit_order": 714,
       "reason": "below the minimum retrievable length",
       "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 729,
+      "unit_order": 715,
       "reason": "below the minimum retrievable length",
       "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 730,
+      "unit_order": 716,
       "reason": "below the minimum retrievable length",
       "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 731,
+      "unit_order": 717,
       "reason": "below the minimum retrievable length",
       "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 732,
+      "unit_order": 718,
       "reason": "below the minimum retrievable length",
       "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 733,
+      "unit_order": 719,
       "reason": "below the minimum retrievable length",
       "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 734,
+      "unit_order": 720,
       "reason": "below the minimum retrievable length",
       "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 735,
+      "unit_order": 721,
       "reason": "below the minimum retrievable length",
       "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 736,
+      "unit_order": 722,
       "reason": "below the minimum retrievable length",
       "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 737,
+      "unit_order": 723,
       "reason": "below the minimum retrievable length",
       "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 738,
+      "unit_order": 724,
       "reason": "below the minimum retrievable length",
       "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 739,
+      "unit_order": 725,
       "reason": "below the minimum retrievable length",
       "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 741,
+      "unit_order": 727,
       "reason": "below the minimum retrievable length",
       "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 728,
+      "reason": "below the minimum retrievable length",
+      "character_count": 17
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 729,
+      "reason": "below the minimum retrievable length",
+      "character_count": 14
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 730,
+      "reason": "below the minimum retrievable length",
+      "character_count": 27
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 731,
+      "reason": "below the minimum retrievable length",
+      "character_count": 24
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 732,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 733,
+      "reason": "below the minimum retrievable length",
+      "character_count": 22
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 734,
+      "reason": "below the minimum retrievable length",
+      "character_count": 22
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 735,
+      "reason": "below the minimum retrievable length",
+      "character_count": 26
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 736,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 737,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 738,
+      "reason": "below the minimum retrievable length",
+      "character_count": 30
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 740,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 741,
+      "reason": "below the minimum retrievable length",
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1357,67 +1314,73 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 743,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 744,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 745,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 746,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 747,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 748,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 749,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 750,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 751,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 752,
       "reason": "below the minimum retrievable length",
-      "character_count": 30
+      "character_count": 22
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 753,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 754,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1429,7 +1392,7 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 756,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1441,137 +1404,125 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 758,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 759,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 760,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 761,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 762,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 763,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 764,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 765,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 766,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 767,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 768,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 769,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 770,
       "reason": "below the minimum retrievable length",
-      "character_count": 34
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 771,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 772,
       "reason": "below the minimum retrievable length",
-      "character_count": 12
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 773,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 774,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 775,
       "reason": "below the minimum retrievable length",
-      "character_count": 30
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 776,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 777,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 778,
-      "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 779,
-      "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 780,
       "reason": "below the minimum retrievable length",
       "character_count": 15
     },
@@ -1579,71 +1530,77 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 781,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 782,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 783,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 784,
-      "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 785,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 38
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 786,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 787,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 788,
       "reason": "below the minimum retrievable length",
-      "character_count": 12
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 789,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 11
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 790,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 791,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 792,
+      "reason": "below the minimum retrievable length",
+      "character_count": 26
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 793,
+      "reason": "below the minimum retrievable length",
+      "character_count": 28
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 794,
       "reason": "below the minimum retrievable length",
       "character_count": 15
     },
@@ -1651,17 +1608,23 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 795,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 796,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 797,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 798,
       "reason": "below the minimum retrievable length",
       "character_count": 15
     },
@@ -1669,91 +1632,91 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 799,
       "reason": "below the minimum retrievable length",
-      "character_count": 38
+      "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 800,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 801,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 802,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 803,
       "reason": "below the minimum retrievable length",
-      "character_count": 11
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 804,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 805,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 806,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 807,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 808,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 809,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 810,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 811,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 812,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 26
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 813,
       "reason": "below the minimum retrievable length",
-      "character_count": 32
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1771,73 +1734,73 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 816,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 817,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 818,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 819,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 820,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 821,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 822,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 823,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 824,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 825,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 826,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 827,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1849,97 +1812,97 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 829,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 830,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 831,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 832,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 833,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 834,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 835,
       "reason": "below the minimum retrievable length",
-      "character_count": 33
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 836,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 837,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 838,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 839,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 840,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 841,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 842,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 843,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 844,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1951,43 +1914,43 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 846,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 847,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 848,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 849,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 850,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 851,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 852,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -1999,85 +1962,79 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 854,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 855,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 856,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 857,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 858,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 859,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 860,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 26
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 861,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 862,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 863,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 864,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 865,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 866,
-      "reason": "below the minimum retrievable length",
-      "character_count": 31
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 867,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2089,109 +2046,115 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 869,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 870,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 871,
       "reason": "below the minimum retrievable length",
-      "character_count": 33
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 872,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 873,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 874,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 875,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 876,
       "reason": "below the minimum retrievable length",
-      "character_count": 12
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 877,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 878,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 879,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 28
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 880,
+      "reason": "below the minimum retrievable length",
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 881,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 882,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 883,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 884,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 885,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 886,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 887,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2203,193 +2166,187 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 889,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 890,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 891,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 892,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 893,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 894,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 895,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 896,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 897,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 898,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 899,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 900,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 901,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 902,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 903,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 904,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 905,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 906,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 907,
-      "reason": "below the minimum retrievable length",
-      "character_count": 18
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 908,
-      "reason": "below the minimum retrievable length",
-      "character_count": 30
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 909,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 910,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 911,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 912,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 913,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 914,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 915,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 916,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 917,
-      "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 918,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 919,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 920,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 13
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 921,
+      "reason": "below the minimum retrievable length",
+      "character_count": 31
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 922,
+      "reason": "below the minimum retrievable length",
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2399,21 +2356,15 @@
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 924,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
       "unit_order": 925,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 926,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2425,151 +2376,151 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 928,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 929,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 930,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 35
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 931,
+      "reason": "below the minimum retrievable length",
+      "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 932,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 933,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 934,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 935,
       "reason": "below the minimum retrievable length",
-      "character_count": 31
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 936,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 937,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 939,
-      "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 940,
-      "reason": "below the minimum retrievable length",
-      "character_count": 28
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 941,
-      "reason": "below the minimum retrievable length",
-      "character_count": 19
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 942,
-      "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 943,
-      "reason": "below the minimum retrievable length",
-      "character_count": 31
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 944,
-      "reason": "below the minimum retrievable length",
-      "character_count": 35
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 945,
-      "reason": "below the minimum retrievable length",
-      "character_count": 31
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 946,
-      "reason": "below the minimum retrievable length",
-      "character_count": 28
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 947,
-      "reason": "below the minimum retrievable length",
-      "character_count": 17
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 948,
-      "reason": "below the minimum retrievable length",
-      "character_count": 30
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 949,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 950,
-      "reason": "below the minimum retrievable length",
-      "character_count": 13
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 951,
-      "reason": "below the minimum retrievable length",
       "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 952,
+      "unit_order": 938,
       "reason": "below the minimum retrievable length",
       "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 953,
+      "unit_order": 939,
       "reason": "below the minimum retrievable length",
       "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 954,
+      "unit_order": 940,
       "reason": "below the minimum retrievable length",
       "character_count": 24
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 941,
+      "reason": "below the minimum retrievable length",
+      "character_count": 14
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 942,
+      "reason": "below the minimum retrievable length",
+      "character_count": 23
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 943,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 944,
+      "reason": "below the minimum retrievable length",
+      "character_count": 17
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 946,
+      "reason": "below the minimum retrievable length",
+      "character_count": 27
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 947,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 949,
+      "reason": "below the minimum retrievable length",
+      "character_count": 15
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 950,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 951,
+      "reason": "below the minimum retrievable length",
+      "character_count": 29
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 952,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 953,
+      "reason": "below the minimum retrievable length",
+      "character_count": 13
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 954,
+      "reason": "below the minimum retrievable length",
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2581,13 +2532,13 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 956,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 957,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2597,9 +2548,15 @@
     },
     {
       "document_id": "IN-DC-RULES-1945",
+      "unit_order": 959,
+      "reason": "below the minimum retrievable length",
+      "character_count": 23
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
       "unit_order": 960,
       "reason": "below the minimum retrievable length",
-      "character_count": 27
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2609,33 +2566,39 @@
     },
     {
       "document_id": "IN-DC-RULES-1945",
+      "unit_order": 962,
+      "reason": "below the minimum retrievable length",
+      "character_count": 26
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
       "unit_order": 963,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 964,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 965,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 966,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 967,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 18
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2647,25 +2610,25 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 969,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 970,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 971,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 972,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2677,91 +2640,91 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 974,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 975,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 976,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 977,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 978,
       "reason": "below the minimum retrievable length",
-      "character_count": 31
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 979,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 980,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 981,
       "reason": "below the minimum retrievable length",
-      "character_count": 18
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 982,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 39
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 983,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 984,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 985,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 986,
       "reason": "below the minimum retrievable length",
-      "character_count": 30
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 987,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 988,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2773,121 +2736,121 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 990,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 991,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 992,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 993,
       "reason": "below the minimum retrievable length",
-      "character_count": 24
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 994,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 995,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 996,
       "reason": "below the minimum retrievable length",
-      "character_count": 39
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 997,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 998,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 26
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 999,
       "reason": "below the minimum retrievable length",
-      "character_count": 12
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1000,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1001,
       "reason": "below the minimum retrievable length",
-      "character_count": 33
+      "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1002,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1003,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1004,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1005,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1006,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1007,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1008,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1009,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2899,67 +2862,67 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1011,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1012,
       "reason": "below the minimum retrievable length",
-      "character_count": 26
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1013,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1014,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1015,
       "reason": "below the minimum retrievable length",
-      "character_count": 22
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1016,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1017,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1018,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 21
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1019,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1020,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1021,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -2971,385 +2934,361 @@
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1023,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1024,
       "reason": "below the minimum retrievable length",
-      "character_count": 30
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1025,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 15
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1026,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1027,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1028,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1029,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1030,
-      "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1031,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1032,
       "reason": "below the minimum retrievable length",
-      "character_count": 21
+      "character_count": 19
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1033,
       "reason": "below the minimum retrievable length",
-      "character_count": 13
+      "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1034,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1035,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1036,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 17
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1037,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 38
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1038,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1039,
       "reason": "below the minimum retrievable length",
-      "character_count": 15
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1040,
       "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1041,
       "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1042,
       "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1043,
       "reason": "below the minimum retrievable length",
-      "character_count": 31
+      "character_count": 30
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1044,
+      "reason": "below the minimum retrievable length",
+      "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1045,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1046,
       "reason": "below the minimum retrievable length",
-      "character_count": 19
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1047,
       "reason": "below the minimum retrievable length",
-      "character_count": 32
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1048,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 23
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1049,
       "reason": "below the minimum retrievable length",
-      "character_count": 34
+      "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1050,
       "reason": "below the minimum retrievable length",
-      "character_count": 17
+      "character_count": 13
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1051,
       "reason": "below the minimum retrievable length",
-      "character_count": 38
+      "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1052,
       "reason": "below the minimum retrievable length",
-      "character_count": 31
+      "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1053,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1054,
       "reason": "below the minimum retrievable length",
-      "character_count": 14
+      "character_count": 16
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1055,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1056,
-      "reason": "below the minimum retrievable length",
-      "character_count": 23
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1057,
-      "reason": "below the minimum retrievable length",
-      "character_count": 30
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1058,
-      "reason": "below the minimum retrievable length",
-      "character_count": 28
+      "character_count": 14
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1059,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1060,
-      "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 10
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1061,
       "reason": "below the minimum retrievable length",
-      "character_count": 25
+      "character_count": 10
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1062,
       "reason": "below the minimum retrievable length",
-      "character_count": 23
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1063,
-      "reason": "below the minimum retrievable length",
-      "character_count": 24
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1064,
-      "reason": "below the minimum retrievable length",
-      "character_count": 13
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1065,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
+      "character_count": 10
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1066,
       "reason": "below the minimum retrievable length",
-      "character_count": 30
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1067,
-      "reason": "below the minimum retrievable length",
-      "character_count": 20
+      "character_count": 11
     },
     {
       "document_id": "IN-DC-RULES-1945",
       "unit_order": 1068,
       "reason": "below the minimum retrievable length",
-      "character_count": 16
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1069,
-      "reason": "below the minimum retrievable length",
-      "character_count": 14
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1073,
-      "reason": "below the minimum retrievable length",
-      "character_count": 10
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1075,
-      "reason": "below the minimum retrievable length",
-      "character_count": 10
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1076,
-      "reason": "below the minimum retrievable length",
-      "character_count": 10
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1080,
-      "reason": "below the minimum retrievable length",
       "character_count": 11
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1082,
-      "reason": "below the minimum retrievable length",
-      "character_count": 11
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1085,
+      "unit_order": 1071,
       "reason": "below the minimum retrievable length",
       "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1093,
+      "unit_order": 1079,
       "reason": "below the minimum retrievable length",
       "character_count": 12
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1113,
+      "unit_order": 1099,
       "reason": "below the minimum retrievable length",
       "character_count": 39
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1121,
+      "unit_order": 1107,
       "reason": "below the minimum retrievable length",
       "character_count": 39
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1153,
+      "unit_order": 1139,
       "reason": "below the minimum retrievable length",
       "character_count": 37
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1154,
+      "unit_order": 1140,
       "reason": "below the minimum retrievable length",
       "character_count": 30
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1155,
+      "unit_order": 1141,
       "reason": "below the minimum retrievable length",
       "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1156,
+      "unit_order": 1142,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1161,
+      "unit_order": 1147,
       "reason": "below the minimum retrievable length",
       "character_count": 27
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1174,
+      "unit_order": 1160,
       "reason": "below the minimum retrievable length",
       "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1176,
+      "unit_order": 1162,
       "reason": "below the minimum retrievable length",
       "character_count": 31
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1179,
+      "unit_order": 1165,
       "reason": "below the minimum retrievable length",
       "character_count": 22
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1180,
+      "unit_order": 1166,
       "reason": "below the minimum retrievable length",
       "character_count": 20
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1167,
+      "reason": "below the minimum retrievable length",
+      "character_count": 21
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1168,
+      "reason": "below the minimum retrievable length",
+      "character_count": 19
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1169,
+      "reason": "below the minimum retrievable length",
+      "character_count": 29
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1171,
+      "reason": "below the minimum retrievable length",
+      "character_count": 21
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1172,
+      "reason": "below the minimum retrievable length",
+      "character_count": 37
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1174,
+      "reason": "below the minimum retrievable length",
+      "character_count": 27
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1175,
+      "reason": "below the minimum retrievable length",
+      "character_count": 35
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1177,
+      "reason": "below the minimum retrievable length",
+      "character_count": 26
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1179,
+      "reason": "below the minimum retrievable length",
+      "character_count": 27
+    },
+    {
+      "document_id": "IN-DC-RULES-1945",
+      "unit_order": 1180,
+      "reason": "below the minimum retrievable length",
+      "character_count": 25
     },
     {
       "document_id": "IN-DC-RULES-1945",
@@ -3359,133 +3298,73 @@
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1182,
-      "reason": "below the minimum retrievable length",
-      "character_count": 19
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
       "unit_order": 1183,
-      "reason": "below the minimum retrievable length",
-      "character_count": 29
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1185,
-      "reason": "below the minimum retrievable length",
-      "character_count": 21
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1186,
-      "reason": "below the minimum retrievable length",
-      "character_count": 37
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1188,
-      "reason": "below the minimum retrievable length",
-      "character_count": 27
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1189,
-      "reason": "below the minimum retrievable length",
-      "character_count": 35
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1191,
-      "reason": "below the minimum retrievable length",
-      "character_count": 26
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1193,
-      "reason": "below the minimum retrievable length",
-      "character_count": 27
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1194,
-      "reason": "below the minimum retrievable length",
-      "character_count": 25
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1195,
-      "reason": "below the minimum retrievable length",
-      "character_count": 21
-    },
-    {
-      "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1197,
       "reason": "below the minimum retrievable length",
       "character_count": 28
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1198,
+      "unit_order": 1184,
       "reason": "below the minimum retrievable length",
       "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1199,
+      "unit_order": 1185,
       "reason": "below the minimum retrievable length",
       "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1200,
+      "unit_order": 1186,
       "reason": "below the minimum retrievable length",
       "character_count": 33
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1201,
+      "unit_order": 1187,
       "reason": "below the minimum retrievable length",
       "character_count": 32
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1202,
+      "unit_order": 1188,
       "reason": "below the minimum retrievable length",
       "character_count": 34
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1203,
+      "unit_order": 1189,
       "reason": "below the minimum retrievable length",
       "character_count": 29
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1204,
+      "unit_order": 1190,
       "reason": "below the minimum retrievable length",
       "character_count": 39
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1205,
+      "unit_order": 1191,
       "reason": "below the minimum retrievable length",
       "character_count": 36
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1206,
+      "unit_order": 1192,
       "reason": "below the minimum retrievable length",
       "character_count": 24
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1207,
+      "unit_order": 1193,
       "reason": "below the minimum retrievable length",
       "character_count": 20
     },
     {
       "document_id": "IN-DC-RULES-1945",
-      "unit_order": 1210,
+      "unit_order": 1196,
       "reason": "below the minimum retrievable length",
       "character_count": 38
     }

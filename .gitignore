@@ -4,3 +4,7 @@ __pycache__/
 .env
 data/raw/
 data/interim/
+
+# Phase 4: the BGE-M3 embedding cache. Regenerated deterministically from the
+# corpus by ai/retrieval/dense.py; 12 MB of derived floats does not belong in git.
+data/evaluation/embeddings/

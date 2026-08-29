@@ -1,5 +1,6 @@
 {
   "document_id": "IN-COPYRIGHT-ACT-1957",
+  "chunking_version": "0.2.0",
   "units": 119,
   "chunks": 114,
   "rejected": 13,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 13
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 113,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "C",
+  "source_status": "OFFICIAL_SOURCE_FOUND_LOCAL_COPY_NOT_MATCHED",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 113,
   "chunks_from_ocr": 0,

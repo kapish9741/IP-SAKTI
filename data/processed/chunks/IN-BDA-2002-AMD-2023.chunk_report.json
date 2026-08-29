@@ -1,5 +1,6 @@
 {
   "document_id": "IN-BDA-2002-AMD-2023",
+  "chunking_version": "0.2.0",
   "units": 86,
   "chunks": 77,
   "rejected": 10,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 10
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 76,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "C",
+  "source_status": "PROVENANCE_UNVERIFIED",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 77,
   "chunks_from_ocr": 0,

@@ -35,6 +35,19 @@ from ingest.common import (  # noqa: E402
     write_jsonl,
 )
 from ingest.parsers.statutory import CLAUSE_RE  # noqa: E402
+from ingest.provenance import citability, provenance_fields  # noqa: E402
+
+#: Declared chunking version. Bumped whenever a change to the cleaning,
+#: structural or chunking stages can alter a chunk's id, text or locator — which
+#: makes every stored chunk id, embedding cache and benchmark result from an
+#: earlier version non-comparable.
+#:
+#: 0.1.0  Phase 2 baseline.
+#: 0.2.0  Phase 5. Treaty Article numbers are no longer stripped as page folios
+#:        (CBD Articles 1-39, Nagoya Articles 1-20 recovered their locators);
+#:        numbered entries inside a Schedule, Form or Annexure became
+#:        `schedule_item` with an `item` locator instead of borrowing `section`.
+CHUNKING_VERSION = "0.2.0"
 
 #: Target ceiling for one chunk. Provisions below it are never split.
 MAX_CHUNK_CHARS = 5_000
@@ -48,6 +61,15 @@ SUB_LOCATOR_KEY = {
     "sub_rule": "sub_rule",
     "paragraph": "paragraph",
 }
+
+#: Locator keys that identify a provision in its own right. A sub-locator —
+#: sub-section, sub-rule, paragraph — is a position *inside* one of these, so it
+#: may only be attached to a chunk whose unit already carries one. Without that
+#: rule a numbered line anywhere becomes a citation: the CBD's front matter reads
+#: "3. Environmental protection — International cooperation", and splitting the
+#: unlocated preamble on it produced a chunk citable as "CBD — Paragraph 3",
+#: which is not a provision of the Convention at all.
+PROVISION_LOCATOR_KEYS = ("section", "rule", "regulation", "article", "paragraph", "item")
 
 
 def slugify(value: str) -> str:
@@ -171,6 +193,7 @@ def chunk_document(doc: LogicalDocument) -> tuple[list[dict[str, Any]], list[dic
     chunks: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     seen_ids: Counter[str] = Counter()
+    provenance = provenance_fields(doc.document_id)
 
     for unit in units:
         if unit["unit_type"] == "heading" and unit["character_count"] < MIN_HEADING_UNIT_CHARS:
@@ -211,7 +234,8 @@ def chunk_document(doc: LogicalDocument) -> tuple[list[dict[str, Any]], list[dic
                 continue
 
             locator = dict(unit["locator"])
-            locator.update(sub_locator)
+            if any(locator.get(key) for key in PROVISION_LOCATOR_KEYS):
+                locator.update(sub_locator)
             citation, unavailable = build_citation(
                 doc.short_title,
                 locator,
@@ -222,7 +246,12 @@ def chunk_document(doc: LogicalDocument) -> tuple[list[dict[str, Any]], list[dic
             methods = unit.get("extraction_methods") or ["native"]
             extraction_method = methods[0] if len(methods) == 1 else "mixed"
 
-            base = unit["structural_path"] or f"{unit['unit_type']}-{unit['unit_order']}"
+            # A unit with no structural path has no locator, so its id is built
+            # from its position. The ``u`` matters: without it an unnumbered
+            # Article at unit_order 8 would slug to ``article-8`` and collide
+            # with the chunk for the real Article 8 — an id that reads like a
+            # citation for text that has none.
+            base = unit["structural_path"] or f"{unit['unit_type']}-u{unit['unit_order']}"
             slug = slugify(base)
             if len(pieces) > 1:
                 slug = f"{slug}-c{index + 1}"
@@ -231,9 +260,14 @@ def chunk_document(doc: LogicalDocument) -> tuple[list[dict[str, Any]], list[dic
             if seen_ids[chunk_id] > 1:
                 chunk_id = f"{chunk_id}-{seen_ids[chunk_id]}"
 
+            retrievable, citable, citability_reason = citability(
+                locator_unavailable=unavailable
+            )
+
             chunks.append(
                 {
                     "chunk_id": chunk_id,
+                    "chunking_version": CHUNKING_VERSION,
                     "document_id": doc.document_id,
                     "parent_source_document_id": doc.parent_source_document_id,
                     "title": doc.title,
@@ -264,16 +298,25 @@ def chunk_document(doc: LogicalDocument) -> tuple[list[dict[str, Any]], list[dic
                     "reference_number": doc.reference_number,
                     "source_url": doc.source_url,
                     "provenance_status": doc.provenance_status,
+                    "retrievable": retrievable,
+                    "citable": citable,
+                    "citability_reason": citability_reason,
+                    **provenance,
                 }
             )
 
     report = {
         "document_id": doc.document_id,
+        "chunking_version": CHUNKING_VERSION,
         "units": len(units),
         "chunks": len(chunks),
         "rejected": len(rejected),
         "rejected_by_reason": dict(Counter(r["reason"] for r in rejected)),
         "chunks_missing_locator": sum(1 for c in chunks if c["locator_unavailable"]),
+        "chunks_citable": sum(1 for c in chunks if c["citable"]),
+        "chunks_not_citable": sum(1 for c in chunks if not c["citable"]),
+        "source_evidence_level": provenance["source_evidence_level"],
+        "source_status": provenance["source_status"],
         "chunks_with_tables": sum(1 for c in chunks if c["contains_table"]),
         "chunks_with_amendment_notes": sum(1 for c in chunks if c["amendment_notes"]),
         "chunks_from_ocr": sum(1 for c in chunks if c["extraction_method"] != "native"),
