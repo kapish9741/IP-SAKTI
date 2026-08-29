@@ -1,0 +1,15 @@
+{
+  "document_id": "UN-NAGOYA-PROTOCOL-2010",
+  "units": 18,
+  "chunks": 29,
+  "rejected": 0,
+  "rejected_by_reason": {},
+  "chunks_missing_locator": 1,
+  "chunks_with_tables": 0,
+  "chunks_with_amendment_notes": 0,
+  "chunks_from_ocr": 0,
+  "characters": 55459,
+  "mean_chunk_characters": 1912.4,
+  "max_chunk_characters": 4988,
+  "rejected_chunks": []
+}

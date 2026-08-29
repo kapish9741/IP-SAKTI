@@ -1,0 +1,18 @@
+# IP-SAKTI — Phase 2 (ingestion and structural preprocessing) only.
+# Nothing here is an ML framework: no embeddings, vector store or retrieval
+# component is part of this phase.
+
+pypdf==6.16.2        # text-layer extraction; also used by the Phase 1 audit
+pypdfium2==5.13.0    # renders scanned pages to images for OCR (self-contained wheel)
+pytesseract==0.3.13  # thin wrapper over the Tesseract binary
+pillow==12.3.0       # image buffer between pypdfium2 and pytesseract
+pytest==9.1.1        # test suite
+
+# System dependency, not installable via pip:
+#   tesseract 5.5.3 with the 'eng' and 'hin' language data
+#   macOS:  brew install tesseract tesseract-lang
+#   Debian: apt-get install tesseract-ocr tesseract-ocr-eng tesseract-ocr-hin
+#
+# pdfplumber is deliberately NOT a dependency. Phase 2 only needs to *detect*
+# table-bearing pages, which is done on the text layer; reconstructing column
+# relationships is deferred rather than guessed.
