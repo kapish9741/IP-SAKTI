@@ -1,0 +1,15 @@
+{
+  "document_id": "IN-FSSAI-AYURVEDA-AAHARA-2022",
+  "units": 13,
+  "chunks": 29,
+  "rejected": 0,
+  "rejected_by_reason": {},
+  "chunks_missing_locator": 28,
+  "chunks_with_tables": 3,
+  "chunks_with_amendment_notes": 0,
+  "chunks_from_ocr": 29,
+  "characters": 94722,
+  "mean_chunk_characters": 3266.3,
+  "max_chunk_characters": 4998,
+  "rejected_chunks": []
+}

@@ -1,0 +1,24 @@
+{
+  "document_id": "UN-CBD-1992",
+  "units": 29,
+  "chunks": 43,
+  "rejected": 1,
+  "rejected_by_reason": {
+    "below the minimum retrievable length": 1
+  },
+  "chunks_missing_locator": 1,
+  "chunks_with_tables": 0,
+  "chunks_with_amendment_notes": 0,
+  "chunks_from_ocr": 0,
+  "characters": 65692,
+  "mean_chunk_characters": 1527.7,
+  "max_chunk_characters": 4999,
+  "rejected_chunks": [
+    {
+      "document_id": "UN-CBD-1992",
+      "unit_order": 5,
+      "reason": "below the minimum retrievable length",
+      "character_count": 29
+    }
+  ]
+}

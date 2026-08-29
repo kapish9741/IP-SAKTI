@@ -1,0 +1,16 @@
+{
+  "document_id": "UN-NAGOYA-PROTOCOL-2010",
+  "parser": "treaty",
+  "provision_label": "Article",
+  "pages_ingested": 15,
+  "pages_excluded": {},
+  "units": 18,
+  "units_by_type": {
+    "preamble": 1,
+    "article": 16,
+    "annexure": 1
+  },
+  "units_with_locator": 17,
+  "units_locator_downgraded": 0,
+  "characters": 55475
+}
