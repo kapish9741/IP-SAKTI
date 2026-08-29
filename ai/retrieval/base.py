@@ -129,6 +129,13 @@ def result_from_chunk(chunk: Chunk, *, score: float, rank: int,
         "source_status": chunk.source_status,
         "citability_reason": chunk.raw.get("citability_reason"),
         "locator_unavailable": chunk.locator_unavailable,
+        # The structured locator, alongside the rendered citation string in
+        # `RetrievalResult.locator`. Phase 6 reranking needs the fields, not the
+        # prose: deciding whether a candidate is the exact provision a query
+        # named, its parent, or a sibling sub-unit is a comparison of locator
+        # keys, and re-parsing them out of "Patents Act, 1970 - Section 3(p)"
+        # would be inventing structure that was already established in Phase 2.
+        "locator_fields": dict(chunk.locator),
         "physical_pages": list(chunk.physical_pages),
         "title": chunk.title,
         "short_title": chunk.short_title,
