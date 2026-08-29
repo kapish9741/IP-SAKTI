@@ -8,8 +8,9 @@
   "units_by_type": {
     "front_matter": 1,
     "heading": 6,
-    "provision": 85,
+    "provision": 76,
     "schedule": 1,
+    "schedule_item": 9,
     "form": 1
   },
   "units_with_locator": 93,

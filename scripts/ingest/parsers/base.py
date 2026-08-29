@@ -26,6 +26,12 @@ LOCATOR_KEYS = (
     "schedule",
     "form",
     "annexure",
+    #: A numbered entry inside a Schedule, Form or Annexure. Schedules restart
+    #: numbering at 1 and their entries are not provisions of the parent
+    #: instrument, so they must never borrow `section`, `rule` or `regulation`:
+    #: the Patents Act Schedule's entry 3 ("Section 1—In sub-section (1) omit
+    #: ...") is an amendment instruction, not section 3.
+    "item",
 )
 
 

@@ -1,5 +1,6 @@
 {
   "document_id": "IN-PPVFR-RULES-2003",
+  "chunking_version": "0.2.0",
   "units": 94,
   "chunks": 103,
   "rejected": 7,
@@ -8,6 +9,10 @@
     "below the minimum retrievable length": 1
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 102,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "A",
+  "source_status": "VERIFIED_OFFICIAL",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 3,
   "chunks_from_ocr": 0,

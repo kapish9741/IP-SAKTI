@@ -17,7 +17,11 @@ from ingest.parsers.base import Line, Unit, accepts_next, empty_locator, parse_n
 
 ARTICLE_INLINE_RE = re.compile(r"^\s*Article\s+(\d{1,3}(?:\s?(?:bis|ter|quater))?)\s*$", re.I)
 ARTICLE_BARE_RE = re.compile(r"^\s*Article\s*$", re.I)
-NUMBER_ONLY_RE = re.compile(r"^\s*(\d{1,3}(?:\s?(?:bis|ter|quater))?)\s*$", re.I)
+#: The centred number under an ``Article`` heading. Digits may arrive separated
+#: — the Nagoya Protocol's Article 11 reaches the text layer as ``1 1`` — because
+#: the heading is letter-spaced in the original typesetting. Joining them reads
+#: the printed number; it does not infer one.
+NUMBER_ONLY_RE = re.compile(r"^\s*(\d(?:\s?\d){0,2}(?:\s?(?:bis|ter|quater))?)\s*$", re.I)
 PART_RE = re.compile(r"^\s*PART\s+([IVXLCDM]+)\s*$", re.I)
 SECTION_RE = re.compile(r"^\s*SECTION\s+(\d+)\s*:?\s*(.*)$", re.I)
 ANNEX_RE = re.compile(r"^\s*ANNEX(?:URE)?\s*([IVXLCDM]+|\d+|[A-Z])?\s*$", re.I)
@@ -83,11 +87,14 @@ def parse(lines: list[Line], provision_label: str = "Article") -> list[Unit]:
             continue
 
         article_number = None
+        article_heading = False
         skip_to = index + 1
         inline = ARTICLE_INLINE_RE.match(stripped)
         if inline:
+            article_heading = True
             article_number = re.sub(r"\s+", "", inline.group(1))
         elif ARTICLE_BARE_RE.match(stripped):
+            article_heading = True
             for look in range(index + 1, min(index + 4, len(lines))):
                 candidate = lines[look][1].strip()
                 if not candidate:
@@ -99,7 +106,12 @@ def parse(lines: list[Line], provision_label: str = "Article") -> list[Unit]:
                     skip_to = look + 1
                 break
 
-        if article_number is not None:
+        # A heading with no recoverable number still opens its own Article. The
+        # alternative — folding the text into whichever unit preceded it — files
+        # one Article's words under another Article's citation, which is the
+        # worst outcome available. Opened without a number, the unit reaches
+        # Phase 3 as `locator_unavailable` and is therefore not citable.
+        if article_heading:
             close()
             title = None
             for look in range(skip_to, min(skip_to + 3, len(lines))):

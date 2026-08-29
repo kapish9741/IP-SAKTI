@@ -81,6 +81,11 @@ def parse(lines: list[Line], provision_label: str = "Section") -> list[Unit]:
     state: dict[str, Any] = {"part": None, "chapter": None, "schedule": None,
                              "form": None, "annexure": None}
     previous_number: tuple[int, str] | None = None
+    #: The last number opened as a provision of the instrument itself, kept
+    #: across Schedules and Forms. A container resets `previous_number` so its
+    #: own entries can start again at 1; this one is what says whether a later
+    #: number resumes the instrument's sequence or belongs to the container.
+    last_provision: tuple[int, str] | None = None
     restart_used = False
     current = Unit(unit_type="front_matter", number=None, heading=None, lines=[],
                    locator=empty_locator())
@@ -99,6 +104,8 @@ def parse(lines: list[Line], provision_label: str = "Section") -> list[Unit]:
         locator["annexure"] = state["annexure"]
         if unit_type == "provision" and number is not None:
             locator[provision_key] = number
+        if unit_type == "schedule_item" and number is not None:
+            locator["item"] = number
         return Unit(unit_type=unit_type, number=number, heading=heading, lines=[],
                     locator=locator)
 
@@ -187,12 +194,40 @@ def parse(lines: list[Line], provision_label: str = "Section") -> list[Unit]:
                 and candidate == (1, "")
                 and previous_number is not None
             )
-            if restart or accepts_next(previous_number, candidate, max_jump=max_jump):
+            in_container = any(state[key] for key in ("schedule", "form", "annexure"))
+            # A number that resumes the instrument's own sequence means the
+            # container has ended, whether or not anything announced it. It
+            # routinely does not: the Drugs and Cosmetics Rules print "Form 37."
+            # at the end of rule 150E's text, on its own line, and a heading
+            # match there swallowed rules 150F to 161 into a Form that had never
+            # started. Resumption is the evidence that we are back in the body.
+            # `last_provision is not None` matters: a container entry cannot
+            # resume a sequence that has not started. Without it the first entry
+            # of a Schedule appearing before any provision — a Schedule printed
+            # in front matter — would be read as provision 1 of the instrument.
+            resumes_body = (in_container and last_provision is not None
+                            and accepts_next(last_provision, candidate,
+                                             max_jump=max_jump))
+            if resumes_body:
+                state.update({"schedule": None, "form": None, "annexure": None})
+                in_container = False
+                previous_number = last_provision
+
+            if (resumes_body or restart
+                    or accepts_next(previous_number, candidate, max_jump=max_jump)):
                 close()
                 restart_used = restart_used or restart
                 previous_number = candidate
                 number = f"{candidate[0]}{candidate[1]}"
-                current = open_unit("provision", number, heading)
+                # Inside a Schedule, Form or Annexure the numbering is the
+                # container's own and restarts at 1. Entry 3 of the Patents Act
+                # Schedule is an instruction to amend the 1911 Act, not section
+                # 3 of the 1970 Act; giving it `section: 3` put it into direct
+                # competition with the real section 3 for identifier queries.
+                current = open_unit(
+                    "schedule_item" if in_container else "provision", number, heading)
+                if not in_container:
+                    last_provision = candidate
                 current.lines.append((page, text))
                 index += 1
                 continue
@@ -219,7 +254,9 @@ def build_path(unit: Unit, provision_key: str) -> str:
         parts.append(f"Form {loc['form']}")
     if loc.get("annexure"):
         parts.append(f"Annexure {loc['annexure']}")
-    if loc.get(provision_key):
+    if loc.get("item"):
+        parts.append(f"Item {loc['item']}")
+    elif loc.get(provision_key):
         parts.append(f"{provision_key.replace('_', ' ').title()} {loc[provision_key]}")
     return " > ".join(parts)
 

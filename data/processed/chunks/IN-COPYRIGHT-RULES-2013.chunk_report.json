@@ -1,5 +1,6 @@
 {
   "document_id": "IN-COPYRIGHT-RULES-2013",
+  "chunking_version": "0.2.0",
   "units": 143,
   "chunks": 133,
   "rejected": 20,
@@ -8,6 +9,10 @@
     "below the minimum retrievable length": 2
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 132,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "A",
+  "source_status": "VERIFIED_OFFICIAL",
   "chunks_with_tables": 1,
   "chunks_with_amendment_notes": 8,
   "chunks_from_ocr": 0,

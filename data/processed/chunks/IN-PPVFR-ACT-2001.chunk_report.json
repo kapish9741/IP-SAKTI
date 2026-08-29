@@ -1,5 +1,6 @@
 {
   "document_id": "IN-PPVFR-ACT-2001",
+  "chunking_version": "0.2.0",
   "units": 109,
   "chunks": 102,
   "rejected": 11,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 11
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 101,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "A",
+  "source_status": "VERIFIED_OFFICIAL",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 0,
   "chunks_from_ocr": 0,

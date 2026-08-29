@@ -1,5 +1,6 @@
 {
   "document_id": "IN-GI-ACT-1999",
+  "chunking_version": "0.2.0",
   "units": 99,
   "chunks": 91,
   "rejected": 9,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 9
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 90,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "B",
+  "source_status": "SOURCE_UNAVAILABLE",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 60,
   "chunks_from_ocr": 0,

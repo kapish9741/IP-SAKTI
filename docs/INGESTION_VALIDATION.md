@@ -9,10 +9,10 @@ Documents processed: **22** logical documents from 21 source PDFs.
 | Pages processed | 1782 |
 | Pages extracted natively | 1565 |
 | Pages OCR'd | 217 |
-| Structural units parsed | 3373 |
-| Chunks generated | 3031 |
-| Chunks rejected | 777 |
-| Chunks missing a locator | 52 |
+| Structural units parsed | 3418 |
+| Chunks generated | 3073 |
+| Chunks rejected | 756 |
+| Chunks missing a locator | 57 |
 | Chunks containing tables | 5 |
 | Chunks carrying amendment notes | 1039 |
 | Chunks derived from OCR | 162 |
@@ -55,7 +55,7 @@ A provision number that the evidence does not support is withdrawn rather than p
 
 | Check | Count |
 | --- | ---: |
-| boilerplate_residue | 162 |
+| boilerplate_residue | 188 |
 | toc_contamination | 4 |
 
 ## Per document
@@ -63,9 +63,9 @@ A provision number that the evidence does not support is withdrawn rather than p
 | Document | Pages | OCR pages | Units | Chunks | Rejected | No locator | Tables | Amendment notes | Hindi lines dropped |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `IN-DC-ACT-1940` | 38 | 0 | 92 | 94 | 3 | 1 | 0 | 91 | 0 |
-| `IN-DC-RULES-1945` | 597 | 0 | 1212 | 916 | 579 | 1 | 1 | 395 | 0 |
+| `IN-DC-RULES-1945` | 597 | 0 | 1198 | 920 | 558 | 1 | 1 | 395 | 0 |
 | `IN-BD-RULES-2024` | 86 | 0 | 48 | 61 | 1 | 1 | 0 | 0 | 1647 |
-| `UN-CBD-1992` | 36 | 0 | 29 | 43 | 1 | 1 | 0 | 0 | 0 |
+| `UN-CBD-1992` | 36 | 0 | 68 | 69 | 1 | 3 | 0 | 0 | 0 |
 | `IN-COPYRIGHT-RULES-2013` | 77 | 0 | 143 | 133 | 20 | 1 | 1 | 8 | 0 |
 | `IN-DESIGNS-RULES-2001` | 31 | 0 | 89 | 94 | 0 | 1 | 0 | 3 | 0 |
 | `IN-DESIGNS-ACT-2000` | 18 | 0 | 59 | 50 | 11 | 1 | 0 | 8 | 0 |
@@ -81,7 +81,7 @@ A provision number that the evidence does not support is withdrawn rather than p
 | `IN-PATENTS-RULES-2003` | 102 | 47 | 302 | 279 | 25 | 1 | 0 | 4 | 0 |
 | `IN-TM-ACT-1999` | 56 | 0 | 185 | 179 | 12 | 1 | 0 | 101 | 0 |
 | `IN-TM-RULES-2017` | 97 | 0 | 186 | 180 | 15 | 1 | 0 | 0 | 2270 |
-| `UN-NAGOYA-PROTOCOL-2010` | 15 | 0 | 18 | 29 | 0 | 1 | 0 | 0 | 0 |
+| `UN-NAGOYA-PROTOCOL-2010` | 15 | 0 | 38 | 41 | 0 | 4 | 0 | 0 | 0 |
 | `IN-PPVFR-ACT-2001` | 50 | 0 | 109 | 102 | 11 | 1 | 0 | 0 | 0 |
 | `IN-PPVFR-RULES-2003` | 56 | 0 | 94 | 103 | 7 | 1 | 0 | 3 | 0 |
 
@@ -89,8 +89,8 @@ A provision number that the evidence does not support is withdrawn rather than p
 
 Reported, not deleted. Identical normalised text most often means a provision reprinted in a Schedule, or an omitted-section marker that reads identically wherever it appears.
 
-* `IN-DC-RULES-1945::part-xv-a-schedule-form-25a-rule-1`, `IN-DC-RULES-1945::part-xv-a-schedule-form-28a-rule-1`
-* `IN-DC-RULES-1945::part-xv-a-schedule-form-25a-rule-3`, `IN-DC-RULES-1945::part-xv-a-schedule-form-28-rule-3`
+* `IN-DC-RULES-1945::part-xv-a-schedule-form-25a-item-1`, `IN-DC-RULES-1945::part-xv-a-schedule-form-28a-item-1`
+* `IN-DC-RULES-1945::part-xv-a-schedule-form-25a-item-3`, `IN-DC-RULES-1945::part-xv-a-schedule-form-28-item-3`
 
 ## Unresolved extraction issues
 

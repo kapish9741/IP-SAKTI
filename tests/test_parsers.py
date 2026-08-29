@@ -101,15 +101,20 @@ class TestRuleDetection:
         units = statutory.parse(lines(text), "Rule")
         assert [u.number for u in units if u.unit_type == "form"] == ["1"]
 
-    def test_schedules_restart_numbering(self):
+    def test_schedule_entries_are_numbered_as_items_not_rules(self):
+        """Phase 5 §1. A Schedule restarts numbering at 1, and its entry 1 is not
+        rule 1 of the instrument. Borrowing the provision key put the entry into
+        direct competition with the real provision for identifier queries."""
         text = ("1. Short title.—These rules may be called the Test Rules.\n"
                 "40. Last rule.—This is the final rule.\n"
                 "THE FIRST SCHEDULE\n"
                 "1. First schedule entry.—Text of the entry.\n")
         units = statutory.parse(lines(text), "Rule")
         entry = units[-1]
+        assert entry.unit_type == "schedule_item"
         assert entry.locator["schedule"] == "FIRST"
-        assert entry.locator["rule"] == "1"
+        assert entry.locator["item"] == "1"
+        assert entry.locator["rule"] is None
 
 
 class TestArticleDetection:

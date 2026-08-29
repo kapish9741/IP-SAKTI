@@ -1,5 +1,6 @@
 {
   "document_id": "IN-DC-ACT-1940",
+  "chunking_version": "0.2.0",
   "units": 92,
   "chunks": 94,
   "rejected": 3,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 3
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 93,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "A",
+  "source_status": "OFFICIAL_SOURCE_FOUND_REPLACEMENT_AVAILABLE",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 91,
   "chunks_from_ocr": 0,

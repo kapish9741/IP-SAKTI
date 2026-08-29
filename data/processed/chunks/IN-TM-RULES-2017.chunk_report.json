@@ -1,5 +1,6 @@
 {
   "document_id": "IN-TM-RULES-2017",
+  "chunking_version": "0.2.0",
   "units": 186,
   "chunks": 180,
   "rejected": 15,
@@ -7,6 +8,10 @@
     "structural heading with no body text": 15
   },
   "chunks_missing_locator": 1,
+  "chunks_citable": 179,
+  "chunks_not_citable": 1,
+  "source_evidence_level": "B",
+  "source_status": "OFFICIAL_SOURCE_FOUND_LOCAL_COPY_NOT_MATCHED",
   "chunks_with_tables": 0,
   "chunks_with_amendment_notes": 0,
   "chunks_from_ocr": 0,

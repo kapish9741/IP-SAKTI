@@ -77,6 +77,16 @@ BARE_NUMBER_RE = re.compile(r"^(\d{1,4})$")
 #: matter with roman numerals, or a cover sheet, shifts it by a few pages.
 PAGE_NUMBER_TOLERANCE = 10
 
+#: A centred structural heading whose number is set on its own line beneath the
+#: word. The CBD and the Nagoya Protocol typeset every Article this way, so the
+#: text layer emits ``Article`` / ``15`` / ``ACCESS TO GENETIC RESOURCES`` as
+#: three lines. The middle line is a bare number and looks exactly like a folio
+#: — which is how CBD Articles 1-39 and Nagoya Articles 1-20 lost their numbers
+#: and, with them, their citations. The line above it is the evidence that tells
+#: the two apart, and it is layout evidence, not a guess about the number.
+CENTRED_HEADING_WORD = re.compile(
+    r"(?i)^\s*(?:article|section|chapter|part|rule|regulation)\s*$")
+
 FOOTNOTE_START = re.compile(r"^\s*(\d{1,2})\s*[\.\)]?\s+\S")
 #: A wrapped footnote may spill onto at most this many continuation lines.
 FOOTNOTE_MAX_CONTINUATION = 2
@@ -199,12 +209,18 @@ def strip_page_numbers(lines: list[str], physical_page: int) -> tuple[list[str],
     """
     kept: list[str] = []
     removed: list[str] = []
+    previous = ""
     for line in lines:
-        match = BARE_NUMBER_RE.match(line.strip())
-        if match and abs(int(match.group(1)) - physical_page) <= PAGE_NUMBER_TOLERANCE:
-            removed.append(line.strip())
+        stripped = line.strip()
+        match = BARE_NUMBER_RE.match(stripped)
+        if (match
+                and abs(int(match.group(1)) - physical_page) <= PAGE_NUMBER_TOLERANCE
+                and not CENTRED_HEADING_WORD.match(previous)):
+            removed.append(stripped)
             continue
         kept.append(line)
+        if stripped:
+            previous = stripped
     return kept, removed
 
 

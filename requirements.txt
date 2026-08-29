@@ -16,3 +16,11 @@ pytest==9.1.1        # test suite
 # pdfplumber is deliberately NOT a dependency. Phase 2 only needs to *detect*
 # table-bearing pages, which is done on the text layer; reconstructing column
 # relationships is deferred rather than guessed.
+
+# --- Phase 4 (retrieval laboratory) -----------------------------------------
+# Dense retrieval only. No vector database: the baseline index is a .npy matrix
+# with a JSON sidecar (see ai/retrieval/dense.py), and the Retriever interface
+# is the same one pgvector would satisfy later.
+numpy==2.5.2
+torch==2.13.0                # CPU/MPS inference for BGE-M3; no training here
+sentence-transformers==6.0.0  # loads BAAI/bge-m3 from the local HF cache
