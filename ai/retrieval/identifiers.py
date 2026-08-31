@@ -64,6 +64,86 @@ _DIRECT = re.compile(
     re.IGNORECASE,
 )
 
+#: Hyphen spellings that mean the ASCII hyphen-minus, rewritten to it before a
+#: pattern reads them. The only place a hyphen is load-bearing in this module is
+#: `sub[\s\-]?(?:section|rule|...)` in `_INVERTED`, so this table is narrow by
+#: consequence as well as by construction.
+#:
+#: Each entry is here because something in this project actually writes it:
+#:
+#: * U+2010 HYPHEN and U+2011 NON-BREAKING HYPHEN — the model's spelling. In
+#:   Phase 7.5 Q027 the completion wrote `sub\u2011rule (2) of Rule 20`, quoting
+#:   the supplied chunk's own `sub-rule (2) of rule 20` verbatim. The chunk
+#:   parsed as ('rule','20',('2',)) and the quotation as ('rule','20',()), the
+#:   cross-reference arm of the citation validator missed, and the answer was
+#:   refused for naming a provision that was sitting in the evidence it cited.
+#: * U+2013 EN DASH — the *corpus's* spelling. `sub\u2013rule` occurs 4 times in
+#:   the processed chunks, so this is not a hypothetical equivalence; it is one
+#:   the source documents already rely on.
+#:
+#: Deliberately excluded, having been measured rather than assumed:
+#:
+#: * U+2014 EM DASH — 1905 occurrences in the corpus, of which 41 sit between
+#:   two letters. It is the heading separator of Indian legislative drafting
+#:   ("namely:\u2014"), not a hyphen.
+#: * U+2212 MINUS SIGN — 95 occurrences, 2 of them intra-word; the same
+#:   separator role, arriving from a different PDF text layer.
+#: * All other Unicode punctuation. "Normalise the dashes" is a rule that keeps
+#:   growing; an enumerated table with a reason per row does not.
+#:
+#: U+202F NARROW NO-BREAK SPACE needs no entry, and that was checked rather than
+#: assumed: the model emitted 14 of them and Python's `\s` already matches it,
+#: because it is category Zs.
+HYPHEN_EQUIVALENTS: tuple[tuple[str, str], ...] = (
+    ("\u2010", "-"),   # HYPHEN
+    ("\u2011", "-"),   # NON-BREAKING HYPHEN
+    ("\u2013", "-"),   # EN DASH
+)
+
+_HYPHEN_TRANSLATION = str.maketrans({source: target
+                                     for source, target in HYPHEN_EQUIVALENTS})
+
+
+def normalise_identifier_text(text: str) -> str:
+    """Rewrite recognised hyphen spellings as `-`, and nothing else.
+
+    Idempotent, total, and it changes no character this module does not read as
+    a hyphen. Applied inside :func:`parse_identifiers`, so every caller — the
+    router, the reranker, the answer policy and the citation validator — sees
+    the same keys for the same reference, which is the property Phase 7.5 found
+    missing.
+    """
+    return (text or "").translate(_HYPHEN_TRANSLATION)
+
+
+#: Plural legislative terms. "Rules 2003" is how an instrument's short title is
+#: written when the comma is dropped; "Rule 2003" would be a provision. See
+#: `_INSTRUMENT_YEAR`.
+_PLURAL_TERMS = frozenset({
+    "sections", "rules", "articles", "regulations", "paragraphs", "forms",
+    "schedules", "chapters", "parts",
+})
+
+#: A four-digit year in the range instruments are actually dated in. Phase 7.5
+#: Q027 wrote "Geographical Indications Rules 2002" and `_DIRECT` read it as
+#: rule number 2002, so the answer was refused for naming a provision that does
+#: not exist. The distinction drawn is the smallest general one available: a
+#: *plural* term followed by a bare year and no parenthesised tail is an
+#: instrument title, not a citation.
+#:
+#: What this deliberately does not do is decide by number alone. `Rule 2003`
+#: singular still parses, because a singular term is how a provision is cited
+#: and this module has no business ruling out a four-digit provision it has
+#: never seen. Nor does it look for the instrument's name: "Patents", "Trade
+#: Marks" and "Biological Diversity" are not a closed set, and a rule that
+#: needed to recognise them would be a document-specific exception wearing a
+#: general shape.
+#:
+#: Note that the corpus's own convention already escapes this: "Patents Rules,
+#: 2003" carries a comma, which `_DIRECT`'s `\s*` never matched. This handles
+#: the spelling without it, which is the one a model writes.
+_INSTRUMENT_YEAR = re.compile(r"(?:19|20)\d{2}")
+
 _KIND_ALIASES = {
     "sections": "section", "section": "section", "sec.": "section", "s.": "section",
     "rules": "rule", "rule": "rule",
@@ -127,6 +207,8 @@ def parse_identifiers(query: str) -> list[LocatorRef]:
             seen.add(key)
             refs.append(ref)
 
+    query = normalise_identifier_text(query)
+
     consumed: list[tuple[int, int]] = []
     for match in _INVERTED.finditer(query):
         kind = _KIND_ALIASES[match.group(2).lower()]
@@ -136,11 +218,17 @@ def parse_identifiers(query: str) -> list[LocatorRef]:
     for match in _DIRECT.finditer(query):
         if any(start <= match.start() < end for start, end in consumed):
             continue
-        kind = _KIND_ALIASES.get(match.group(1).lower())
+        term = match.group(1).lower()
+        kind = _KIND_ALIASES.get(term)
         if kind is None:
             continue
         number = match.group(2)
-        subs = re.findall(r"\(\s*([0-9A-Za-z]{1,5})\s*\)", match.group(3) or "")
+        tail = match.group(3) or ""
+        # "…Rules 2017" names an instrument, not a provision of one.
+        if (term in _PLURAL_TERMS and not tail.strip()
+                and _INSTRUMENT_YEAR.fullmatch(number)):
+            continue
+        subs = re.findall(r"\(\s*([0-9A-Za-z]{1,5})\s*\)", tail)
         # "Article 27.1" writes the paragraph after a dot rather than in brackets.
         if "." in number and kind == "article":
             head, _, tail = number.partition(".")

@@ -24,3 +24,10 @@ pytest==9.1.1        # test suite
 numpy==2.5.2
 torch==2.13.0                # CPU/MPS inference for BGE-M3; no training here
 sentence-transformers==6.0.0  # loads BAAI/bge-m3 from the local HF cache
+
+# --- Phase 7 (grounded answer engine) ---------------------------------------
+# Adds nothing. ai/answering/ is standard library plus the existing ai.retrieval
+# tokenizer and identifier parser; it imports no ML framework and opens no
+# network connection. There is no LLM client here and no paid API dependency:
+# the project's ₹0 operating-cost requirement means a provider must remain
+# optional, so the system runs today on the deterministic extractive provider.

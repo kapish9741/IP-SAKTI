@@ -22,7 +22,7 @@ from typing import Any
 if __package__ in (None, ""):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ingest.citation import build_citation  # noqa: E402
+from ingest.citation import build_citation, disambiguate_citations  # noqa: E402
 from ingest.clean import detect_table  # noqa: E402
 from ingest.common import (  # noqa: E402
     CHUNKS_DIR,
@@ -305,11 +305,20 @@ def chunk_document(doc: LogicalDocument) -> tuple[list[dict[str, Any]], list[dic
                 }
             )
 
+    # A citation is only useful if it separates. Two provisions in different
+    # Parts of the same instrument can carry the same rule number, and until
+    # this pass they rendered the same string — see `disambiguate_citations`.
+    # It runs here rather than inside the loop because a collision is a property
+    # of the document, not of any one chunk.
+    citations_disambiguated = disambiguate_citations(
+        chunks, short_title=doc.short_title, citation_style=doc.citation_style)
+
     report = {
         "document_id": doc.document_id,
         "chunking_version": CHUNKING_VERSION,
         "units": len(units),
         "chunks": len(chunks),
+        "citations_disambiguated": citations_disambiguated,
         "rejected": len(rejected),
         "rejected_by_reason": dict(Counter(r["reason"] for r in rejected)),
         "chunks_missing_locator": sum(1 for c in chunks if c["locator_unavailable"]),
