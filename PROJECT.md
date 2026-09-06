@@ -132,6 +132,18 @@ Three cross-encoders and a deterministic feature reranker over an expanded
 barely moved anything, 278M matched the router, only 568M produced the step
 change.
 
+**Shipped configuration, after the operative-text demotion**
+(`features.phase7-operative.summary.json`; candidate generation unchanged):
+
+| Configuration | R@1 | R@5 | R@10 | MRR |
+|---|---:|---:|---:|---:|
+| expanded + features (Phase 6) | 0.784 | 0.946 | 0.973 | 0.852 |
+| **expanded + features + operative-text demotion** | **0.802** | **0.964** | 0.973 | **0.863** |
+
+A title page, a chapter heading and a preamble carry no operative rule, so they
+are demoted by a bounded 0.25 of the relevance range rather than filtered out.
+Four questions improved, none regressed. Identifier queries reach R@1 1.000.
+
 ### Phase 7 — grounded answer engine
 `ai/answering/`, `docs/ANSWER_ENGINE.md`, `docs/ANSWER_GENERATION_CONTRACT.md`,
 `docs/ANSWER_PROVIDER.md`.
