@@ -13,7 +13,10 @@ import {
   Search,
 } from "lucide-react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+// Production (Vercel): NEXT_PUBLIC_API_URL="" → uses relative /api/... path → Next.js proxy → Render
+// Local dev: falls back to Express gateway on :5001
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5001";
+
 
 const SAMPLES = [
   "How must an application for registration of a trade mark be signed?",

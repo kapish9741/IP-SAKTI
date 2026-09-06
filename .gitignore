@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 .env
+.env.production
+.env.local
+apps/server/.env
+
 data/raw/
 data/interim/
 
