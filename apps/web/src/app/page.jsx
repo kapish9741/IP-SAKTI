@@ -43,6 +43,7 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [expandedSources, setExpandedSources] = useState({});
+  const [showUncitedCandidates, setShowUncitedCandidates] = useState(false);
   const [flashTarget, setFlashTarget] = useState(null);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(null);
   const [rateLimitQuery, setRateLimitQuery] = useState(null);
@@ -118,6 +119,8 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setExpandedSources({});
+    setShowUncitedCandidates(false);
     startStepAnimation();
 
     try {
@@ -138,9 +141,11 @@ export default function Home() {
         }
         // Default expand the first cited source if available
         if (data.evidence && data.evidence.length > 0) {
-          const firstCited = data.evidence.find((e) => e.cited) || data.evidence[0];
+          const firstCited = data.evidence.find((e) => e.cited);
           if (firstCited) {
-            setExpandedSources((prev) => ({ ...prev, [firstCited.marker]: true }));
+            setExpandedSources({ [firstCited.marker]: true });
+          } else {
+            setExpandedSources({});
           }
         }
       }
@@ -213,6 +218,114 @@ export default function Home() {
       : confidence === "LOW"
       ? "text-amber-400 border-amber-800/60 bg-amber-950/30"
       : "text-blue-300 border-blue-800/60 bg-blue-950/30";
+
+  const renderSourceCard = (e) => {
+    const isExpanded = !!expandedSources[e.marker];
+    const isFlashing = flashTarget === e.marker;
+    const isStale = e.temporal_status !== "CURRENT";
+
+    return (
+      <div
+        key={e.marker}
+        id={`src-${e.marker}`}
+        className={`p-4 sm:p-5 transition-all ${
+          isFlashing ? "flash-target" : "bg-[#0f1218] hover:bg-[#12161f]"
+        }`}
+      >
+        <div className="flex items-start gap-3.5">
+          {/* Marker Box */}
+          <div
+            className={`w-6 h-6 flex-shrink-0 flex items-center justify-center font-mono text-xs font-bold rounded-none ${
+              e.cited
+                ? "bg-blue-600 text-white"
+                : "bg-zinc-700 text-zinc-300"
+            }`}
+          >
+            {e.marker}
+          </div>
+
+          <div className="flex-grow space-y-2">
+            {/* Document & Locator */}
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="font-semibold text-sm sm:text-base text-prose">
+                {e.document_name}
+              </div>
+              <div className="text-xs font-mono text-subtext">
+                {e.locator_text || e.citation}
+                {e.heading ? ` — ${e.heading}` : ""}
+              </div>
+            </div>
+
+            {/* Meta Badges */}
+            <div className="flex flex-wrap gap-1.5 text-[10px] font-mono uppercase">
+              <span
+                className={`px-1.5 py-0.5 border ${
+                  e.cited
+                    ? "text-emerald-400 border-emerald-800/60 bg-emerald-950/20"
+                    : "text-zinc-400 border-zinc-700 bg-zinc-800/40"
+                }`}
+              >
+                {e.cited ? "Cited" : "Retrieved"}
+              </span>
+
+              <span
+                className={`px-1.5 py-0.5 border ${
+                  isStale
+                    ? "text-amber-400 border-amber-800/60 bg-amber-950/20"
+                    : "text-emerald-400 border-emerald-800/60 bg-emerald-950/20"
+                }`}
+              >
+                {e.temporal_status}
+              </span>
+
+              <span className="px-1.5 py-0.5 border border-wireframe text-zinc-400 bg-zinc-900">
+                Provenance {e.source_evidence_level}
+              </span>
+
+              <span
+                className={`px-1.5 py-0.5 border ${
+                  e.citable
+                    ? "border-wireframe text-zinc-300"
+                    : "border-amber-800/60 text-amber-400"
+                }`}
+              >
+                {e.citable ? "Citable" : "Not citable"}
+              </span>
+
+              {e.physical_pages && e.physical_pages.length > 0 && (
+                <span className="px-1.5 py-0.5 border border-wireframe text-zinc-400">
+                  p. {e.physical_pages[0]}
+                  {e.physical_pages.length > 1
+                    ? `–${e.physical_pages[e.physical_pages.length - 1]}`
+                    : ""}
+                </span>
+              )}
+            </div>
+
+            {/* Collapsible Evidence Accordion */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => toggleSourceExpand(e.marker)}
+                className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors py-1 cursor-pointer font-semibold"
+              >
+                <span>{isExpanded ? "▾ Hide evidence text" : "▸ View evidence text"}</span>
+              </button>
+
+              {isExpanded && (
+                <div className="mt-2 p-3 bg-[#080a0d] border border-wireframe font-mono text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap selection:bg-zinc-800 overflow-x-auto">
+                  {e.text}
+                  <div className="mt-2 text-[11px] text-zinc-500 border-t border-zinc-800/80 pt-1.5">
+                    chunk <code>{e.chunk_id}</code>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-canvas text-prose flex flex-col justify-between">
@@ -520,125 +633,77 @@ export default function Home() {
               </section>
             )}
 
-            {/* 6. SOURCES Section */}
-            {evidenceList.length > 0 && (
+            {/* 6. SOURCES Section (when authoritative sources are cited) */}
+            {citedEvidence.length > 0 && (
               <section className="wireframe-box rounded-none">
                 <div className="border-b border-wireframe px-4 py-2.5 bg-[#141822] text-xs font-mono uppercase tracking-wider text-muted font-semibold flex items-center justify-between">
                   <span>Sources</span>
                   <span className="text-[11px] font-mono text-zinc-400 lowercase">
-                    {citedEvidence.length} cited · {uncitedEvidence.length} retrieved, not cited
+                    {citedEvidence.length} cited
+                    {uncitedEvidence.length > 0 ? ` · ${uncitedEvidence.length} additional retrieved` : ""}
                   </span>
                 </div>
 
                 <div className="divide-y divide-wireframe">
-                  {[...citedEvidence, ...uncitedEvidence].map((e) => {
-                    const isExpanded = !!expandedSources[e.marker];
-                    const isFlashing = flashTarget === e.marker;
-                    const isStale = e.temporal_status !== "CURRENT";
-
-                    return (
-                      <div
-                        key={e.marker}
-                        id={`src-${e.marker}`}
-                        className={`p-4 sm:p-5 transition-all ${
-                          isFlashing ? "flash-target" : "bg-[#0f1218] hover:bg-[#12161f]"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3.5">
-                          {/* Marker Box */}
-                          <div
-                            className={`w-6 h-6 flex-shrink-0 flex items-center justify-center font-mono text-xs font-bold rounded-none ${
-                              e.cited
-                                ? "bg-blue-600 text-white"
-                                : "bg-zinc-700 text-zinc-300"
-                            }`}
-                          >
-                            {e.marker}
-                          </div>
-
-                          <div className="flex-grow space-y-2">
-                            {/* Document & Locator */}
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                              <div className="font-semibold text-sm sm:text-base text-prose">
-                                {e.document_name}
-                              </div>
-                              <div className="text-xs font-mono text-subtext">
-                                {e.locator_text || e.citation}
-                                {e.heading ? ` — ${e.heading}` : ""}
-                              </div>
-                            </div>
-
-                            {/* Meta Badges */}
-                            <div className="flex flex-wrap gap-1.5 text-[10px] font-mono uppercase">
-                              <span
-                                className={`px-1.5 py-0.5 border ${
-                                  e.cited
-                                    ? "text-emerald-400 border-emerald-800/60 bg-emerald-950/20"
-                                    : "text-zinc-400 border-zinc-700 bg-zinc-800/40"
-                                }`}
-                              >
-                                {e.cited ? "Cited" : "Retrieved"}
-                              </span>
-
-                              <span
-                                className={`px-1.5 py-0.5 border ${
-                                  isStale
-                                    ? "text-amber-400 border-amber-800/60 bg-amber-950/20"
-                                    : "text-emerald-400 border-emerald-800/60 bg-emerald-950/20"
-                                }`}
-                              >
-                                {e.temporal_status}
-                              </span>
-
-                              <span className="px-1.5 py-0.5 border border-wireframe text-zinc-400 bg-zinc-900">
-                                Provenance {e.source_evidence_level}
-                              </span>
-
-                              <span
-                                className={`px-1.5 py-0.5 border ${
-                                  e.citable
-                                    ? "border-wireframe text-zinc-300"
-                                    : "border-amber-800/60 text-amber-400"
-                                }`}
-                              >
-                                {e.citable ? "Citable" : "Not citable"}
-                              </span>
-
-                              {e.physical_pages && e.physical_pages.length > 0 && (
-                                <span className="px-1.5 py-0.5 border border-wireframe text-zinc-400">
-                                  p. {e.physical_pages[0]}
-                                  {e.physical_pages.length > 1
-                                    ? `–${e.physical_pages[e.physical_pages.length - 1]}`
-                                    : ""}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Collapsible Evidence Accordion */}
-                            <div className="pt-1">
-                              <button
-                                type="button"
-                                onClick={() => toggleSourceExpand(e.marker)}
-                                className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors py-1 cursor-pointer font-semibold"
-                              >
-                                <span>{isExpanded ? "▾ Hide evidence text" : "▸ View evidence text"}</span>
-                              </button>
-
-                              {isExpanded && (
-                                <div className="mt-2 p-3 bg-[#080a0d] border border-wireframe font-mono text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap selection:bg-zinc-800 overflow-x-auto">
-                                  {e.text}
-                                  <div className="mt-2 text-[11px] text-zinc-500 border-t border-zinc-800/80 pt-1.5">
-                                    chunk <code>{e.chunk_id}</code>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {citedEvidence.map((e) => renderSourceCard(e))}
                 </div>
+
+                {/* Additional retrieved but uncited evidence in an optional drawer */}
+                {uncitedEvidence.length > 0 && (
+                  <div className="border-t border-wireframe bg-[#11141c]">
+                    <div className="px-4 py-2.5 flex items-center justify-between text-xs font-mono">
+                      <span className="text-zinc-400">
+                        {uncitedEvidence.length} candidate{uncitedEvidence.length > 1 ? "s" : ""} retrieved but not cited
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowUncitedCandidates(!showUncitedCandidates)}
+                        className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer text-[11px]"
+                      >
+                        {showUncitedCandidates ? "▾ Hide uncited candidates" : "▸ Show uncited candidates"}
+                      </button>
+                    </div>
+                    {showUncitedCandidates && (
+                      <div className="divide-y divide-wireframe border-t border-wireframe">
+                        {uncitedEvidence.map((e) => renderSourceCard(e))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* When 0 sources were cited (Abstained / No authoritative evidence) */}
+            {citedEvidence.length === 0 && evidenceList.length > 0 && (
+              <section className="wireframe-box rounded-none p-4 bg-[#141822] text-xs font-mono">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
+                    <span className="text-zinc-400">0 authoritative sources cited for this query</span>
+                  </div>
+                  {uncitedEvidence.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowUncitedCandidates(!showUncitedCandidates)}
+                      className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer text-[11px]"
+                    >
+                      {showUncitedCandidates
+                        ? `▾ Hide ${uncitedEvidence.length} retrieved candidate passages (off-topic)`
+                        : `▸ Inspect ${uncitedEvidence.length} retrieved candidate passages (off-topic)`}
+                    </button>
+                  )}
+                </div>
+
+                {showUncitedCandidates && uncitedEvidence.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-wireframe space-y-2">
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      The lexical search engine fetched these passages based on token matches, but the safety policy rejected all of them because they share no relevant content terms with the query:
+                    </p>
+                    <div className="divide-y divide-wireframe border border-wireframe">
+                      {uncitedEvidence.map((e) => renderSourceCard(e))}
+                    </div>
+                  </div>
+                )}
               </section>
             )}
           </div>
