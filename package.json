@@ -1,0 +1,19 @@
+{
+  "name": "ip-sakti-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "IP-SAKTI Turborepo with Next.js frontend and Express backend",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.12"
+  },
+  "packageManager": "npm@10.9.4"
+}
