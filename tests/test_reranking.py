@@ -18,6 +18,8 @@ import pytest
 from ai.reranking.base import IdentityReranker, Reranker, RerankedResult, order_by_score
 from ai.reranking.features import (
     AUTHORITY_LAMBDA,
+    NON_OPERATIVE_UNIT_TYPES,
+    STRUCTURAL_PENALTY,
     WEIGHTS,
     AuthorityPolicyReranker,
     FeatureReranker,
@@ -25,6 +27,7 @@ from ai.reranking.features import (
     authority_score,
     idf_coverage,
     locator_scores,
+    operative_text,
     phrase_overlap,
 )
 from ai.reranking.format import (
@@ -80,7 +83,7 @@ def make_chunk(chunk_id: str, text: str, **overrides) -> Chunk:
         title="The Patents Act, 1970",
         short_title=overrides.pop("short_title", "Patents Act, 1970"),
         heading=overrides.pop("heading", None),
-        unit_type="provision",
+        unit_type=overrides.pop("unit_type", "provision"),
         structural_path=overrides.pop("structural_path", ""),
         raw={"citability_reason": "locator established"},
     )
@@ -407,6 +410,88 @@ def test_weights_are_declared_and_sum_to_one():
     assert WEIGHTS[IDENTIFIER]["locator_exactness"] > WEIGHTS[CONCEPTUAL]["locator_exactness"]
     assert WEIGHTS[CONCEPTUAL]["dense_percentile"] > WEIGHTS[IDENTIFIER]["dense_percentile"]
     assert FeatureReranker().config()["trained"] is False
+
+
+# ------------------------------------------------------- operative text ---
+
+
+def _candidate(chunk_id, *, unit_type, dense, order):
+    """One candidate, with only what the structural penalty and the engine
+    features read."""
+    return Candidate(
+        chunk_id=chunk_id, document_id="IN-PATENTS-ACT-1970",
+        text="the term of a patent is twenty years from the date of filing",
+        locator="Patents Act, 1970", citable=True,
+        metadata={"unit_type": unit_type, "locator_fields": {},
+                  "source_evidence_level": "A", "temporal_status": "CURRENT"},
+        order=order, sources=("dense",), dense_score=dense, dense_rank=order)
+
+
+@pytest.fixture
+def structural_pool():
+    """A front-matter chunk the engines like *more* than the provision."""
+    return [_candidate("c-front", unit_type="front_matter", dense=1.0, order=1),
+            _candidate("c-prov", unit_type="provision", dense=0.6, order=2),
+            _candidate("c-head", unit_type="heading", dense=0.4, order=3),
+            _candidate("c-other", unit_type="provision", dense=0.0, order=4)]
+
+
+def test_non_operative_unit_types_are_read_from_the_chunker(structural_pool):
+    kinds = {c.chunk_id: operative_text(c) for c in structural_pool}
+    assert kinds == {"c-front": 0.0, "c-prov": 1.0, "c-head": 0.0, "c-other": 1.0}
+    assert NON_OPERATIVE_UNIT_TYPES == {"front_matter", "heading", "preamble"}
+
+
+def test_front_matter_does_not_outrank_a_provision_it_merely_names(structural_pool):
+    """The failure this exists for: a title page winning on document vocabulary."""
+    query = "what is the term of a patent"
+    without = FeatureReranker(structural_penalty=0.0).rerank(query, structural_pool)
+    assert without[0].chunk_id == "c-front"
+
+    with_penalty = FeatureReranker().rerank(query, structural_pool)
+    assert with_penalty[0].chunk_id == "c-prov"
+
+
+def test_the_penalty_is_a_demotion_and_never_a_filter(structural_pool):
+    """Phase 3 decided against hiding text from search; this must not undo it."""
+    results = FeatureReranker().rerank("what is the term of a patent", structural_pool)
+    assert {r.chunk_id for r in results} == {c.chunk_id for c in structural_pool}
+
+
+def test_ordering_among_operative_candidates_is_untouched(structural_pool):
+    query = "what is the term of a patent"
+    operative = lambda results: [r.chunk_id for r in results  # noqa: E731
+                                 if r.chunk_id in ("c-prov", "c-other")]
+    assert operative(FeatureReranker(structural_penalty=0.0).rerank(query, structural_pool)) \
+        == operative(FeatureReranker().rerank(query, structural_pool))
+
+
+def test_relevance_score_keeps_its_meaning_and_the_penalty_is_reported(structural_pool):
+    scored = {s.candidate.chunk_id: s
+              for s in FeatureReranker().score("q", structural_pool)}
+    front, provision = scored["c-front"], scored["c-prov"]
+    # The weighted sum is unchanged and still bounded; only the ranking score moves.
+    assert 0.0 <= front.relevance_score <= 1.0
+    assert front.structural_penalty == pytest.approx(STRUCTURAL_PENALTY)
+    assert front.ranking_score == pytest.approx(front.relevance_score - STRUCTURAL_PENALTY)
+    assert provision.structural_penalty == 0.0
+    assert provision.ranking_score == pytest.approx(provision.relevance_score)
+
+
+def test_unstructured_text_is_not_demoted():
+    """`unstructured` means the chunker found no locator, not that the text is
+    non-operative — a different claim, and one this module does not make."""
+    assert operative_text(_candidate("c-u", unit_type="unstructured",
+                                     dense=1.0, order=1)) == 1.0
+
+
+def test_the_penalty_is_bounded_and_declared(structural_pool):
+    config = FeatureReranker().config()["structural_penalty"]
+    assert config["value"] == STRUCTURAL_PENALTY < 0.5
+    assert config["filter"] is False
+    assert sorted(NON_OPERATIVE_UNIT_TYPES) == config["applies_to"]
+    with pytest.raises(ValueError):
+        FeatureReranker(structural_penalty=-0.1)
 
 
 # --------------------------------------------------- identifier handling ---

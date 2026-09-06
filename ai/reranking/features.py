@@ -68,6 +68,28 @@ Two caveats, stated because this is the one empirical choice in the module:
 z-score was considered and not run: it is unbounded and assumes a roughly
 symmetric spread, and BM25 over a 3,073-chunk corpus is heavily right-skewed, so
 a candidate can be "above average" while ranked 30th.
+
+Operative text
+--------------
+
+Three of the chunker's unit types carry no operative rule. A ``front_matter``
+chunk is a title page and a gazette notification line; a ``heading`` is the name
+of a chapter with nothing under it; a ``preamble`` recites why an instrument was
+made. Each states what an instrument is *called* or *why it exists*, never what
+it requires — so none of them can be the provision that answers a question about
+what the law says. That is a statement about legal drafting, not about this
+benchmark, and it is what :data:`STRUCTURAL_PENALTY` acts on.
+
+They are still retrieved, still scored and still returnable: the penalty is a
+demotion, not a filter, for the Phase 3 reason that hiding text from search is
+worse than ranking it low. A treaty preamble is genuine interpretive material
+and a question actually about one should still reach it, so the penalty is
+bounded — 0.25 of the relevance range, in the :data:`AUTHORITY_LAMBDA` idiom —
+rather than a categorical exclusion.
+
+The demotion is applied outside the weighted sum, so ``relevance_score`` keeps
+its meaning and its [0, 1] range, the declared weights are untouched, and the
+ordering *among* operative candidates is bit-for-bit what it was before.
 """
 from __future__ import annotations
 
@@ -141,6 +163,21 @@ AUTHORITY_WEIGHTS = {"evidence_level": 0.6, "temporal": 0.4}
 #: min-max-normalised score. 0.05 means authority can only reorder candidates
 #: the relevance model already considers within 5% of each other.
 AUTHORITY_LAMBDA = 0.05
+
+#: Chunk unit types that contain no operative rule. Deliberately narrow: it does
+#: not include `unstructured`, which is text the chunker could not attach a
+#: locator to and may well be operative law that failed structural parsing.
+#: Demoting that would be demoting content for a parsing failure, which is a
+#: different claim from the one above and one this module does not make.
+NON_OPERATIVE_UNIT_TYPES = frozenset({"front_matter", "heading", "preamble"})
+
+#: How far a non-operative chunk is demoted, on the same scale as
+#: `relevance_score`. 0.25 means such a chunk must be a quarter of the whole
+#: relevance range *more* relevant than an operative candidate to outrank it.
+#: The demotion saturates at 0.5 — beyond that no non-operative chunk can win
+#: any contest, which is a categorical exclusion rather than a preference, and
+#: the bounded form is chosen for the reason given in the module docstring.
+STRUCTURAL_PENALTY = 0.25
 
 
 def _percentile(rank: int | None, total: int) -> float:
@@ -262,6 +299,18 @@ def authority_score(candidate: Candidate) -> tuple[float, dict[str, float]]:
     return score, {"evidence_level": level, "temporal": temporal}
 
 
+def operative_text(candidate: Candidate) -> float:
+    """1.0 for a chunk that can carry a rule, 0.0 for one that cannot.
+
+    Read from the chunker's `unit_type`, never guessed from the text: the
+    structural role was decided once, at chunking, from the document's own
+    layout, and re-deriving it here from prose would make ranking depend on a
+    second opinion about structure that nothing else in the system shares.
+    """
+    return 0.0 if str(candidate.metadata.get("unit_type") or "") in (
+        NON_OPERATIVE_UNIT_TYPES) else 1.0
+
+
 @dataclass(frozen=True)
 class Scored:
     """One candidate's full working, for reporting and for review tooling."""
@@ -269,6 +318,9 @@ class Scored:
     candidate: Candidate
     features: dict[str, float]
     relevance_score: float
+    operative_text: float
+    structural_penalty: float
+    ranking_score: float
     authority_score: float
     authority_features: dict[str, float]
     citable: bool
@@ -283,13 +335,19 @@ class FeatureReranker(Reranker):
     def __init__(self, *, idf: Mapping[str, float] | None = None,
                  aliases: Mapping[str, Sequence[str]] | None = None,
                  weights: Mapping[str, Mapping[str, float]] | None = None,
-                 normalization: str = "min_max"):
+                 normalization: str = "min_max",
+                 structural_penalty: float = STRUCTURAL_PENALTY):
         if normalization not in ("rank_percentile", "min_max"):
             raise ValueError(f"unknown normalization: {normalization}")
+        if structural_penalty < 0.0:
+            raise ValueError("structural_penalty may not be negative")
         self.idf = dict(idf or {})
         self.aliases = dict(aliases or {})
         self.weights = {k: dict(v) for k, v in (weights or WEIGHTS).items()}
         self.normalization = normalization
+        # 0.0 restores the Phase 6 ordering exactly, which is what makes the
+        # demotion a measurable change rather than a new baseline.
+        self.structural_penalty = float(structural_penalty)
 
     # ------------------------------------------------------------- scoring ---
 
@@ -342,11 +400,16 @@ class FeatureReranker(Reranker):
             }
             relevance = sum(weights.get(name, 0.0) * value
                             for name, value in features.items())
+            operative = operative_text(candidate)
+            penalty = self.structural_penalty * (1.0 - operative)
             authority, authority_features = authority_score(candidate)
             scored.append(Scored(
                 candidate=candidate,
                 features=features,
                 relevance_score=relevance,
+                operative_text=operative,
+                structural_penalty=penalty,
+                ranking_score=relevance - penalty,
                 authority_score=authority,
                 authority_features=authority_features,
                 citable=candidate.citable,
@@ -357,9 +420,12 @@ class FeatureReranker(Reranker):
                top_k: int = 10) -> list[RerankedResult]:
         scored = self.score(query, candidates)
         payload = [
-            (item.candidate, item.relevance_score,
+            (item.candidate, item.ranking_score,
              {**item.features,
+              "operative_text": item.operative_text,
               "relevance_score": item.relevance_score,
+              "structural_penalty": item.structural_penalty,
+              "ranking_score": item.ranking_score,
               "authority_score": item.authority_score})
             for item in scored
         ]
@@ -380,6 +446,18 @@ class FeatureReranker(Reranker):
             "weights_provenance":
                 "declared a priori from the Phase 5 per-family Recall@1 tables; "
                 "not fitted to the golden questions",
+            "structural_penalty": {
+                "value": self.structural_penalty,
+                "applies_to": sorted(NON_OPERATIVE_UNIT_TYPES),
+                "read_from": "chunk unit_type, set at chunking",
+                "form": "subtracted from relevance_score after the weighted sum, "
+                        "so the declared weights and the ordering among "
+                        "operative candidates are unchanged",
+                "rationale": "a title page, a chapter heading and a preamble "
+                             "carry no operative rule, so none can be the "
+                             "provision an answer must cite",
+                "filter": False,
+            },
             "authority": {
                 "kept_separate_from_relevance": True,
                 "evidence_level_score": EVIDENCE_LEVEL_SCORE,
