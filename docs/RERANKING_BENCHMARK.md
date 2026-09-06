@@ -107,9 +107,9 @@ repaired downstream, and an expanded pool can.
 
 | Key | Model | Licence | Params | Disk | Max len |
 | --- | --- | --- | ---: | ---: | ---: |
-| `minilm` | `cross-encoder/ms-marco-MiniLM-L-6-v2` | Apache-2.0 | 22.7M | 184 MB | 512 |
-| `bge-base` | `BAAI/bge-reranker-base` | MIT | 278M | 2,269 MB | 512 |
-| `bge-m3` | `BAAI/bge-reranker-v2-m3` | Apache-2.0 | 568M | 4,587 MB | 512 |
+| `minilm` | `cross-encoder/ms-marco-MiniLM-L-6-v2` | Apache-2.0 | 22.7M | 92 MB | 512 |
+| `bge-base` | `BAAI/bge-reranker-base` | MIT | 278M | 1,134 MB | 512 |
+| `bge-m3` | `BAAI/bge-reranker-v2-m3` | Apache-2.0 | 568M | 2,293 MB | 512 |
 
 Resolved commit hashes are recorded in every results file
 (`reranker_config.model_revision`): `233902d25c44` for MiniLM, `2cfc18c9415c`
@@ -295,11 +295,21 @@ expanded candidate pool (50 + 50). **Zero human-verified.**
 | **F2a** | expanded + `minilm` | 0.721 | 0.937 | 0.955 | 0.812 | 0.841 | 0.846 |
 | **F2b** | expanded + `bge-base` | 0.766 | 0.955 | 0.991 | 0.842 | 0.866 | 0.877 |
 | **F2c** | expanded + **`bge-m3`** | **0.874** | **0.982** | **0.991** | **0.926** | **0.936** | **0.939** |
-| **F3** | expanded + `bge-m3` + authority policy | <!--F3--> | | | | | |
+| **F3** | expanded + `bge-m3` + authority policy | — | — | — | — | — | — |
 | F3′ | expanded + features + authority policy | 0.784 | 0.946 | 0.973 | 0.852 | 0.869 | 0.878 |
 | A | routed + identity | 0.766 | 0.928 | 0.964 | 0.843 | 0.857 | 0.869 |
 | A′ | routed + features | 0.730 | 0.946 | 0.973 | 0.829 | 0.852 | 0.861 |
 | — | expanded + features (rank percentile) | 0.712 | 0.946 | 0.973 | 0.814 | 0.842 | 0.851 |
+
+**F3 was not measured.** The run was killed roughly ten minutes in when Phase 6
+compute was halted, and it wrote no output. The row is left empty rather than
+filled by inference: the authority policy is a bounded tiebreak on min-max
+normalised base scores, so a plausible guess is that it changes little, but a
+guess is not a measurement and this table carries none. What *is* measured is
+F3′, the same policy over the feature reranker, and there it changed nothing at
+all — every figure identical to F1 to four decimals, because λ = 0.05 is smaller
+than the score gaps it would have to close. That is evidence about the policy,
+not about `bge-m3`.
 
 Conditional MRR equals MRR for every expanded-pool row (candidate recall 1.000).
 For the routed pool, identity's conditional MRR is 0.850 against an unconditional
@@ -465,7 +475,37 @@ is the first thing to test next (§15).
 Measured by `scripts/evaluation/measure_latency.py`: fresh instances, warmed on
 queries outside the benchmark, one stage at a time, machine otherwise idle.
 
-<!--LATENCY-->
+**Not measured. There is no `latency.json`.**
+
+The clean pass was never run: Phase 6 compute was halted after roughly two hours
+of sustained load on the machine, and this measurement was still queued. No
+number is substituted from the per-row timings in the results files — the note
+below explains why those are not a measurement, and the honest consequence of
+that note is a blank section rather than a laundered one.
+
+To take the measurement, on an otherwise idle machine, one model per invocation:
+
+```
+.venv/bin/python scripts/evaluation/measure_latency.py --queries 30 --stage candidates --stage identity --stage features
+.venv/bin/python scripts/evaluation/measure_latency.py --queries 30 --stage cross_encoder --cross-encoder minilm
+.venv/bin/python scripts/evaluation/measure_latency.py --queries 30 --stage cross_encoder --cross-encoder bge-base
+.venv/bin/python scripts/evaluation/measure_latency.py --queries 30 --stage cross_encoder --cross-encoder bge-m3
+```
+
+Each writes `latency.json`, so the runs must be taken one at a time and the file
+kept between them; running all three cross-encoders in a single invocation is
+supported but leaves the earlier models' weights resident on the Metal device
+while the later ones are timed, which is the same contention hazard one process
+down.
+
+Until that has run, the only defensible statements about cost are ordinal, and
+they come from the architecture rather than from any measurement: candidate
+generation is one dense encode plus one BM25 scan over 3,073 chunks; `identity`
+is a sort; `features` is arithmetic over metadata already present in the pool;
+and a cross-encoder is a forward pass over every one of the ~77 (query, passage)
+pairs, which is the dominant term. §13's parameter counts bound that term's
+shape. They do not measure it, and nothing in this document should be read as
+though they did.
 
 > **A measurement hazard, recorded like Phase 5's.** The per-row `latency_ms` in
 > the results files is **not** a clean measurement and must not be quoted. Some
@@ -482,16 +522,25 @@ queries outside the benchmark, one stage at a time, machine otherwise idle.
 
 | Model | Params | Weights in memory (fp32) | Disk (HF cache) | Device |
 | --- | ---: | ---: | ---: | --- |
-| `minilm` | 22.7M | 90.9 MB | 184 MB | MPS |
-| `bge-base` | 278M | 1,112 MB | 2,269 MB | MPS |
-| `bge-m3` | 568M | 2,272 MB | 4,587 MB | MPS |
+| `minilm` | 22.7M | 90.9 MB | 92 MB | MPS |
+| `bge-base` | 278M | 1,112 MB | 1,134 MB | MPS |
+| `bge-m3` | 568M | 2,272 MB | 2,293 MB | MPS |
 
 Batch size 16, max sequence length 512, fp32, truncation `longest_first` on the
 (query, passage) pair — the passage is longer than the query in every observed
 case, so the provision's tail is what is dropped.
 
+> **Correction.** The disk column above was wrong in the first draft, and the
+> stored `model_disk_mb` in every results file written before 2026-08-30 still
+> carries the wrong figure. `_cache_size_bytes()` walked the Hugging Face cache
+> with `follow_symlinks=True`, counting each file once under `blobs/` and again
+> through the `snapshots/<revision>/` symlink that points at it — exactly double.
+> The recorded values were 183.6 / 2,268.8 / 4,586.5 MB; the true sizes are
+> 91.8 / 1,134.4 / 2,293.3 MB. The function now skips symlinks. Nothing else
+> read that number, so no ranking or latency result depends on it.
+
 `bge-reranker-v2-m3` is the accuracy winner and it is **expensive on this
-machine**: 4.6 GB on disk, 2.3 GB of weights resident, and seconds rather than
+machine**: 2.3 GB on disk, 2.3 GB of weights resident, and seconds rather than
 milliseconds per query at pool depth ~77. §15 says what to do about that. Nothing
 here has been quantised or converted; both are open follow-ups with their own
 accuracy questions, and doing either silently would break the model-identity
@@ -590,7 +639,12 @@ top-10 reranked evidence, each carrying document_id, locator, citable,
 temporal_status, source_evidence_level, physical_pages, retrieval path
 ```
 
-The authority policy is **not** in the recommended path — see the F3 row in §8.
+The authority policy is **not** in the recommended path. The reason is F3′ in
+§8, not F3: over the feature reranker the policy changed no metric at all, so
+there is measured evidence that it does not help and none that it does. F3 —
+the same policy over `bge-m3` — was never run, so this is a decision taken
+without its most relevant experiment, and §17 records it as provisional on that
+basis.
 Citability and temporal status ride along, labelled, for the answer layer to
 enforce; Phase 6 §11 keeps them out of retrieval and out of relevance.
 
@@ -605,4 +659,170 @@ generation, no citations in prose, no API, no UI.
 
 ## 17. Decision report
 
-<!--DECISIONS-->
+Phase 6 §26 asks fourteen questions. Each is answered below from completed runs
+only. Three answers are **"not measured"** — F3, Mode A × cross-encoder, and the
+latency pass were cut when compute was halted, and nothing here is interpolated
+across those gaps. Every number rests on 111 corpus-derived questions, **none of
+which a human has verified**; read §15 before quoting any of them.
+
+**1. What candidate-pool depth gives sufficient recall?**
+Depth 50 per engine. Candidate recall on the expanded pool is 0.964 at 10, 0.991
+at 20, 0.991 at 30 and **1.000 at 50**, over a pool averaging 77.3 candidates
+(58–93). Depth 20 would cost two questions and depth 10 four. The routed pool at
+the same depth reaches 0.991, not 1.000. Caveat: 1.000 is a ceiling measured on
+the same 111 questions the rerankers are then scored on, so it establishes that
+the pool is not the binding constraint *for this set* — not that 50 is sufficient
+for questions nobody has asked yet.
+
+**2. Does the feature reranker beat identity?**
+Yes. R@1 0.712 → **0.784** (+0.072, eight questions), MRR 0.818 → **0.852**
+(+0.034), R@10 0.964 → 0.973, R@5 unchanged at 0.946. The gain is almost entirely
+one family: identifier R@1 0.611 → 0.944, conceptual only 0.731 → 0.753. The
+identifier probe says the same thing from the other side — the count of questions
+where a locator-`unrelated` chunk outranked the exact cited provision goes from
+5 to 0, and exact-at-rank-1 from 10/15 to 15/15. That is the behaviour the
+locator features were declared a priori to produce, and it is where they produced
+it.
+
+**3. Does the cross-encoder beat identity?**
+`bge-m3` and `bge-base` yes, `minilm` essentially not. R@1: identity 0.712,
+`minilm` 0.721, `bge-base` 0.766, **`bge-m3` 0.874**. MRR: 0.818 / 0.812 /
+0.842 / **0.926**. `minilm` gains 0.009 R@1 while *losing* MRR, R@5 and R@10 — at
+22.7M parameters it is the honest control on model size, and it says size is
+doing real work here rather than the reranking framing alone.
+
+**4. Does the cross-encoder beat the feature model?**
+`bge-m3` yes, decisively: R@1 0.784 → **0.874** (+0.090, ten questions), MRR
+0.852 → **0.926** (+0.074), R@5 0.946 → 0.982, R@10 0.973 → 0.991. `bge-base`
+does not (R@1 0.766 vs 0.784) and `minilm` does not (0.721). The gap is on
+conceptual questions — 0.753 → 0.860 — which is precisely where a hand-declared
+feature vector has nothing to offer beyond the dense score it is already
+weighting. On identifier questions the two are level at 0.944.
+
+**5. How much does reranking improve Recall@1?**
+**+0.162 absolute**, 0.712 → 0.874, best configuration against identity on the
+same pool — eighteen of 111 questions moved into rank 1. Against Phase 5's
+published baselines: +0.162 over dense-alone (0.712) and +0.108 over the routed
+hybrid (0.766). Identity-on-the-expanded-pool coincides with dense-alone at 0.712
+by construction, not coincidence: the round-robin interleave places the dense
+top hit at pool position 1, so an identity reranker cannot differ from BGE-M3 at
+rank 1.
+
+**6. How much does it improve MRR?**
+**+0.108**, 0.818 → 0.926 against identity; +0.119 over Phase 5 dense-alone
+(0.807) and +0.083 over routed (0.843). Conditional MRR is identical to MRR on
+every expanded-pool row, because candidate recall is 1.000 and the two
+definitions coincide.
+
+**7. Does it hurt Recall@5/10?**
+Not for the recommended configuration: `bge-m3` improves both (R@5 0.946 →
+0.982, R@10 0.964 → 0.991). It does for `minilm`, which drops R@5 to 0.937 and
+R@10 to 0.955 — a weak reranker can and here does push correct evidence *out* of
+a window it was already inside. `features` is neutral at 5 and +0.009 at 10. The
+§26 concern is therefore real and model-dependent, and it is the reason R@5/R@10
+are reported on every row rather than only the headline metric.
+
+**8. Which query families benefit?**
+Both, from different rerankers. By dataset family: identifier (18 q) benefits
+most and earliest — 0.611 → 0.944 from features alone, with the cross-encoder
+adding nothing on top. Conceptual (93 q) benefits almost entirely from `bge-m3`
+— 0.731 → 0.753 from features, → 0.860 from the cross-encoder. By router family:
+CONCEPTUAL (74 q) 0.743 → 0.865, GENERAL (20 q) 0.650 → 0.850, IDENTIFIER (17 q)
+0.647 → 0.941. GENERAL, the family the Phase 5 router serves worst, gains the
+most in relative terms.
+
+**9. Which query families regress?**
+One, and only between the two best systems: router-family IDENTIFIER goes
+1.000 (features) → 0.941 (`bge-m3`), a single question out of 17. Nothing
+regresses against the identity baseline for `bge-m3`. For `minilm`, conceptual
+R@5 and R@10 both regress against identity. The IDENTIFIER regression is one
+question on a 17-question sample — worth **0.059** — and should not be treated as
+an established effect; it is, however, the specific thing a hybrid would be built
+to fix, and §15's small-sample warning applies to it more than to anything else
+in this document.
+
+**10. What percentage of failures are candidate-generation failures?**
+**0%** on the expanded pool, for every reranker, at k=5. Not one Type A failure:
+candidate recall at pool depth is 1.000, so the evidence was always present. On
+the routed pool it is 12.5% for identity (1 of 8) and 16.7% for features (1 of
+6) — the same single question, Q066, whose gold chunk BGE-M3 never returns at any
+depth and which only the boosted lexical arm recovers.
+
+**11. What percentage are reranking failures?**
+**100%** on the expanded pool — 6 of 6 for identity and features, 2 of 2 for
+`bge-m3`, all Type B. `minilm` is the one system with a Type C failure (a
+competing chunk carrying the expected locator outranked the gold). The honest
+qualification, already in §15: with candidate recall at 1.000 the A/B partition
+degenerates, so "100% reranking failures" is a restatement of the pool's
+completeness, not an independently informative classification.
+
+**12. Is the latency acceptable?**
+**Not measured — this question is not answered.** `latency.json` does not exist;
+see §12. The per-row timings in the results files were taken from overlapping
+background jobs contending for one Metal device and are not a measurement of
+anything. Refusing to answer is the correct outcome here rather than a gap to be
+apologised for: an acceptability judgement built on contended numbers would be
+wrong in an unknown direction and would then be quoted as though it were not.
+What is known without measurement is structural — the cross-encoder is a forward
+pass over ~77 pairs per query and dominates a candidate stage that is one encode
+plus one BM25 scan — and §13's 568M parameters bound its shape.
+
+**13. Which model/configuration should become the Phase 7 default?**
+On accuracy, unambiguously: **expanded pool (50 + 50, interleaved) →
+`BAAI/bge-reranker-v2-m3` @ revision `953dc6f6f85a`, max_len 512, batch 16,
+fp32, MPS, no authority policy**, exactly as §16 draws it. It wins every metric
+in §8 and it wins on both families.
+
+This recommendation is **provisional in three specific ways**, and each is a
+measurement that was cut, not an unknowable:
+* Latency is unmeasured (Q12). If the clean pass shows seconds per query, the
+  decision reopens as a cost decision — not because `bge-m3` became less
+  accurate, but because the alternatives become admissible. `features` costs
+  arithmetic and delivers +0.072 R@1; that is the fallback the trade would name.
+* F3 is unmeasured. The authority policy is excluded on F3′'s evidence
+  (no effect over the feature reranker), not on its own.
+* Mode A × cross-encoder is unmeasured, so "expanded beats routed" is
+  established for identity and for features, and assumed for the cross-encoder.
+  It is a reasonable assumption — the routed pool's recall ceiling is 0.991
+  against 1.000 — but it is an assumption.
+* Separately, 35.8% of scored pairs were truncated at 512 tokens and both
+  remaining `bge-m3` failures are on chunks over that limit. A longer window is
+  the first accuracy experiment to run next, ahead of any new model.
+
+**14. What additional human-labelled benchmark data is required?**
+The largest single gap is not more data — it is **verification of the data that
+exists**. Zero of 111 questions have been checked by a person, and the headline
+result is a +0.162 gain on labels derived from the corpus by rule, which is the
+exact shape a systematic labelling error produces. In priority order:
+1. **Human verification of all 111 existing questions**, via
+   `scripts/evaluation/review_reranking.py`. Nothing else on this list is worth
+   doing first, and no metric in this document should be described as accuracy
+   until it is done.
+2. **Adjudication of the 6 identity / 2 `bge-m3` failures specifically**, since
+   a benchmark where the winner misses two questions is decided by whether those
+   two labels are right.
+3. **Questions with more than one correct provision.** Every question here has a
+   single expected chunk; real legal questions frequently do not, and R@1 against
+   a single-chunk label systematically punishes a system that surfaces an equally
+   valid sibling. `review_reranking.py` already records a `multiple` decision for
+   exactly this.
+4. **More identifier questions.** 18 is a sample in which one question is worth
+   0.056, and it currently carries the whole feature-reranker argument.
+5. **Non-English queries.** Two of the three cross-encoders are multilingual and
+   that is part of why they were shortlisted; none was tested that way.
+6. **Questions whose correct answer is non-citable or Level B/C evidence**, to
+   test §11's separation of relevance from authority against something other
+   than the Level A statutory text that dominates the current set.
+
+---
+
+## Status
+
+`RERANKING_STATUS: PROVISIONAL`
+
+Provisional, not PASS, for reasons that are recorded rather than hedged: no
+question in this benchmark has been verified by a human; three planned
+experiments (F3, Mode A × cross-encoder, the clean latency pass) were not run;
+and the ground truth is corpus-derived. The measured claim is that
+`bge-reranker-v2-m3` agrees with corpus-derived labels far more often than the
+alternatives do. **No claim is made here about legal accuracy.**

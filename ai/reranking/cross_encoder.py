@@ -144,8 +144,14 @@ def _cache_size_bytes(model_name: str) -> int | None:
     for root, _, files in os.walk(folder):
         for name in files:
             path = os.path.join(root, name)
+            # The cache stores each file once under `blobs/` and links to it
+            # from every `snapshots/<revision>/`. Following those links counts
+            # the same bytes twice: this reported 4,586.5 MB for
+            # `bge-reranker-v2-m3`, whose blobs are 2,293.3 MB.
+            if os.path.islink(path):
+                continue
             try:
-                total += os.stat(path, follow_symlinks=True).st_size
+                total += os.stat(path, follow_symlinks=False).st_size
             except OSError:
                 continue
     return total

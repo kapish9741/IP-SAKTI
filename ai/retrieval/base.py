@@ -145,6 +145,13 @@ def result_from_chunk(chunk: Chunk, *, score: float, rank: int,
         "official_source_url": chunk.raw.get("official_source_url"),
         "consolidated_as_of": chunk.raw.get("consolidated_as_of"),
         "source_version_id": chunk.raw.get("source_version_id"),
+        # The identity of the PDF this text came out of. Phase 7 §9 requires a
+        # citation to be machine-resolvable back to a source document and page,
+        # and a filename that has to be looked up again somewhere else is a
+        # lookup that will eventually be skipped — the same argument this
+        # module's docstring makes about provenance generally.
+        "source_filename": chunk.raw.get("source_filename"),
+        "source_sha256": chunk.raw.get("source_sha256"),
     }
     if extra:
         metadata.update(extra)
