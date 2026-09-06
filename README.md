@@ -45,7 +45,7 @@ brew install tesseract tesseract-lang          # macOS
 # apt-get install tesseract-ocr tesseract-ocr-eng tesseract-ocr-hin   # Debian
 ```
 
-Run the test suite (671 tests; the retrieval and reranking tests load models and
+Run the test suite (699 tests; the retrieval and reranking tests load models and
 are the slow ones):
 
 ```bash
@@ -124,8 +124,15 @@ data/
     embeddings/              BGE-M3 cache (gitignored, regenerated deterministically)
     results/                 every benchmark run, by phase
 
+app/                         the runnable prototype. No retrieval or policy logic.
+  pipeline.py                builds the engine once; QUESTION → ANSWER in one call
+  server.py                  stdlib demo server + the single-page UI (app/static/)
+  api_server.py              Flask HTTP API — POST /api/v1/query, GET /health
+  schemas.py                 request validation and response serialisation
+  config.py                  every environment variable, in one dataclass
+
 docs/                        one document per phase; see §6
-tests/                       671 tests; fixtures under tests/fixtures/
+tests/                       699 tests; fixtures under tests/fixtures/
 ```
 
 ---
@@ -213,6 +220,8 @@ will fail a test or invalidate a recorded result.
 | `docs/GROUND_TRUTH_VERIFICATION.md` | 8 | the human review workflow, unused |
 | `docs/AI_GROUND_TRUTH_JUDGING.md` | 8.1–8.3 | 111/111 AI-judged; anti-circularity design |
 | `docs/AI_GROUND_TRUTH_JUDGE_PROMPT.md` | 8.1 | the judge prompt itself, v1.0.0 |
+| `DEMO.md` | — | how to start the prototype, and the rehearsed demo questions |
+| `docs/API_HANDOVER.md` | — | the HTTP API contract the frontend integrates against |
 | `PROJECT.md` | — | implemented vs remaining, against the project's aim |
 
 ---
