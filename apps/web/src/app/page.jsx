@@ -51,10 +51,13 @@ export default function Home() {
   const stepTimerRef = useRef(null);
   const rateLimitTimerRef = useRef(null);
 
-  // 1. Fetch live health status on mount & run initial question
+  // Health only. Asking a question on mount spent a provider completion on
+  // every page load and every refresh — before anyone had clicked anything —
+  // which is a real cost against a free-tier per-minute cap and is not a
+  // decision a page load should be making. The input is prefilled with
+  // SAMPLES[0], so the first question is still one click away.
   useEffect(() => {
     fetchHealth();
-    handleAsk(SAMPLES[0]);
 
     return () => {
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);

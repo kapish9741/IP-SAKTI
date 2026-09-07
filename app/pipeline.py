@@ -55,7 +55,11 @@ from ai.retrieval.bm25 import BM25Retriever  # noqa: E402
 from ai.retrieval.candidates import CandidateGenerator  # noqa: E402
 from ai.retrieval.identifiers import BM25IdentifierBoostRetriever  # noqa: E402
 from ai.reranking.features import FeatureReranker  # noqa: E402
-from app.cache import DEFAULT_CACHE_PATH, ValidatedAnswerCache  # noqa: E402
+from app.cache import (  # noqa: E402
+    DEFAULT_CACHE_PATH,
+    DEFAULT_SEED_PATH,
+    ValidatedAnswerCache,
+)
 
 APP_VERSION = "0.1.0"
 
@@ -129,7 +133,8 @@ class Pipeline:
 
     def __init__(self, *, use_dense: bool = True, reranker: str = "features",
                  provider: str = "auto", cache: bool = True,
-                 cache_path: str | None = DEFAULT_CACHE_PATH, log=print):
+                 cache_path: str | None = DEFAULT_CACHE_PATH,
+                 seed_cache_path: str | None = DEFAULT_SEED_PATH, log=print):
         self._lock = threading.Lock()
         self.log = log
         self.warnings: list[str] = []
@@ -163,13 +168,15 @@ class Pipeline:
         self.engine = GroundedAnswerEngine(provider=self.provider, policy=self.policy)
         log(f"  answer provider     {self.provider_name}")
 
-        self.cache = self._build_cache(cache, cache_path)
+        self.cache = self._build_cache(cache, cache_path, seed_cache_path)
         if self.cache is None:
             log("  answer cache        disabled")
         else:
             stats = self.cache.stats()
+            log(f"  seed answers        {stats['seed_entries']} shipped with this "
+                f"build [{stats['namespace']}]")
             log(f"  answer cache        {stats['entries']} validated answer(s) "
-                f"[{stats['namespace']}]")
+                f"({stats['runtime_entries']} from this deployment)")
             self.warnings.extend(self.cache.warnings)
 
         self.startup_seconds = round(time.perf_counter() - started, 2)
@@ -280,12 +287,13 @@ class Pipeline:
         material = json.dumps(identity, sort_keys=True, default=str)
         return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
 
-    def _build_cache(self, enabled: bool, path: str | None):
+    def _build_cache(self, enabled: bool, path: str | None, seed_path: str | None):
         """Never let the cache stop the pipeline from starting."""
         if not enabled:
             return None
         try:
-            return ValidatedAnswerCache(namespace=self._cache_namespace(), path=path)
+            return ValidatedAnswerCache(namespace=self._cache_namespace(),
+                                        path=path, seed_path=seed_path)
         except Exception as exc:  # noqa: BLE001 - degrade, never crash
             self.warnings.append(
                 f"answer cache unavailable ({type(exc).__name__}: {exc}); "
@@ -331,6 +339,7 @@ class Pipeline:
         service_failure = _service_failure(answer)
         if service_failure:
             status = "UNAVAILABLE"
+            self._log_service_failure(question, service_failure)
         elif answer.insufficient_evidence:
             status = "ABSTAINED"
         else:
@@ -376,6 +385,32 @@ class Pipeline:
         result["cache"] = {"hit": False, "stored": stored}
         return result
 
+    def _log_service_failure(self, question: str, failure: dict[str, Any]) -> None:
+        """One structured line per provider failure, for a deployed log.
+
+        The screenshots from Render said `TRANSPORT_ERROR` and nothing more,
+        which is not enough to act on: the same code covers a timeout, a DNS
+        failure and a refused connection, and whether the request was even a
+        live one is invisible from the outside. So the code, the unwrapped
+        detail, the configured timeout and the fact that this was a live call
+        rather than a cache hit go out together — a failure only reachable on
+        a cache miss, which is why `cache_hit` is always false here and is
+        still stated rather than assumed by a reader.
+
+        No credential can appear: `detail` is scrubbed by the provider before
+        it reaches this object, and nothing here reads the environment.
+        """
+        settings = getattr(self.provider, "settings", None)
+        self.log(
+            "provider_failure "
+            f"code={failure.get('code')} "
+            f"timeout_s={getattr(settings, 'timeout_seconds', 'n/a')} "
+            f"max_completion_tokens={getattr(settings, 'max_completion_tokens', 'n/a')} "
+            f"provider={self.provider_name!r} "
+            f"cache_hit=false "
+            f"question={question[:80]!r} "
+            f"detail={failure.get('detail') or '(none)'!r}")
+
     # -- health ---------------------------------------------------------------
 
     def health(self) -> dict[str, Any]:
@@ -418,6 +453,11 @@ def _from_cache(entry: dict[str, Any], question: str,
     result["cache"] = {
         "hit": True,
         "stored": True,
+        # "seed" shipped with the build; "runtime" was produced by this
+        # deployment. Both went through the same gate — the distinction is
+        # operational, so a log line can say whether a demo is running on
+        # answers the deployment carried in or answers it earned.
+        "source": entry.get("source", "runtime"),
         "cached_at": entry.get("cached_at"),
         "cached_question": entry.get("question"),
         "original_timings_ms": original_timings,
@@ -450,4 +490,5 @@ def build(log=print) -> Pipeline:
         provider=os.environ.get("IPSAKTI_PROVIDER", "auto"),
         cache=_flag("IPSAKTI_CACHE", True),
         cache_path=os.environ.get("IPSAKTI_CACHE_PATH") or DEFAULT_CACHE_PATH,
+        seed_cache_path=os.environ.get("IPSAKTI_SEED_CACHE_PATH") or DEFAULT_SEED_PATH,
         log=log)

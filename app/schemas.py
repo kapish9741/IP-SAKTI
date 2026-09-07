@@ -267,8 +267,13 @@ def serialize_result(result: Mapping[str, Any],
             "pipeline": to_jsonable(result.get("pipeline")),
             "engine_version": to_jsonable(engine.get("version")),
             "cache": {"hit": cache_hit,
+                      "source": to_jsonable(cache.get("source")) if cache_hit
+                                else None,
                       "cached_at": to_jsonable(cache.get("cached_at"))},
-            "response_source": "validated_cache" if cache_hit else "live_pipeline",
+            # "seed" (shipped with the build), "runtime" (produced by this
+            # deployment) or "live_pipeline" (generated for this request).
+            "response_source": (to_jsonable(cache.get("source")) or "runtime")
+                               if cache_hit else "live_pipeline",
         },
     }
 

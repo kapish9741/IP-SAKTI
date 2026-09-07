@@ -61,6 +61,20 @@ DEFAULT_CACHE_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "data", "cache", "validated_answers.json")
 
+#: The seed cache: committed, shipped in the Docker image, never written to at
+#: runtime. Render's filesystem is ephemeral, so a redeploy or an idle spin-down
+#: takes the runtime file with it and the first person to click a demo question
+#: pays for a completion again — on a free tier that may already be exhausted.
+#: A file that travels inside the build artifact cannot be lost that way.
+#:
+#: It holds nothing the runtime cache does not: the same entries, produced by
+#: the same pipeline, admitted by the same gate, re-validated on load. The only
+#: difference is who may write it. `scripts/demo/warm_cache.py --seed-demo-cache`
+#: generates it from real runs; the server only ever reads it.
+DEFAULT_SEED_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "demo_cache", "validated_demo_answers.json")
+
 
 def normalize_question(question: str) -> str:
     """The lookup form of a question: its tokens, in order, joined by spaces.
@@ -121,7 +135,17 @@ def is_publishable(result: Any) -> bool:
 
 
 class ValidatedAnswerCache:
-    """In-memory, optionally mirrored to one JSON file.
+    """Two layers, one gate.
+
+    The **seed** layer is read-only and ships with the deployment; the
+    **runtime** layer is writable and accumulates whatever the pipeline
+    publishes while the server is up. A lookup reads runtime first, then seed,
+    so a fresher answer to the same question always wins over the shipped one
+    and the seed can never pin a stale result in place.
+
+    Both layers go through :func:`is_publishable` on load and again on read.
+    Being committed to the repository buys the seed no trust at all — it is
+    checked exactly as strictly as a file the server wrote itself.
 
     Held behind its own lock. `app/pipeline.py` already serialises `answer()`,
     but the warm script and the health endpoint read this from other threads
@@ -129,23 +153,29 @@ class ValidatedAnswerCache:
     """
 
     def __init__(self, *, namespace: str, path: str | None = DEFAULT_CACHE_PATH,
+                 seed_path: str | None = DEFAULT_SEED_PATH,
                  max_entries: int = DEFAULT_MAX_ENTRIES):
         self.namespace = namespace
         self.path = path
+        self.seed_path = seed_path
         self.max_entries = max(1, int(max_entries))
         self.warnings: list[str] = []
         self.hits = 0
+        self.seed_hits = 0
         self.misses = 0
         self.stores = 0
         self.rejections = 0
         self._lock = threading.Lock()
         self._entries: dict[str, dict[str, Any]] = {}
+        #: Read-only. Never written, never evicted, never saved back.
+        self._seed: dict[str, dict[str, Any]] = {}
         #: Entries belonging to another namespace. Never read, never served,
         #: only carried through on save. Starting the server once with a
         #: different flag — `--provider extractive` to rehearse offline, say —
         #: would otherwise erase a cache that cost real provider requests to
         #: warm, which is the opposite of what this module is for.
         self._foreign: dict[str, dict[str, Any]] = {}
+        self._load_seed()
         self._load()
 
     # -- keys ----------------------------------------------------------------
@@ -166,9 +196,14 @@ class ValidatedAnswerCache:
     def get(self, question: str) -> dict[str, Any] | None:
         """A stored entry for this question, or `None`.
 
-        The returned payload is a deep copy: the caller stamps its own timings
-        and cache metadata onto it, and must not be able to mutate the entry
-        every later request will be served from.
+        Runtime before seed: an answer this server produced is at least as
+        current as the one that shipped with it, and the seed must never
+        override a fresher result.
+
+        The returned payload is a deep copy carrying a `source` of `"runtime"`
+        or `"seed"`: the caller stamps its own timings and cache metadata onto
+        it, and must not be able to mutate the entry every later request will
+        be served from.
         """
         try:
             entry_key = self.key(question)
@@ -177,22 +212,29 @@ class ValidatedAnswerCache:
             return None
 
         with self._lock:
-            entry = self._entries.get(entry_key)
-            if entry is None:
-                self.misses += 1
-                return None
-            if entry.get("namespace") != self.namespace or not is_publishable(
-                    entry.get("result")):
-                # Second reading of the gate. Reachable only if the file was
-                # edited by hand or corrupted, which is exactly when it matters.
-                self._entries.pop(entry_key, None)
-                self.rejections += 1
-                self.misses += 1
-                self._warn("a cache entry failed re-validation on read and was "
-                           "discarded; the pipeline will answer this question")
-                return None
-            self.hits += 1
-            return copy.deepcopy(entry)
+            for source, layer in (("runtime", self._entries), ("seed", self._seed)):
+                entry = layer.get(entry_key)
+                if entry is None:
+                    continue
+                if entry.get("namespace") != self.namespace or not is_publishable(
+                        entry.get("result")):
+                    # Second reading of the gate. Reachable only if a file was
+                    # edited by hand or corrupted — which is exactly when it
+                    # matters, and is why the shipped seed gets no exemption.
+                    layer.pop(entry_key, None)
+                    self.rejections += 1
+                    self._warn(f"a {source} cache entry failed re-validation on "
+                               f"read and was discarded; the pipeline will "
+                               f"answer this question")
+                    continue
+                self.hits += 1
+                if source == "seed":
+                    self.seed_hits += 1
+                served = copy.deepcopy(entry)
+                served["source"] = source
+                return served
+            self.misses += 1
+            return None
 
     # -- write ---------------------------------------------------------------
 
@@ -233,20 +275,31 @@ class ValidatedAnswerCache:
     # -- inspection ----------------------------------------------------------
 
     def questions(self) -> list[str]:
+        """Questions this cache can answer, runtime first, without duplicates."""
         with self._lock:
-            return [e.get("question", "") for e in self._entries.values()]
+            seen = {k: e.get("question", "") for k, e in self._seed.items()}
+            seen.update({k: e.get("question", "") for k, e in self._entries.items()})
+            return list(seen.values())
+
+    def seed_questions(self) -> list[str]:
+        with self._lock:
+            return [e.get("question", "") for e in self._seed.values()]
 
     def stats(self) -> dict[str, Any]:
         with self._lock:
             return {
                 "enabled": True,
-                "entries": len(self._entries),
+                "entries": len(self._entries) + len(self._seed),
+                "runtime_entries": len(self._entries),
+                "seed_entries": len(self._seed),
                 "hits": self.hits,
+                "seed_hits": self.seed_hits,
                 "misses": self.misses,
                 "stores": self.stores,
                 "rejected_on_read": self.rejections,
                 "namespace": self.namespace,
                 "path": self.path,
+                "seed_path": self.seed_path,
                 "warnings": list(self.warnings),
             }
 
@@ -256,25 +309,67 @@ class ValidatedAnswerCache:
         if message not in self.warnings:
             self.warnings.append(message)
 
-    def _load(self) -> None:
-        """Read the file if there is one. Any problem leaves an empty cache."""
-        if not self.path or not os.path.isfile(self.path):
-            return
+    def _read_document(self, path: str, label: str) -> dict[str, Any] | None:
+        """One cache file, parsed and format-checked. `None` on any problem."""
+        if not path or not os.path.isfile(path):
+            return None
         try:
-            with open(self.path, encoding="utf-8") as handle:
+            with open(path, encoding="utf-8") as handle:
                 document = json.load(handle)
         except Exception as exc:  # noqa: BLE001 - a broken file is not fatal
-            self._warn(f"cache file unreadable ({type(exc).__name__}); starting empty")
-            return
-
+            self._warn(f"{label} cache file unreadable ({type(exc).__name__}); ignored")
+            return None
         if not isinstance(document, dict) or document.get("format") != CACHE_FORMAT:
-            self._warn("cache file has an unrecognised format; starting empty")
-            return
-
+            self._warn(f"{label} cache file has an unrecognised format; ignored")
+            return None
         entries = document.get("entries")
         if not isinstance(entries, dict):
-            self._warn("cache file has no entries object; starting empty")
+            self._warn(f"{label} cache file has no entries object; ignored")
+            return None
+        return document
+
+    def _load_seed(self) -> None:
+        """Read the shipped seed. Read-only, and trusted no further than any file.
+
+        A seed built against a different corpus, prompt or provider is reported
+        rather than skipped in silence: it is the one failure mode of a shipped
+        cache that looks exactly like an empty one, and the startup log is
+        where somebody can still act on it.
+        """
+        document = self._read_document(self.seed_path or "", "seed")
+        if document is None:
             return
+        kept: dict[str, dict[str, Any]] = {}
+        wrong_namespace = 0
+        rejected = 0
+        for entry_key, entry in document["entries"].items():
+            if not isinstance(entry, dict):
+                rejected += 1
+                continue
+            if entry.get("namespace") != self.namespace:
+                wrong_namespace += 1
+                continue
+            if not is_publishable(entry.get("result")):
+                rejected += 1
+                continue
+            kept[str(entry_key)] = entry
+        if wrong_namespace:
+            self._warn(
+                f"{wrong_namespace} seed answer(s) were built for a different "
+                f"corpus, prompt or provider and cannot be served; regenerate "
+                f"with scripts/demo/warm_cache.py --seed-demo-cache in the "
+                f"configuration you deploy")
+        if rejected:
+            self._warn(f"{rejected} seed answer(s) failed validation on load "
+                       f"and were dropped")
+        self._seed = kept
+
+    def _load(self) -> None:
+        """Read the writable runtime file. Any problem leaves it empty."""
+        document = self._read_document(self.path or "", "runtime")
+        if document is None:
+            return
+        entries = document["entries"]
 
         kept: dict[str, dict[str, Any]] = {}
         foreign: dict[str, dict[str, Any]] = {}

@@ -470,7 +470,7 @@ def test_the_api_serves_a_cached_answer_during_an_outage(corpus_pipeline, tmp_pa
         assert body["answer"]["text"]
         assert body["answer"]["grounded"] is True
         assert body["citations"] and body["sources"]
-        assert body["meta"]["response_source"] == "validated_cache"
+        assert body["meta"]["response_source"] == "runtime"
         assert calls == []
 
         # And an uncached question is still a 503 that says why.
@@ -508,3 +508,219 @@ def test_the_completion_ceiling_is_clamped_in_both_directions(monkeypatch):
     monkeypatch.delenv("GROQ_MAX_COMPLETION_TOKENS")
     assert GroqConfig.from_environment(load_dotenv=False).max_completion_tokens == \
         DEFAULT_MAX_COMPLETION_TOKENS
+
+
+# -- the seed layer -----------------------------------------------------------
+#
+# The seed ships inside the deployment artifact so the demo questions survive
+# Render's ephemeral filesystem. It is read-only and gets no more trust than a
+# file the server wrote itself.
+
+
+def seeded(tmp_path, entries, namespace="ns-1"):
+    """Write a seed file directly, the way the generator would."""
+    keyer = ValidatedAnswerCache(namespace=namespace, path=None, seed_path=None)
+    path = tmp_path / "seed.json"
+    path.write_text(json.dumps({
+        "format": CACHE_FORMAT, "namespace": namespace,
+        "entries": {keyer.key(q): {"namespace": namespace, "question": q,
+                                   "normalized": normalize_question(q),
+                                   "cached_at": "2026-09-07T00:00:00Z",
+                                   "result": r}
+                    for q, r in entries.items()},
+    }), encoding="utf-8")
+    return str(path)
+
+
+def test_the_seed_loads_at_startup_with_no_runtime_cache(tmp_path):
+    path = seeded(tmp_path, {QUESTION: published_result()})
+    store = ValidatedAnswerCache(namespace="ns-1",
+                                 path=str(tmp_path / "absent.json"),
+                                 seed_path=path)
+    stats = store.stats()
+    assert stats["seed_entries"] == 1
+    assert stats["runtime_entries"] == 0
+
+    entry = store.get(QUESTION)
+    assert entry is not None
+    assert entry["source"] == "seed"
+    assert entry["result"]["answer"]["citations"][0]["locator"] == "Rule 23"
+    assert store.seed_hits == 1
+
+
+def test_a_seeded_question_survives_a_wiped_runtime_cache(tmp_path):
+    """What a Render redeploy does: the writable file is gone, the seed is not."""
+    path = seeded(tmp_path, {QUESTION: published_result()})
+    runtime = tmp_path / "runtime.json"
+
+    first = ValidatedAnswerCache(namespace="ns-1", path=str(runtime),
+                                 seed_path=path)
+    first.put("Who may apply for a geographical indication?", published_result())
+    assert runtime.exists()
+
+    runtime.unlink()                                   # the redeploy
+
+    after = ValidatedAnswerCache(namespace="ns-1", path=str(runtime),
+                                 seed_path=path)
+    assert after.get(QUESTION) is not None             # seeded: still served
+    assert after.get("Who may apply for a geographical indication?") is None
+
+
+def test_the_runtime_layer_wins_over_the_seed(tmp_path):
+    stale = published_result()
+    stale["answer"]["answer"] = "The shipped answer [1]."
+    fresh = published_result()
+    fresh["answer"]["answer"] = "The answer this deployment produced [1]."
+
+    store = ValidatedAnswerCache(namespace="ns-1", path=str(tmp_path / "r.json"),
+                                 seed_path=seeded(tmp_path, {QUESTION: stale}))
+    assert store.get(QUESTION)["result"]["answer"]["answer"] == \
+        "The shipped answer [1]."
+
+    store.put(QUESTION, fresh)
+    served = store.get(QUESTION)
+    assert served["source"] == "runtime"
+    assert served["result"]["answer"]["answer"] == \
+        "The answer this deployment produced [1]."
+
+
+def test_an_invalid_seed_entry_is_rejected(tmp_path):
+    ungrounded = published_result()
+    ungrounded["answer"]["grounded"] = False
+    abstained = published_result()
+    abstained["status"] = "ABSTAINED"
+
+    store = ValidatedAnswerCache(
+        namespace="ns-1", path=None,
+        seed_path=seeded(tmp_path, {QUESTION: ungrounded,
+                                    "Who may apply for a GI?": abstained}))
+    assert store.stats()["seed_entries"] == 0
+    assert store.get(QUESTION) is None
+    assert any("failed validation" in w for w in store.warnings)
+
+
+def test_a_seed_for_another_configuration_is_reported_not_silently_empty(tmp_path):
+    path = seeded(tmp_path, {QUESTION: published_result()}, namespace="groq-dense")
+    store = ValidatedAnswerCache(namespace="groq-lexical", path=None,
+                                 seed_path=path)
+    assert store.stats()["seed_entries"] == 0
+    assert store.get(QUESTION) is None
+    assert any("different corpus, prompt or provider" in w
+               for w in store.warnings)
+
+
+def test_a_malformed_seed_does_not_stop_the_server(tmp_path):
+    path = tmp_path / "seed.json"
+    path.write_text("not json at all", encoding="utf-8")
+    store = ValidatedAnswerCache(namespace="ns-1", path=None, seed_path=str(path))
+    assert store.stats()["seed_entries"] == 0
+    assert store.warnings
+    assert store.put(QUESTION, published_result()) is True   # still usable
+
+
+def test_the_seed_is_never_written_to(tmp_path):
+    path = seeded(tmp_path, {QUESTION: published_result()})
+    before = open(path, encoding="utf-8").read()
+    store = ValidatedAnswerCache(namespace="ns-1", path=str(tmp_path / "r.json"),
+                                 seed_path=path)
+    store.put("What is the term of a patent?", published_result())
+    store.get(QUESTION)
+    assert open(path, encoding="utf-8").read() == before
+
+
+def test_a_seeded_question_answers_during_a_provider_outage(corpus_pipeline,
+                                                            tmp_path):
+    """The property the whole seed exists for, through the real engine."""
+    pipeline = corpus_pipeline
+    healthy = pipeline.engine
+    pipeline.cache = ValidatedAnswerCache(namespace="seed-outage",
+                                          path=str(tmp_path / "r.json"),
+                                          seed_path=None)
+    try:
+        warm = pipeline.answer(QUESTION)
+        assert warm["status"] == "ANSWERED"
+
+        # Ship that answer as a seed, throw the runtime cache away, kill Groq.
+        seed_path = seeded(tmp_path, {QUESTION: {k: v for k, v in warm.items()
+                                                 if k != "cache"}},
+                           namespace="seed-outage")
+        pipeline.cache = ValidatedAnswerCache(namespace="seed-outage",
+                                              path=str(tmp_path / "gone.json"),
+                                              seed_path=seed_path)
+        pipeline.engine, calls = failing_engine(pipeline, "transport")
+
+        served = pipeline.answer(QUESTION)
+        assert served["status"] == "ANSWERED"
+        assert served["cache"]["source"] == "seed"
+        assert served["answer"]["citations"] == warm["answer"]["citations"]
+        assert served["answer"]["grounded"] is True
+        assert served["evidence"] == warm["evidence"]
+        assert calls == []
+
+        # An unseeded question still reaches the real pipeline and fails honestly.
+        cold = pipeline.answer("What is the term of a patent in India?")
+        assert cold["status"] == "UNAVAILABLE"
+        assert cold["service_failure"]["code"] == "transport_error"
+        assert len(calls) == 1
+    finally:
+        pipeline.engine = healthy
+        pipeline.cache = None
+
+
+def test_the_api_reports_the_seed_as_the_response_source(corpus_pipeline, tmp_path):
+    from app.api_server import create_app
+    from app.config import Config
+
+    pipeline = corpus_pipeline
+    pipeline.cache = ValidatedAnswerCache(namespace="seed-api", path=None,
+                                          seed_path=None)
+    try:
+        warm = pipeline.answer(QUESTION)
+        pipeline.cache = ValidatedAnswerCache(
+            namespace="seed-api", path=None,
+            seed_path=seeded(tmp_path, {QUESTION: {k: v for k, v in warm.items()
+                                                   if k != "cache"}},
+                             namespace="seed-api"))
+        client = create_app(Config(cors_origins=("*",)), pipeline).test_client()
+        body = client.post("/api/v1/query", json={"question": QUESTION}).get_json()
+
+        assert body["status"] == "ANSWERED"
+        assert body["meta"]["response_source"] == "seed"
+        assert body["meta"]["cache"] == {"hit": True, "source": "seed",
+                                         "cached_at": "2026-09-07T00:00:00Z"}
+        assert body["citations"] and body["sources"]
+        assert body["answer"]["grounded"] is True
+    finally:
+        pipeline.cache = None
+
+
+# -- the page must not spend tokens on mount ----------------------------------
+
+
+def _page_source():
+    import os
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root, "apps", "web", "src", "app", "page.jsx"),
+              encoding="utf-8") as handle:
+        return handle.read()
+
+
+def test_page_load_does_not_ask_a_question():
+    """A source guard, not a rendering test — apps/web has no JS runner and
+    tonight is not the night to add one. It still catches the regression that
+    matters: an auto-ask on mount spent a completion on every page load and
+    every refresh, before anyone had clicked anything."""
+    source = _page_source()
+    mount = source[source.index("useEffect(() => {"):]
+    mount = mount[:mount.index("}, []);")]
+    assert "fetchHealth()" in mount
+    assert "handleAsk" not in mount
+
+
+def test_sample_chips_still_submit_on_an_explicit_click():
+    source = _page_source()
+    chips = source[source.index("{SAMPLES.map("):]
+    chips = chips[:chips.index("</button>")]
+    assert "onClick" in chips
+    assert "setQuestion(s)" in chips and "handleAsk(s)" in chips
