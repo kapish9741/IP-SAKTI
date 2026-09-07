@@ -233,4 +233,4 @@ will fail a test or invalidate a recorded result.
 * **No claim of legal accuracy. No claim of production readiness.** Citation
   validity and grounding are structural properties, not statements about whether
   an answer is right.
-* Answers are not legal advice.
+* answers are not legal advice.
