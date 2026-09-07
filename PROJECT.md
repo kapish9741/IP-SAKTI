@@ -197,7 +197,7 @@ different model and provider from the answer generator, different prompt,
 no import edge (asserted by parsing ASTs, not grepping), and no retrieval output
 in the evidence packets. The `verified` flag, `ground_truth_method` and the
 label author's own `notes` are withheld from the judge, each asserted absent from
-all 111 packets. Packets are byte-stable and hash-pinned in a frozen manifest.
+all 111 packets.  Packets are byte-stable and hash-pinned in a frozen manifest.
 **Network requests across all of Phase 8: 0.**
 
 ### Cross-cutting
