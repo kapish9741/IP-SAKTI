@@ -202,7 +202,7 @@ all 111 packets. Packets are byte-stable and hash-pinned in a frozen manifest.
 
 ### Cross-cutting
 671 tests. Fixture-driven offline paths for every layer that can reach a model or
-a network. `docs/PHASE7_FREEZE.md` freezes the Phase 7 record so no later phase
+A network. `docs/PHASE7_FREEZE.md` freezes the Phase 7 record so no later phase
 can improve its own numbers by editing an earlier one.
 
 ---
