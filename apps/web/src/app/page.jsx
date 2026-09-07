@@ -536,6 +536,14 @@ export default function Home() {
                       <div className="font-mono text-[11px] opacity-80">
                         provider error: <code>{result?.service_failure?.code || "unknown"}</code>
                       </div>
+                      {result?.service_failure?.detail && (
+                        // The backend already records what actually failed — a
+                        // timeout, DNS, a refused connection. Showing it turns
+                        // an unreproducible venue failure into a diagnosis.
+                        <div className="font-mono text-[11px] opacity-60 break-words">
+                          {result.service_failure.detail}
+                        </div>
+                      )}
                     </div>
                   )}
                   <p className="text-xs text-subtext leading-relaxed">

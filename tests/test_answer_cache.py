@@ -363,3 +363,148 @@ def test_disabling_the_cache_leaves_the_pipeline_unchanged(tmp_path):
     pipeline.answer(QUESTION)
     pipeline.answer(QUESTION)
     assert pipeline.generations == 2
+
+
+# -- surviving a provider outage ---------------------------------------------
+#
+# These build the real pipeline once and run the real engine, citation
+# validator and grounding check. Only the HTTP transport is replaced, so what
+# is under test is the property the demo depends on: a question already
+# answered stays answerable while the provider is down, and a question that is
+# not stays honestly unavailable.
+
+
+@pytest.fixture(scope="module")
+def corpus_pipeline():
+    import os
+
+    os.environ["IPSAKTI_DENSE"] = "0"
+    from app.pipeline import Pipeline
+
+    return Pipeline(use_dense=False, provider="extractive", cache=False,
+                    log=lambda message: None)
+
+
+def failing_engine(pipeline, status, body=b"{}"):
+    """The real engine and the real Groq provider, over a dead transport."""
+    from ai.answering import GroundedAnswerEngine
+    from ai.answering.groq import (GroqConfig, GroqError, GroqProvider,
+                                   _transport_detail)
+
+    calls = []
+
+    def transport(url, payload, headers, timeout):
+        """Stands in for `_urllib_transport`, and honours its contract: a
+        network failure is raised as a `GroqError`, an HTTP status is returned.
+        Raising a bare OSError here would test the engine's last-resort handler
+        instead of the transport failure the demo actually sees."""
+        calls.append(url)
+        if status == "transport":
+            raise GroqError("transport_error", _transport_detail(
+                OSError(61, "Connection refused"), timeout))
+        return 429, body
+
+    provider = GroqProvider(config=GroqConfig(), transport=transport,
+                            api_key="sk-not-a-real-key")
+    return GroundedAnswerEngine(provider=provider, policy=pipeline.policy), calls
+
+
+@pytest.mark.parametrize("failure,expected", [
+    ("transport", "transport_error"),
+    ("429", "rate_limited"),
+])
+def test_a_cached_question_answers_while_the_provider_is_down(
+        corpus_pipeline, tmp_path, failure, expected):
+    pipeline = corpus_pipeline
+    healthy = pipeline.engine
+    pipeline.cache = ValidatedAnswerCache(namespace="outage",
+                                          path=str(tmp_path / f"{failure}.json"))
+    try:
+        warm = pipeline.answer(QUESTION)
+        assert warm["status"] == "ANSWERED"
+        assert warm["cache"]["stored"] is True
+
+        pipeline.engine, calls = failing_engine(pipeline, failure)
+
+        # The cached question still answers, and the provider is never reached.
+        served = pipeline.answer(QUESTION)
+        assert served["status"] == "ANSWERED"
+        assert served["cache"]["hit"] is True
+        assert served["answer"]["citations"] == warm["answer"]["citations"]
+        assert served["answer"]["grounded"] is True
+        assert served["evidence"] == warm["evidence"]
+        assert calls == []
+
+        # An uncached question stays honestly unavailable: no fabricated
+        # answer, no abstention standing in for a service failure, no retry.
+        cold = pipeline.answer("What is the term of a patent in India?")
+        assert cold["status"] == "UNAVAILABLE"
+        assert cold["service_failure"]["code"] == expected
+        assert cold["cache"] == {"hit": False, "stored": False}
+        assert len(calls) == 1
+        assert pipeline.cache.questions() == [QUESTION]
+    finally:
+        pipeline.engine = healthy
+        pipeline.cache = None
+
+
+def test_the_api_serves_a_cached_answer_during_an_outage(corpus_pipeline, tmp_path):
+    """End to end over HTTP: the contract is identical, the provider is dead."""
+    from app.api_server import create_app
+    from app.config import Config
+
+    pipeline = corpus_pipeline
+    healthy = pipeline.engine
+    pipeline.cache = ValidatedAnswerCache(namespace="api-outage",
+                                          path=str(tmp_path / "api.json"))
+    try:
+        pipeline.answer(QUESTION)
+        pipeline.engine, calls = failing_engine(pipeline, "transport")
+
+        client = create_app(Config(cors_origins=("*",)), pipeline).test_client()
+        response = client.post("/api/v1/query", json={"question": QUESTION})
+        body = response.get_json()
+
+        assert response.status_code == 200
+        assert body["status"] == "ANSWERED"
+        assert body["answer"]["text"]
+        assert body["answer"]["grounded"] is True
+        assert body["citations"] and body["sources"]
+        assert body["meta"]["response_source"] == "validated_cache"
+        assert calls == []
+
+        # And an uncached question is still a 503 that says why.
+        miss = client.post("/api/v1/query", json={"question": "What is a patent?"})
+        assert miss.status_code == 503
+        assert miss.get_json()["error"]["provider_error"]["code"] == "transport_error"
+    finally:
+        pipeline.engine = healthy
+        pipeline.cache = None
+
+
+def test_transport_detail_names_the_cause_not_just_the_class():
+    """"URLError" was the recorded detail for a timeout, a DNS failure and a
+    refused connection alike. Each has a different fix."""
+    from ai.answering.groq import _transport_detail
+
+    assert "timeout" in _transport_detail(TimeoutError("timed out"), 15.0)
+    assert "ConnectionRefusedError" in _transport_detail(
+        OSError(61, "Connection refused"), 15.0) or "Connection refused" in \
+        _transport_detail(OSError(61, "Connection refused"), 15.0)
+
+
+def test_the_completion_ceiling_is_clamped_in_both_directions(monkeypatch):
+    from ai.answering.groq import (DEFAULT_MAX_COMPLETION_TOKENS,
+                                   MIN_MAX_COMPLETION_TOKENS, GroqConfig)
+
+    def budget(value):
+        monkeypatch.setenv("GROQ_MAX_COMPLETION_TOKENS", value)
+        return GroqConfig.from_environment(load_dotenv=False).max_completion_tokens
+
+    assert budget("512") == 512
+    assert budget("4000") == DEFAULT_MAX_COMPLETION_TOKENS   # cannot be raised
+    assert budget("1") == MIN_MAX_COMPLETION_TOKENS          # cannot starve
+    assert budget("not-a-number") == DEFAULT_MAX_COMPLETION_TOKENS
+    monkeypatch.delenv("GROQ_MAX_COMPLETION_TOKENS")
+    assert GroqConfig.from_environment(load_dotenv=False).max_completion_tokens == \
+        DEFAULT_MAX_COMPLETION_TOKENS
