@@ -41,17 +41,36 @@ TOKEN_PATTERN = re.compile(
 _LEADING_NUMBER = re.compile(r"^\d+")
 
 
+#: Closed compounds the corpus also writes open or hyphenated. The Trade Marks
+#: Act, 1999 says "trade mark" and the Trade Marks Rules, 2017 say "trademark",
+#: often on facing pages of the same regime, so a lexical index that keeps them
+#: apart cannot retrieve across the two instruments — the query spelling alone
+#: decides which document is reachable. Opening the closed form makes all three
+#: written variants ("trademark", "trade-mark", "trade mark") the same pair of
+#: tokens on both the index and the query side.
+#:
+#: The equivalence is not new here: `identifiers.py` already lists both
+#: spellings as aliases of the same document and `router.py` treats them as one
+#: topic term. This is the one place that did not yet know it. Entries are added
+#: only for a variant actually attested in the corpus, never on the theory that
+#: two words look joinable.
+CLOSED_COMPOUNDS = re.compile(r"\b(trade)(marks?)\b")
+
+
 def _fold(text: str) -> str:
     """Lowercase and neutralise the punctuation that PDF text layers scatter about.
 
     Hyphens and the various Unicode dashes are split points: the corpus writes
     "sub-section", "sub -section" and "sub section" in the same document, and
     splitting makes all three agree. Curly apostrophes are dropped rather than
-    split, so "farmers’" and "farmers" share a token.
+    split, so "farmers’" and "farmers" share a token. Closed compounds listed in
+    :data:`CLOSED_COMPOUNDS` are opened for the same reason, after the dashes,
+    so that all three written forms end up as the same pair of tokens.
     """
     text = text.lower()
     text = text.replace("’", "").replace("‘", "").replace("'", "")
-    return re.sub(r"[‐-―−_/\\]+", " ", text)
+    text = re.sub(r"[‐-―−_/\\]+", " ", text)
+    return CLOSED_COMPOUNDS.sub(r"\1 \2", text)
 
 
 def tokenize(text: str) -> list[str]:
