@@ -1,0 +1,365 @@
+"""Tests for the validated-answer cache.
+
+No network, no model, no corpus read. The pipeline is a stub that counts how
+many times it was asked to generate, because the property under test is exactly
+that: a cached question does not reach the provider.
+
+The safety half of this file matters more than the speed half. A cache that
+serves a fast wrong answer is worse than a rate limit, so most of what follows
+checks what does *not* get stored: abstentions, provider failures, ungrounded
+drafts, answers whose citations did not resolve, and entries belonging to a
+different corpus or prompt version.
+"""
+from __future__ import annotations
+
+import copy
+import json
+
+import pytest
+
+from app.cache import (
+    CACHE_FORMAT,
+    ValidatedAnswerCache,
+    is_publishable,
+    normalize_question,
+)
+
+QUESTION = "How must an application for registration of a trade mark be signed?"
+
+
+def published_result(question=QUESTION):
+    """A result the pipeline would have published: ANSWERED, grounded, cited."""
+    return {
+        "question": question,
+        "status": "ANSWERED",
+        "service_failure": None,
+        "answer": {
+            "answer": "An application must be made in Form TM-A and signed by "
+                      "the applicant or his agent [1].",
+            "citations": [{"marker": 1, "chunk_id": "chunk-a",
+                           "document_id": "IN-TM-RULES-2017",
+                           "locator": "Rule 23", "pages": [59],
+                           "citation_text": "Trade Marks Rules, 2017 — Rule 23",
+                           "source_evidence_level": "B",
+                           "temporal_status": "CURRENT"}],
+            "confidence": "MODERATE",
+            "grounded": True,
+            "insufficient_evidence": False,
+            "insufficient_evidence_reasons": [],
+            "validation_failures": [],
+            "unsupported_claims": [],
+            "cautions": [],
+            "evidence_fingerprint": "fp-1",
+            "version": "0.1.0",
+        },
+        "rendered": "...",
+        "disclaimer": "Not legal advice.",
+        "evidence": [{"marker": 1, "chunk_id": "chunk-a", "cited": True,
+                      "text": "Rule 23 ..."}],
+        "timings_ms": {"retrieval": 40.0, "reranking": 5.0,
+                       "answering": 3100.0, "total": 3145.0},
+        "pipeline": {"candidates": 50, "evidence_count": 5,
+                     "provider": "groq · openai/gpt-oss-120b"},
+    }
+
+
+def cache(tmp_path, namespace="ns-1"):
+    return ValidatedAnswerCache(namespace=namespace,
+                                path=str(tmp_path / "answers.json"))
+
+
+# -- the admission gate -------------------------------------------------------
+
+
+def test_a_published_result_is_publishable():
+    assert is_publishable(published_result()) is True
+
+
+@pytest.mark.parametrize("mutate,reason", [
+    (lambda r: r.update(status="ABSTAINED"), "abstention"),
+    (lambda r: r.update(status="UNAVAILABLE"), "provider unavailable"),
+    (lambda r: r.update(service_failure={"code": "rate_limited"}), "rate limit"),
+    (lambda r: r["answer"].update(grounded=False), "grounding failed"),
+    (lambda r: r["answer"].update(
+        validation_failures=[{"code": "unresolved_citation"}]),
+     "citation validation failed"),
+    (lambda r: r["answer"].update(unsupported_claims=["a claim"]),
+     "unsupported claim"),
+    (lambda r: r["answer"].update(insufficient_evidence=True),
+     "insufficient evidence"),
+    (lambda r: r["answer"].update(citations=[]), "no citation"),
+    (lambda r: r["answer"].update(answer="   "), "no answer text"),
+    (lambda r: r.pop("answer"), "no answer object"),
+])
+def test_unpublished_results_are_never_publishable(mutate, reason):
+    result = published_result()
+    mutate(result)
+    assert is_publishable(result) is False, reason
+
+
+def test_non_mappings_are_not_publishable():
+    assert is_publishable(None) is False
+    assert is_publishable("ANSWERED") is False
+    assert is_publishable([published_result()]) is False
+
+
+# -- keys ---------------------------------------------------------------------
+
+
+def test_normalization_folds_case_punctuation_and_the_trademark_spelling():
+    assert normalize_question("  Trade Marks  Act, 1999?  ") == \
+           normalize_question("trademarks act 1999")
+    assert normalize_question("How is a trademark signed?") == \
+           normalize_question("How is a trade-mark signed")
+    # Singular and plural stay apart; the tokenizer does not stem.
+    assert normalize_question("trade mark") != normalize_question("trade marks")
+
+
+def test_normalization_keeps_different_questions_apart():
+    assert normalize_question("What is the term of copyright?") != \
+           normalize_question("What is the term of a patent?")
+    # Word order is content, not noise.
+    assert normalize_question("patent of a trade mark") != \
+           normalize_question("trade mark of a patent")
+
+
+def test_a_question_of_pure_punctuation_still_gets_a_key(tmp_path):
+    store = cache(tmp_path)
+    assert store.key("???") != store.key("!!!")
+
+
+def test_the_namespace_is_inside_the_key(tmp_path):
+    assert cache(tmp_path, "ns-1").key(QUESTION) != \
+           cache(tmp_path, "ns-2").key(QUESTION)
+
+
+# -- store and serve ----------------------------------------------------------
+
+
+def test_a_published_answer_is_stored_and_served(tmp_path):
+    store = cache(tmp_path)
+    assert store.put(QUESTION, published_result()) is True
+
+    entry = store.get(QUESTION)
+    assert entry is not None
+    assert entry["result"]["answer"]["answer"].startswith("An application")
+    assert entry["result"]["answer"]["citations"][0]["locator"] == "Rule 23"
+    assert store.hits == 1
+
+
+def test_a_normalized_equivalent_question_hits_the_same_entry(tmp_path):
+    store = cache(tmp_path)
+    store.put(QUESTION, published_result())
+    assert store.get("how must an application for registration of a "
+                     "trademark be signed") is not None
+
+
+def test_a_different_question_misses(tmp_path):
+    store = cache(tmp_path)
+    store.put(QUESTION, published_result())
+    assert store.get("What is the term of a patent in India?") is None
+    assert store.misses == 1
+
+
+def test_the_served_payload_is_a_copy(tmp_path):
+    store = cache(tmp_path)
+    store.put(QUESTION, published_result())
+    store.get(QUESTION)["result"]["answer"]["answer"] = "tampered"
+    assert store.get(QUESTION)["result"]["answer"]["answer"].startswith(
+        "An application")
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda r: r.update(status="ABSTAINED"),
+    lambda r: r.update(status="UNAVAILABLE",
+                       service_failure={"code": "rate_limited"}),
+    lambda r: r["answer"].update(grounded=False),
+    lambda r: r["answer"].update(validation_failures=[{"code": "x"}]),
+])
+def test_unpublished_results_are_not_stored(tmp_path, mutate):
+    store = cache(tmp_path)
+    result = published_result()
+    mutate(result)
+    assert store.put(QUESTION, result) is False
+    assert store.get(QUESTION) is None
+    assert store.questions() == []
+
+
+# -- persistence and invalidation ---------------------------------------------
+
+
+def test_entries_survive_a_restart(tmp_path):
+    cache(tmp_path).put(QUESTION, published_result())
+    assert cache(tmp_path).get(QUESTION) is not None
+
+
+def test_a_new_namespace_ignores_old_entries(tmp_path):
+    cache(tmp_path, "corpus-v1").put(QUESTION, published_result())
+    reopened = cache(tmp_path, "corpus-v2")
+    assert reopened.get(QUESTION) is None
+    assert reopened.questions() == []
+    assert reopened.warnings
+
+
+def test_entries_from_another_namespace_are_kept_but_never_served(tmp_path):
+    """Rehearsing offline must not erase a cache that cost provider requests."""
+    cache(tmp_path, "groq").put(QUESTION, published_result())
+
+    offline = cache(tmp_path, "extractive")
+    assert offline.get(QUESTION) is None            # not served
+    offline.put("What is the term of a patent?", published_result())
+
+    back = cache(tmp_path, "groq")
+    assert back.get(QUESTION) is not None           # still there
+    assert back.questions() == [QUESTION]
+
+
+def test_a_malformed_file_is_ignored_not_fatal(tmp_path):
+    path = tmp_path / "answers.json"
+    path.write_text("{ this is not json", encoding="utf-8")
+    store = ValidatedAnswerCache(namespace="ns-1", path=str(path))
+    assert store.get(QUESTION) is None
+    assert store.warnings
+    # And it recovers: a later write replaces the bad file.
+    assert store.put(QUESTION, published_result()) is True
+    assert json.loads(path.read_text())["format"] == CACHE_FORMAT
+
+
+def test_an_unknown_file_format_is_ignored(tmp_path):
+    path = tmp_path / "answers.json"
+    path.write_text(json.dumps({"format": 99, "entries": {}}), encoding="utf-8")
+    assert ValidatedAnswerCache(namespace="ns-1", path=str(path)).warnings
+
+
+def test_a_hand_edited_entry_cannot_smuggle_an_answer_back(tmp_path):
+    """The gate runs again on read, so editing the file is not a way in."""
+    path = tmp_path / "answers.json"
+    store = ValidatedAnswerCache(namespace="ns-1", path=str(path))
+    store.put(QUESTION, published_result())
+
+    document = json.loads(path.read_text())
+    entry = next(iter(document["entries"].values()))
+    entry["result"]["answer"]["grounded"] = False
+    entry["result"]["answer"]["answer"] = "A fabricated answer with no support."
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    # Rejected on load...
+    assert ValidatedAnswerCache(namespace="ns-1", path=str(path)).get(QUESTION) is None
+    # ...and rejected on read, if it were placed directly into a live cache.
+    live = ValidatedAnswerCache(namespace="ns-1", path=None)
+    live._entries[live.key(QUESTION)] = entry
+    assert live.get(QUESTION) is None
+    assert live.rejections == 1
+
+
+def test_an_unwritable_path_keeps_working_in_memory(tmp_path):
+    blocked = tmp_path / "file-not-a-dir"
+    blocked.write_text("x", encoding="utf-8")
+    store = ValidatedAnswerCache(namespace="ns-1",
+                                 path=str(blocked / "answers.json"))
+    assert store.put(QUESTION, published_result()) is True
+    assert store.get(QUESTION) is not None
+    assert store.warnings
+
+
+def test_the_cache_is_bounded(tmp_path):
+    store = ValidatedAnswerCache(namespace="ns-1",
+                                 path=str(tmp_path / "answers.json"),
+                                 max_entries=2)
+    for word in ("alpha", "beta", "gamma"):
+        store.put(f"What is a {word} trade mark?", published_result())
+    assert len(store.questions()) == 2
+
+
+# -- the pipeline boundary ----------------------------------------------------
+
+
+class CountingPipeline:
+    """The real `Pipeline.answer` body, reduced to what the cache wraps."""
+
+    def __init__(self, store, result):
+        self.cache = store
+        self._result = result
+        self.generations = 0
+
+    def answer(self, question):
+        from app.pipeline import _from_cache
+
+        question = (question or "").strip()
+        if not question:
+            raise ValueError("Ask a question first.")
+        cached = self.cache.get(question) if self.cache else None
+        if cached is not None:
+            return _from_cache(cached, question, 0.4)
+        self.generations += 1                     # the provider call
+        result = copy.deepcopy(self._result)
+        result["question"] = question
+        stored = bool(self.cache and self.cache.put(question, result))
+        result["cache"] = {"hit": False, "stored": stored}
+        return result
+
+
+def test_a_cache_hit_does_not_reach_the_provider(tmp_path):
+    pipeline = CountingPipeline(cache(tmp_path), published_result())
+
+    first = pipeline.answer(QUESTION)
+    assert first["cache"] == {"hit": False, "stored": True}
+    assert pipeline.generations == 1
+
+    second = pipeline.answer(QUESTION)
+    assert second["cache"]["hit"] is True
+    assert pipeline.generations == 1              # no second generation
+    assert second["answer"] == first["answer"]
+    assert second["evidence"] == first["evidence"]
+
+
+def test_a_cache_miss_runs_the_pipeline(tmp_path):
+    pipeline = CountingPipeline(cache(tmp_path), published_result())
+    pipeline.answer(QUESTION)
+    pipeline.answer("Who may apply for a geographical indication?")
+    assert pipeline.generations == 2
+
+
+def test_a_rate_limited_result_is_not_cached_and_is_not_retried(tmp_path):
+    unavailable = published_result()
+    unavailable["status"] = "UNAVAILABLE"
+    unavailable["service_failure"] = {"code": "rate_limited",
+                                      "message": "rate limited"}
+    pipeline = CountingPipeline(cache(tmp_path), unavailable)
+
+    first = pipeline.answer(QUESTION)
+    assert first["status"] == "UNAVAILABLE"
+    assert first["cache"] == {"hit": False, "stored": False}
+    assert pipeline.generations == 1              # one request, not two
+
+    second = pipeline.answer(QUESTION)            # a fresh user-driven attempt
+    assert second["status"] == "UNAVAILABLE"
+    assert pipeline.generations == 2              # still one request each
+
+
+def test_a_hit_reports_its_own_timings_and_the_original(tmp_path):
+    pipeline = CountingPipeline(cache(tmp_path), published_result())
+    pipeline.answer(QUESTION)
+    hit = pipeline.answer(QUESTION)
+
+    assert hit["timings_ms"]["answering"] == 0.0
+    assert hit["timings_ms"]["total"] < 1.0
+    assert hit["cache"]["original_timings_ms"]["answering"] == 3100.0
+    assert hit["cache"]["cached_question"] == QUESTION
+
+
+def test_a_hit_echoes_the_question_that_was_asked(tmp_path):
+    pipeline = CountingPipeline(cache(tmp_path), published_result())
+    pipeline.answer(QUESTION)
+    asked = "How must an application for registration of a TRADEMARK be signed?"
+    hit = pipeline.answer(asked)
+    assert hit["cache"]["hit"] is True
+    assert hit["question"] == asked
+    assert hit["cache"]["cached_question"] == QUESTION
+
+
+def test_disabling_the_cache_leaves_the_pipeline_unchanged(tmp_path):
+    pipeline = CountingPipeline(None, published_result())
+    pipeline.answer(QUESTION)
+    pipeline.answer(QUESTION)
+    assert pipeline.generations == 2

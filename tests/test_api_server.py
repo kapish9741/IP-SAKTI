@@ -411,3 +411,36 @@ def test_api_layer_does_not_reimplement_the_engine():
             source = fh.read()
         for name in forbidden:
             assert name not in source, f"{path} references {name}"
+
+
+# -- cache metadata (additive; nothing a client renders depends on it) --------
+
+
+def test_a_live_result_is_labelled_as_coming_from_the_pipeline():
+    body = post(client_for(StubPipeline(answered_result())),
+                {"question": "How is it signed?"}).get_json()
+    assert body["meta"]["cache"] == {"hit": False, "cached_at": None}
+    assert body["meta"]["response_source"] == "live_pipeline"
+
+
+def test_a_cached_result_serialises_identically_apart_from_the_label():
+    live = answered_result()
+    cached = answered_result()
+    cached["cache"] = {"hit": True, "stored": True,
+                       "cached_at": "2026-09-07T10:00:00Z",
+                       "cached_question": cached["question"],
+                       "original_timings_ms": cached["timings_ms"]}
+    cached["timings_ms"] = {"retrieval": 0.0, "reranking": 0.0,
+                            "answering": 0.0, "total": 0.4}
+
+    live_body = post(client_for(StubPipeline(live)), {"question": "Q?"}).get_json()
+    cached_body = post(client_for(StubPipeline(cached)),
+                       {"question": "Q?"}).get_json()
+
+    assert cached_body["meta"]["response_source"] == "validated_cache"
+    assert cached_body["meta"]["cache"]["hit"] is True
+    # Everything the user sees is byte-identical.
+    for field in ("status", "answer", "citations", "sources", "cautions",
+                  "disclaimer"):
+        assert cached_body[field] == live_body[field]
+    assert cached_body["meta"]["grounded"] == live_body["meta"]["grounded"]

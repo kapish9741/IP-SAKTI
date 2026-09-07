@@ -87,6 +87,11 @@ export default function Home() {
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
   };
 
+  // Counts down the provider's per-minute window and then stops. It does NOT
+  // re-send: the backend issues one request per question and never retries, and
+  // a UI that quietly fired a second one would both contradict that design and
+  // spend more of the token budget that was just exhausted. Retrying is the
+  // user's decision, taken with the button below.
   const startRateLimitCountdown = (q, seconds = 62) => {
     if (rateLimitTimerRef.current) clearInterval(rateLimitTimerRef.current);
     setRateLimitCountdown(seconds);
@@ -97,8 +102,7 @@ export default function Home() {
       setRateLimitCountdown(remaining);
       if (remaining <= 0) {
         clearInterval(rateLimitTimerRef.current);
-        setRateLimitCountdown(null);
-        handleAsk(q);
+        setRateLimitCountdown(0);
       }
     }, 1000);
   };
@@ -493,7 +497,8 @@ export default function Home() {
                         <div className="space-y-1">
                           <div className="font-semibold text-amber-300 text-sm">Groq free-tier rate limit hit</div>
                           <p className="text-amber-200/80 leading-relaxed">
-                            The model allows ~8,000 tokens per minute. Your query will be automatically retried once the window resets.
+                            The model allows ~8,000 tokens per minute. Nothing was retried automatically — one
+                            question is one request. Wait for the window to reset, then retry.
                           </p>
                         </div>
                       </div>

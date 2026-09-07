@@ -237,6 +237,12 @@ def serialize_result(result: Mapping[str, Any],
     engine = result.get("answer") or {}
     evidence = list(result.get("evidence") or ())
     status = result.get("status")
+    # Additive, and deliberately outside the answer: a cached response is the
+    # same published result served again, so nothing a client renders may
+    # depend on this. It is here so the dev team can tell a 2 ms hit from a
+    # 3 s generation without inferring it from the timings.
+    cache = result.get("cache") or {}
+    cache_hit = bool(cache.get("hit"))
 
     body: dict[str, Any] = {
         "success": status != "UNAVAILABLE",
@@ -260,6 +266,9 @@ def serialize_result(result: Mapping[str, Any],
             "timings_ms": to_jsonable(result.get("timings_ms")),
             "pipeline": to_jsonable(result.get("pipeline")),
             "engine_version": to_jsonable(engine.get("version")),
+            "cache": {"hit": cache_hit,
+                      "cached_at": to_jsonable(cache.get("cached_at"))},
+            "response_source": "validated_cache" if cache_hit else "live_pipeline",
         },
     }
 

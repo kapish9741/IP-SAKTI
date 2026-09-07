@@ -18,9 +18,19 @@ Two deliberate differences from that script, both stated rather than buried:
 The provider is chosen once, at startup, from the environment. That is a
 configuration choice, not a fallback chain: a request that fails is an
 abstention, and nothing here retries, regenerates or switches models.
+
+One question answered twice does not run twice. `app/cache.py` holds results
+this pipeline already published — `ANSWERED`, citations resolved, grounding
+passed — and `answer()` consults it first. A hit skips retrieval, reranking and
+the provider entirely, which is the only reason a demo can ask the same six
+questions repeatedly on a free-tier token budget. A miss runs the code below
+unchanged. The cache stores what the pipeline produced; it cannot produce
+anything, and it never stores an abstention or a provider failure.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import sys
 import threading
@@ -45,6 +55,7 @@ from ai.retrieval.bm25 import BM25Retriever  # noqa: E402
 from ai.retrieval.candidates import CandidateGenerator  # noqa: E402
 from ai.retrieval.identifiers import BM25IdentifierBoostRetriever  # noqa: E402
 from ai.reranking.features import FeatureReranker  # noqa: E402
+from app.cache import DEFAULT_CACHE_PATH, ValidatedAnswerCache  # noqa: E402
 
 APP_VERSION = "0.1.0"
 
@@ -117,7 +128,8 @@ class Pipeline:
     """
 
     def __init__(self, *, use_dense: bool = True, reranker: str = "features",
-                 provider: str = "auto", log=print):
+                 provider: str = "auto", cache: bool = True,
+                 cache_path: str | None = DEFAULT_CACHE_PATH, log=print):
         self._lock = threading.Lock()
         self.log = log
         self.warnings: list[str] = []
@@ -150,6 +162,15 @@ class Pipeline:
         self.provider_name, self.provider = self._build_provider(provider)
         self.engine = GroundedAnswerEngine(provider=self.provider, policy=self.policy)
         log(f"  answer provider     {self.provider_name}")
+
+        self.cache = self._build_cache(cache, cache_path)
+        if self.cache is None:
+            log("  answer cache        disabled")
+        else:
+            stats = self.cache.stats()
+            log(f"  answer cache        {stats['entries']} validated answer(s) "
+                f"[{stats['namespace']}]")
+            self.warnings.extend(self.cache.warnings)
 
         self.startup_seconds = round(time.perf_counter() - started, 2)
 
@@ -228,10 +249,60 @@ class Pipeline:
         config = GroqConfig.from_environment()
         return f"groq · {config.model}", GroqProvider(config=config)
 
+    def _cache_namespace(self) -> str:
+        """Everything that would change the answer, folded into one digest.
+
+        A cached answer is only reusable while the run that produced it would
+        still be reproduced. So the corpus fingerprint (chunk ids paired with
+        digests of their text — the same identity `ai/retrieval/dense.py` keys
+        its embeddings by), the retrieval and reranking configuration, and the
+        answering versions from `engine.config()` all go in. Re-chunk, change
+        the prompt, switch provider, or start with `--no-dense`, and the
+        namespace changes, so yesterday's entries stop matching instead of
+        being served against evidence they were never generated from.
+
+        Only the digest is kept. `engine.config()` names an endpoint and reports
+        whether a credential is present; hashing means no part of it is written
+        to disk, and there is no room for a secret to arrive here by accident.
+        """
+        from ai.retrieval.dense import corpus_fingerprint
+
+        identity = {
+            "app_version": APP_VERSION,
+            "corpus": corpus_fingerprint(self.chunks),
+            "dense": self.dense_status,
+            "reranker": self.reranker.name,
+            "lexical": self.lexical.name,
+            "depths": [DENSE_DEPTH, LEXICAL_DEPTH, TOP_K],
+            "provider": self.provider_name,
+            "engine": self.engine.config(),
+        }
+        material = json.dumps(identity, sort_keys=True, default=str)
+        return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+
+    def _build_cache(self, enabled: bool, path: str | None):
+        """Never let the cache stop the pipeline from starting."""
+        if not enabled:
+            return None
+        try:
+            return ValidatedAnswerCache(namespace=self._cache_namespace(), path=path)
+        except Exception as exc:  # noqa: BLE001 - degrade, never crash
+            self.warnings.append(
+                f"answer cache unavailable ({type(exc).__name__}: {exc}); "
+                f"every question will run the full pipeline")
+            return None
+
     # -- the request path -----------------------------------------------------
 
     def answer(self, question: str) -> dict[str, Any]:
-        """One question, one answer-generation call, no retries."""
+        """One question, at most one answer-generation call, no retries.
+
+        *At most*, because a question this pipeline has already answered is
+        served from `app/cache.py` without contacting the provider at all. The
+        input guards run first either way: an invalid question is rejected
+        before anything is looked up, so the cache cannot become a second route
+        past validation.
+        """
         question = (question or "").strip()
         if not question:
             raise ValueError("Ask a question first.")
@@ -242,6 +313,12 @@ class Pipeline:
 
         with self._lock:
             t0 = time.perf_counter()
+            cached = self.cache.get(question) if self.cache else None
+            if cached is not None:
+                return _from_cache(cached, question,
+                                   round((time.perf_counter() - t0) * 1000, 1))
+
+            t0 = time.perf_counter()   # the lookup is not retrieval time
             pool = self.generator.generate(question)
             t1 = time.perf_counter()
             reranked = self.reranker.rerank(question, pool.candidates, TOP_K)
@@ -258,7 +335,7 @@ class Pipeline:
             status = "ABSTAINED"
         else:
             status = "ANSWERED"
-        return {
+        result = {
             "question": question,
             "status": status,
             "service_failure": service_failure,
@@ -292,6 +369,12 @@ class Pipeline:
                 "provider": self.provider_name,
             },
         }
+        # Offered to the cache, which stores it only if it was published:
+        # ANSWERED, grounded, with citations that resolved. An abstention and a
+        # rate limit both reach this line and both leave unstored.
+        stored = bool(self.cache and self.cache.put(question, result))
+        result["cache"] = {"hit": False, "stored": stored}
+        return result
 
     # -- health ---------------------------------------------------------------
 
@@ -307,8 +390,39 @@ class Pipeline:
                           "reranker": self.reranker.name},
             "answering": {"provider": self.provider_name,
                           "versions": self.engine.config()},
+            "cache": self.cache.stats() if self.cache else {"enabled": False},
             "warnings": self.warnings,
         }
+
+
+def _from_cache(entry: dict[str, Any], question: str,
+                lookup_ms: float) -> dict[str, Any]:
+    """Shape a stored entry as this request's result.
+
+    The answer, citations, cautions, confidence, grounding and evidence are
+    returned exactly as they were published — that is the point, and altering
+    any of them here would make a cached response a different response.
+
+    Three things are this request's rather than the stored one's. The question
+    is the one actually asked, so the response echoes the caller's words and
+    not the normalised-equivalent phrasing that produced the entry. The timings
+    are the real ones, which is why a hit reports the lookup instead of
+    claiming the provider latency it did not spend. And `cache` says plainly
+    where the result came from, including the question that generated it.
+    """
+    result = entry["result"]
+    original_timings = result.get("timings_ms")
+    result["question"] = question
+    result["timings_ms"] = {"retrieval": 0.0, "reranking": 0.0,
+                            "answering": 0.0, "total": lookup_ms}
+    result["cache"] = {
+        "hit": True,
+        "stored": True,
+        "cached_at": entry.get("cached_at"),
+        "cached_question": entry.get("question"),
+        "original_timings_ms": original_timings,
+    }
+    return result
 
 
 class _NoDense:
@@ -334,4 +448,6 @@ def build(log=print) -> Pipeline:
         use_dense=_flag("IPSAKTI_DENSE", True),
         reranker=os.environ.get("IPSAKTI_RERANKER", "features"),
         provider=os.environ.get("IPSAKTI_PROVIDER", "auto"),
+        cache=_flag("IPSAKTI_CACHE", True),
+        cache_path=os.environ.get("IPSAKTI_CACHE_PATH") or DEFAULT_CACHE_PATH,
         log=log)
