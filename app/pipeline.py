@@ -50,6 +50,7 @@ from ai.answering import (  # noqa: E402
     render_answer,
 )
 from ai.answering.excerpt import excerpt_config, excerpt_for_evidence  # noqa: E402
+from ai.text_integrity import assess as assess_integrity, integrity_config  # noqa: E402
 from ai.answering.groq import GroqConfig, GroqProvider, load_env_file  # noqa: E402
 from ai.retrieval.base import load_chunks  # noqa: E402
 from ai.retrieval.bm25 import BM25Retriever  # noqa: E402
@@ -57,6 +58,8 @@ from ai.retrieval.candidates import CandidateGenerator  # noqa: E402
 from ai.retrieval.identifiers import BM25IdentifierBoostRetriever  # noqa: E402
 from ai.reranking.features import FeatureReranker  # noqa: E402
 from app.clarify import clarify_config, post_abstention, pre_retrieval  # noqa: E402
+from app.intent import classify as classify_intent, intent_config  # noqa: E402
+from app.spelling import CorpusSpelling, spelling_config  # noqa: E402
 from app.cache import (  # noqa: E402
     DEFAULT_CACHE_PATH,
     DEFAULT_SEED_PATH,
@@ -150,6 +153,13 @@ class Pipeline:
         bm25 = BM25Retriever(self.chunks)
         self.lexical = BM25IdentifierBoostRetriever(bm25)
         log(f"  lexical index       ready ({self.lexical.name})")
+
+        # The corpus is its own dictionary; see `app/spelling.py`. Built from
+        # the same chunk text BM25 indexes, so a word is "known" here exactly
+        # when it is reachable there.
+        self.speller = CorpusSpelling(chunk.text for chunk in self.chunks)
+        log(f"  spelling            {len(self.speller.targets)} correction "
+            f"targets from {len(self.speller.vocabulary)} corpus words")
 
         self.dense = None
         self.dense_status = "disabled"
@@ -285,6 +295,9 @@ class Pipeline:
             "depths": [DENSE_DEPTH, LEXICAL_DEPTH, TOP_K],
             "provider": self.provider_name,
             "engine": self.engine.config(),
+            # A corrected query retrieves different evidence, so an entry
+            # published before correction existed is not reusable after it.
+            "spelling": spelling_config(self.speller),
         }
         material = json.dumps(identity, sort_keys=True, default=str)
         return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
@@ -327,13 +340,37 @@ class Pipeline:
                 f"Question is too long ({len(question)} characters; "
                 f"the limit is {MAX_QUESTION_CHARS}).")
 
+        # Before anything else, including the clarifier. "hi" is not an
+        # under-specified legal question and must not be answered with one.
+        # `classify` returns None for everything that is not a verbatim entry
+        # in its phrase table, so a legal question cannot reach this branch.
+        social = classify_intent(question, self.lexical.aliases)
+        if social is not None:
+            return _social(question, social)
+
+        # Spelling is repaired next, and before the clarifier, because the
+        # clarifier's whole test is whether the query names a regime — and
+        # "How do I register a tradmark?" names one, in the only sense the user
+        # cares about. Running the clarifier first made a typo indistinguishable
+        # from a vague question and answered it with "which area of IP law did
+        # you mean?", which is the worst of both: the system knew the answer and
+        # asked the question anyway.
+        #
+        # What is searched for and what is asked are kept apart from here on.
+        # `search_query` reaches BM25, BGE-M3, the reranker and excerpt
+        # selection, because they match strings and a misspelling is a string
+        # they cannot match. `question` reaches the answer generator, because
+        # the user asked that. Both appear in the response.
+        correction = self.speller.correct(question)
+        search_query = correction.corrected
+
         if allow_clarification:
             # Only for a question that anchors on no regime, no instrument and
             # no provision. Nothing else short-circuits the pipeline, and this
             # branch never touches the abstention logic.
-            upfront = pre_retrieval(question, self.lexical.aliases)
+            upfront = pre_retrieval(search_query, self.lexical.aliases)
             if upfront is not None:
-                return _needs_clarification(question, upfront)
+                return _needs_clarification(question, upfront, correction)
 
         with self._lock:
             t0 = time.perf_counter()
@@ -343,9 +380,9 @@ class Pipeline:
                                    round((time.perf_counter() - t0) * 1000, 1))
 
             t0 = time.perf_counter()   # the lookup is not retrieval time
-            pool = self.generator.generate(question)
+            pool = self.generator.generate(search_query)
             t1 = time.perf_counter()
-            reranked = self.reranker.rerank(question, pool.candidates, TOP_K)
+            reranked = self.reranker.rerank(search_query, pool.candidates, TOP_K)
             evidence = as_evidence_set([r.to_retrieval_result() for r in reranked])
             t2 = time.perf_counter()
             answer = self.engine.answer(question, evidence)
@@ -363,6 +400,7 @@ class Pipeline:
         result = {
             "question": question,
             "status": status,
+            "spelling": correction.to_dict(),
             "service_failure": service_failure,
             "answer": answer.to_dict(),
             "rendered": render_answer(answer, show_confidence=True),
@@ -380,8 +418,13 @@ class Pipeline:
                      # Phase F: the short verbatim span a source card shows
                      # first. `text` stays beside it for "View full passage" —
                      # the excerpt narrows what is shown, never what is kept.
-                     excerpt=excerpt_for_evidence(item, question,
+                     excerpt=excerpt_for_evidence(item, search_query,
                                                   answer_text=answer.answer),
+                     # Whether PDF extraction damaged this passage. Reported so
+                     # a card can say "the source text did not extract cleanly"
+                     # instead of presenting debris as a verbatim quotation.
+                     # Nothing here rewrites the text: see ai/text_integrity.py.
+                     text_integrity=assess_integrity(item.text).to_dict(),
                      cited=item.chunk_id in cited)
                 for item in evidence],
             "timings_ms": {
@@ -399,6 +442,9 @@ class Pipeline:
                 "provider": self.provider_name,
                 "excerpt": excerpt_config(),
                 "clarification": clarify_config(),
+                "intent": intent_config(),
+                "spelling": spelling_config(self.speller),
+                "text_integrity": integrity_config(),
             },
         }
         # Phase E, second and last place a clarification can appear: beside an
@@ -406,7 +452,7 @@ class Pipeline:
         # back or changed by this — an ABSTAINED response stays ABSTAINED, with
         # its reasons intact, and gains a suggestion for the next attempt.
         if allow_clarification:
-            suggestion = post_abstention(question, result, self.lexical.aliases)
+            suggestion = post_abstention(search_query, result, self.lexical.aliases)
             if suggestion is not None:
                 result["clarification"] = suggestion.to_dict()
 
@@ -462,8 +508,42 @@ class Pipeline:
         }
 
 
+def _social(question: str, social: Any) -> dict[str, Any]:
+    """The response to a greeting: courteous, and visibly not a legal answer.
+
+    Same keys as every other response so a client renders it through the path
+    it already has, and three of them chosen so that nothing can mistake this
+    for something the corpus said. `status` is `SOCIAL`, which is neither
+    `ANSWERED` nor `ABSTAINED` — the evidence was not consulted, so counting
+    this as either would corrupt both rates. `answer` is null, so no citation,
+    confidence or grounding flag exists to be read. `evidence` is empty,
+    because nothing was retrieved.
+
+    The reply text is a constant from `app/intent.py`. No provider is called,
+    nothing is cached and no clarification is attached: a greeting has nothing
+    to clarify.
+    """
+    return {
+        "question": question,
+        "status": "SOCIAL",
+        "social": social.to_dict(),
+        "service_failure": None,
+        "answer": None,
+        "rendered": social.reply,
+        "disclaimer": SYSTEM_DISCLAIMER,
+        "evidence": [],
+        "timings_ms": {"retrieval": 0.0, "reranking": 0.0,
+                       "answering": 0.0, "total": 0.0},
+        "pipeline": {"candidates": 0, "evidence_count": 0,
+                     "stage": "intent_gate",
+                     "intent": intent_config()},
+        "cache": {"hit": False, "stored": False},
+    }
+
+
 def _needs_clarification(question: str,
-                         clarification: Any) -> dict[str, Any]:
+                         clarification: Any,
+                         correction: Any = None) -> dict[str, Any]:
     """The response for a question that named no body of law at all.
 
     Deliberately shaped like every other response — same keys, same disclaimer,
@@ -482,6 +562,7 @@ def _needs_clarification(question: str,
     return {
         "question": question,
         "status": "NEEDS_CLARIFICATION",
+        "spelling": correction.to_dict() if correction is not None else None,
         "service_failure": None,
         "answer": None,
         "rendered": "",

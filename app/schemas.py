@@ -291,6 +291,26 @@ def serialize_result(result: Mapping[str, Any],
         }
         return body, 503
 
+    if status == "SOCIAL":
+        # A greeting. The reply is a fixed string from `app/intent.py`, and it
+        # goes in `reply` rather than in `answer` so no client can render it
+        # through the path that expects citations and a confidence level. It has
+        # neither, because nothing was retrieved.
+        social = result.get("social") or {}
+        body["reply"] = to_jsonable(result.get("rendered"))
+        body["intent"] = to_jsonable(social.get("intent"))
+        body["meta"]["retrieval_performed"] = False
+        return body, 200
+
+    if status == "NEEDS_CLARIFICATION":
+        # The pipeline has not looked yet and is asking what to look for. Also
+        # not an answer, and — like SOCIAL — kept out of `answer` so that an
+        # empty `answer.text` can never reach a client as though it were one.
+        clarification = result.get("clarification") or {}
+        body["clarification"] = to_jsonable(clarification)
+        body["meta"]["retrieval_performed"] = False
+        return body, 200
+
     if status == "ABSTAINED":
         reasons = [
             {"code": str(r.get("code", "")).upper(),
