@@ -72,3 +72,24 @@ test("returns English text unchanged without calling the external client", async
 
   assert.equal(result, "Already English [1].");
 });
+
+test("preserves whitespace beside protected legal terms when the provider trims it", async () => {
+  const client = {
+    async translate(parts) {
+      return [parts.map((part) => part.trim())];
+    },
+  };
+  const provider = new GoogleCloudTranslationProvider({ client });
+
+  const result = await provider.translate({
+    text: "Explanation before Trade Marks Rules, 2017 and after.",
+    sourceLanguage: "en",
+    targetLanguage: "hi",
+    protectedTerms: ["Trade Marks Rules, 2017"],
+  });
+
+  assert.equal(
+    result,
+    "Explanation before Trade Marks Rules, 2017 and after.",
+  );
+});

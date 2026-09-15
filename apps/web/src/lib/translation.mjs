@@ -122,9 +122,15 @@ export class GoogleCloudTranslationProvider {
     );
     if (translatableIndexes.length === 0) return text;
 
-    const translatableText = translatableIndexes.map(
-      (index) => segments[index].text,
-    );
+    const translatableParts = translatableIndexes.map((index) => {
+      const match = segments[index].text.match(/^(\s*)([\s\S]*?)(\s*)$/u);
+      return {
+        leading: match[1],
+        text: match[2],
+        trailing: match[3],
+      };
+    });
+    const translatableText = translatableParts.map((part) => part.text);
     const [translated] = await this.client.translate(translatableText, {
       from: sourceLanguage,
       to: targetLanguage,
@@ -136,8 +142,9 @@ export class GoogleCloudTranslationProvider {
     }
 
     translatableIndexes.forEach((segmentIndex, translatedIndex) => {
+      const boundary = translatableParts[translatedIndex];
       segments[segmentIndex] = {
-        text: translatedText[translatedIndex],
+        text: `${boundary.leading}${translatedText[translatedIndex]}${boundary.trailing}`,
         protected: false,
       };
     });
