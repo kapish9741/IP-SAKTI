@@ -45,6 +45,7 @@ from typing import Any, Mapping, Sequence
 
 from ai.answering.grounding import CITATION_MARKER, split_sentences
 from ai.answering.policy import content_terms
+from ai.text_integrity import assess as assess_integrity
 
 EXCERPT_VERSION = "0.1.0"
 
@@ -150,6 +151,45 @@ def _score(sentence: str, query_terms: frozenset[str],
     return 0.6 * query_hit + 0.3 * answer_hit + 0.1 * substance
 
 
+def _anchor(display: str, query_terms: frozenset[str]) -> int:
+    """Where in `display` the query is most concentrated.
+
+    The first version of this took the *earliest* occurrence of any query term,
+    which is only the right answer when the chunk mentions the subject once. On
+    a five-thousand-character schedule where a common word like "fee" appears in
+    the header, the earliest hit opens the window four thousand characters away
+    from the passage the reader wants, and the card shows the top of the page.
+
+    So every occurrence of every term is collected, and the anchor is the one
+    whose surrounding window covers the most *distinct* query terms — hit count
+    breaks ties, then position, so the result is deterministic. Density is the
+    signal that matters: a place where four of the query's words appear together
+    is the passage; a place where one common word appears alone is not.
+    """
+    if not query_terms:
+        return 0
+    lowered = display.lower()
+    occurrences: list[tuple[int, str]] = []
+    for term in sorted(query_terms):
+        position = lowered.find(term)
+        while position >= 0:
+            occurrences.append((position, term))
+            position = lowered.find(term, position + 1)
+    if not occurrences:
+        return 0
+    occurrences.sort()
+    best_key = (-1, -1, 0)
+    for position, _ in occurrences:
+        low, high = position - WINDOW_RADIUS, position + WINDOW_RADIUS
+        covered = {term for where, term in occurrences if low <= where <= high}
+        hits = sum(1 for where, _ in occurrences if low <= where <= high)
+        key = (len(covered), hits, -position)
+        if key > best_key:
+            best_key = key
+            anchor = position
+    return anchor
+
+
 def _window(display: str, query_terms: frozenset[str]) -> Excerpt:
     """The Phase F fallback: a span around the best match, on word boundaries.
 
@@ -157,13 +197,7 @@ def _window(display: str, query_terms: frozenset[str]) -> Excerpt:
     full stops, a schedule that is really a table. It is explicitly a *window*
     and says so, rather than being presented as a sentence it is not.
     """
-    anchor = 0
-    if query_terms:
-        lowered = display.lower()
-        hits = [lowered.find(term) for term in sorted(query_terms)]
-        found = [position for position in hits if position >= 0]
-        if found:
-            anchor = min(found)
+    anchor = _anchor(display, query_terms)
     start = max(0, anchor - WINDOW_RADIUS)
     end = min(len(display), start + 2 * WINDOW_RADIUS)
     # Never cut a word in half: walk out to the nearest whitespace.
@@ -261,11 +295,21 @@ def select_excerpt(text: str, query: str, *, answer_text: str | None = None,
 
 def excerpt_for_evidence(item: Any, query: str, *,
                          answer_text: str | None = None) -> dict[str, Any] | None:
-    """`select_excerpt` for one `Evidence`, keyed on that passage's marker."""
+    """`select_excerpt` for one `Evidence`, keyed on that passage's marker.
+
+    The excerpt is also assessed for extraction damage, and the verdict travels
+    with it. Selection itself is deliberately *not* steered away from damaged
+    text: the excerpt's job is to show the passage the answer rests on, and
+    quietly substituting a cleaner sentence from elsewhere in the chunk would
+    put a tidy quotation under a claim it does not support. A damaged passage is
+    shown as damaged, and the card says so.
+    """
     excerpt = select_excerpt(getattr(item, "text", "") or "", query,
                              answer_text=answer_text,
                              marker=getattr(item, "marker", None))
-    return excerpt.to_dict() if excerpt else None
+    if excerpt is None:
+        return None
+    return dict(excerpt.to_dict(), integrity=assess_integrity(excerpt.text).to_dict())
 
 
 def excerpt_config() -> dict[str, Any]:
@@ -276,6 +320,7 @@ def excerpt_config() -> dict[str, Any]:
         "window_radius": WINDOW_RADIUS,
         "sentence_length_limit": SENTENCE_LENGTH_LIMIT,
         "guarantee": "every excerpt is a verbatim substring of the retrieved "
-                     "chunk; offsets index the chunk as displayed",
+                     "chunk; offsets index the chunk as displayed; extraction "
+                     "damage is reported, never repaired",
         "strategies": ("whole_chunk", "sentence", "window"),
     }
