@@ -116,9 +116,15 @@ export default function Home() {
     setRateLimitQuery(null);
   };
 
-  const handleAsk = async (queryText) => {
+  // Phase E. `clarified` is the whole loop guard: the backend asks at most one
+  // clarifying question, and only when the query names no regime, instrument or
+  // provision. Whatever the user sends next goes through the full pipeline,
+  // because this flag rides with it. A second clarification is therefore not
+  // something the UI declines to show — it is something the backend never asks.
+  const handleAsk = async (queryText, opts = {}) => {
     const q = (queryText !== undefined ? queryText : question).trim();
     if (!q) return;
+    const clarified = opts.clarified === true;
 
     // Cancel any pending rate-limit retry
     cancelRateLimit();
@@ -134,7 +140,7 @@ export default function Home() {
       const res = await fetch(`${API_BASE_URL}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, clarified }),
       });
 
       const data = await res.json();
@@ -215,8 +221,15 @@ export default function Home() {
   const uncitedEvidence = evidenceList.filter((e) => !e.cited);
 
   const answerObj = result?.answer || {};
-  const isAbstained = result?.status === "ABSTAINED" || answerObj?.insufficient_evidence;
+  const needsClarification = result?.status === "NEEDS_CLARIFICATION";
+  // A clarification is not an abstention: nothing was retrieved and no evidence
+  // was weighed, so it must not be rendered as "the evidence did not support an
+  // answer" — and must not fall through to the ANSWERED branch either.
+  const isAbstained =
+    !needsClarification &&
+    (result?.status === "ABSTAINED" || answerObj?.insufficient_evidence);
   const isUnavailable = result?.status === "UNAVAILABLE";
+  const clarification = result?.clarification;
   const confidence = answerObj?.confidence;
 
   const confColor =
@@ -309,14 +322,43 @@ export default function Home() {
               )}
             </div>
 
-            {/* Collapsible Evidence Accordion */}
+            {/*
+              Phase F. What used to be here was a button revealing the whole
+              chunk — two to three printed pages of statute, which is grounded
+              and unreadable. The excerpt the backend selected is now shown by
+              default, and the full passage stays one click away for anyone
+              checking it in context.
+
+              The excerpt is a verbatim substring of e.text, chosen in
+              ai/answering/excerpt.py. Nothing here reformats it: no
+              truncation, no ellipsis, no case folding. A "window" strategy
+              means the passage had no sentence boundaries to cut on, and the
+              label says so rather than implying a sentence was quoted.
+            */}
+            {e.excerpt?.text && (
+              <div className="pt-1">
+                <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500 mb-1">
+                  {e.excerpt.strategy === "window"
+                    ? "Evidence window"
+                    : "Exact relevant passage"}
+                </div>
+                <blockquote className="border-l-2 border-blue-700/70 pl-3 py-1 bg-[#0b0e13] font-mono text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap overflow-x-auto">
+                  {e.excerpt.text}
+                </blockquote>
+              </div>
+            )}
+
+            {/* Full passage, on request */}
             <div className="pt-1">
               <button
                 type="button"
                 onClick={() => toggleSourceExpand(e.marker)}
                 className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors py-1 cursor-pointer font-semibold"
               >
-                <span>{isExpanded ? "▾ Hide evidence text" : "▸ View evidence text"}</span>
+                <span>
+                  {isExpanded ? "▾ Hide full passage" : "▸ View full passage"}
+                  {e.excerpt?.truncated ? "" : ""}
+                </span>
               </button>
 
               {isExpanded && (
@@ -588,12 +630,80 @@ export default function Home() {
                         </ul>
                       )}
                   </div>
+
+                  {/*
+                    Phase E, second stage. This sits beside the abstention and
+                    changes nothing about it: the status above still reads
+                    ABSTAINED and the reasons are still the pipeline's own. It
+                    offers a next question rather than telling the user to
+                    rephrase, and the retry carries clarified:true so this is
+                    the last time it can appear.
+                  */}
+                  {clarification && (
+                    <div className="p-3.5 border border-wireframe bg-[#0b0e13] text-xs space-y-2">
+                      <div className="text-zinc-300">{clarification.question}</div>
+                      <button
+                        type="button"
+                        onClick={() => handleAsk(question, { clarified: true })}
+                        className="font-mono text-blue-400 hover:text-blue-300 cursor-pointer"
+                      >
+                        ▸ Yes — search again on that reading
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* B2. NEEDS_CLARIFICATION — one question, then never again */}
+            {needsClarification && clarification && (
+              <section className="border border-wireframe bg-card">
+                <div className="px-5 py-3 border-b border-wireframe flex items-center justify-between">
+                  <h2 className="text-xs font-mono uppercase tracking-wider text-subtext">
+                    One quick question
+                  </h2>
+                  <span className="px-2 py-0.5 text-[10px] font-mono uppercase border border-blue-800/60 text-blue-300 bg-blue-950/20">
+                    NEEDS CLARIFICATION
+                  </span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="text-sm sm:text-base text-prose leading-relaxed">
+                    {clarification.question}
+                  </div>
+                  <div className="text-xs text-subtext font-mono">
+                    {clarification.reason}
+                  </div>
+                  {clarification.options?.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {clarification.options.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            const refined = `${question.trim()} (${option})`;
+                            setQuestion(refined);
+                            handleAsk(refined, { clarified: true });
+                          }}
+                          className="px-2.5 py-1 text-xs font-mono border border-wireframe text-zinc-300 hover:border-blue-700 hover:text-blue-300 transition-colors cursor-pointer"
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleAsk(question, { clarified: true })}
+                    className="text-xs font-mono text-blue-400 hover:text-blue-300 cursor-pointer"
+                  >
+                    ▸ Search anyway with what I typed
+                  </button>
                 </div>
               </section>
             )}
 
             {/* C. ANSWERED State */}
-            {!isAbstained && !isUnavailable && (
+            {!isAbstained && !isUnavailable && !needsClarification && (
               <section className="wireframe-box rounded-none">
                 <div className="border-b border-wireframe px-4 py-2.5 bg-[#141822] text-xs font-mono uppercase tracking-wider text-muted font-semibold flex items-center justify-between">
                   <span>Answer</span>

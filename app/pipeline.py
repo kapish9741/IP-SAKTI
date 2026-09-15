@@ -49,12 +49,14 @@ from ai.answering import (  # noqa: E402
     as_evidence_set,
     render_answer,
 )
+from ai.answering.excerpt import excerpt_config, excerpt_for_evidence  # noqa: E402
 from ai.answering.groq import GroqConfig, GroqProvider, load_env_file  # noqa: E402
 from ai.retrieval.base import load_chunks  # noqa: E402
 from ai.retrieval.bm25 import BM25Retriever  # noqa: E402
 from ai.retrieval.candidates import CandidateGenerator  # noqa: E402
 from ai.retrieval.identifiers import BM25IdentifierBoostRetriever  # noqa: E402
 from ai.reranking.features import FeatureReranker  # noqa: E402
+from app.clarify import clarify_config, post_abstention, pre_retrieval  # noqa: E402
 from app.cache import (  # noqa: E402
     DEFAULT_CACHE_PATH,
     DEFAULT_SEED_PATH,
@@ -302,7 +304,8 @@ class Pipeline:
 
     # -- the request path -----------------------------------------------------
 
-    def answer(self, question: str) -> dict[str, Any]:
+    def answer(self, question: str, *,
+               allow_clarification: bool = True) -> dict[str, Any]:
         """One question, at most one answer-generation call, no retries.
 
         *At most*, because a question this pipeline has already answered is
@@ -310,6 +313,11 @@ class Pipeline:
         input guards run first either way: an invalid question is rejected
         before anything is looked up, so the cache cannot become a second route
         past validation.
+
+        `allow_clarification=False` is how a caller says "this is the user's
+        second attempt — do not ask again". It is the only loop guard Phase E
+        has, and it is the caller's to set, because only the caller knows
+        whether it already showed one. See `app/clarify.py`.
         """
         question = (question or "").strip()
         if not question:
@@ -318,6 +326,14 @@ class Pipeline:
             raise ValueError(
                 f"Question is too long ({len(question)} characters; "
                 f"the limit is {MAX_QUESTION_CHARS}).")
+
+        if allow_clarification:
+            # Only for a question that anchors on no regime, no instrument and
+            # no provision. Nothing else short-circuits the pipeline, and this
+            # branch never touches the abstention logic.
+            upfront = pre_retrieval(question, self.lexical.aliases)
+            if upfront is not None:
+                return _needs_clarification(question, upfront)
 
         with self._lock:
             t0 = time.perf_counter()
@@ -361,6 +377,11 @@ class Pipeline:
                      source_status=item.source_status,
                      official_source_url=item.official_source_url,
                      retrieval_score=item.retrieval_score,
+                     # Phase F: the short verbatim span a source card shows
+                     # first. `text` stays beside it for "View full passage" —
+                     # the excerpt narrows what is shown, never what is kept.
+                     excerpt=excerpt_for_evidence(item, question,
+                                                  answer_text=answer.answer),
                      cited=item.chunk_id in cited)
                 for item in evidence],
             "timings_ms": {
@@ -376,8 +397,19 @@ class Pipeline:
                               if self.dense else "BM25+identifier-boost (lexical only)",
                 "reranker": self.reranker.name,
                 "provider": self.provider_name,
+                "excerpt": excerpt_config(),
+                "clarification": clarify_config(),
             },
         }
+        # Phase E, second and last place a clarification can appear: beside an
+        # abstention the pipeline has already decided on. `status` is not read
+        # back or changed by this — an ABSTAINED response stays ABSTAINED, with
+        # its reasons intact, and gains a suggestion for the next attempt.
+        if allow_clarification:
+            suggestion = post_abstention(question, result, self.lexical.aliases)
+            if suggestion is not None:
+                result["clarification"] = suggestion.to_dict()
+
         # Offered to the cache, which stores it only if it was published:
         # ANSWERED, grounded, with citations that resolved. An abstention and a
         # rate limit both reach this line and both leave unstored.
@@ -428,6 +460,41 @@ class Pipeline:
             "cache": self.cache.stats() if self.cache else {"enabled": False},
             "warnings": self.warnings,
         }
+
+
+def _needs_clarification(question: str,
+                         clarification: Any) -> dict[str, Any]:
+    """The response for a question that named no body of law at all.
+
+    Deliberately shaped like every other response — same keys, same disclaimer,
+    an empty `evidence` list — so a frontend renders it through the code path it
+    already has rather than needing a second one. `status` is its own value and
+    not `ABSTAINED`, because the two are different events: an abstention means
+    the system looked and the evidence did not support an answer, and this means
+    it has not looked yet and is asking what to look for. Reporting the second
+    as the first would inflate the abstention count with questions the evidence
+    was never consulted about.
+
+    No provider call is made, nothing is cached, and the next request — which
+    the caller sends with `clarified: true` — runs the full pipeline whatever
+    the user typed. That is what bounds Phase E to one question.
+    """
+    return {
+        "question": question,
+        "status": "NEEDS_CLARIFICATION",
+        "service_failure": None,
+        "answer": None,
+        "rendered": "",
+        "disclaimer": SYSTEM_DISCLAIMER,
+        "evidence": [],
+        "clarification": clarification.to_dict(),
+        "timings_ms": {"retrieval": 0.0, "reranking": 0.0,
+                       "answering": 0.0, "total": 0.0},
+        "pipeline": {"candidates": 0, "evidence_count": 0,
+                     "stage": "pre_retrieval",
+                     "clarification": clarify_config()},
+        "cache": {"hit": False, "stored": False},
+    }
 
 
 def _from_cache(entry: dict[str, Any], question: str,
