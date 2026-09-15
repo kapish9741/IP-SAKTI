@@ -249,6 +249,10 @@ export default function Home() {
   const handleAsk = async (queryText) => {
     const q = (queryText !== undefined ? queryText : question).trim();
     if (!q) return;
+    const requestLanguage =
+      queryText !== undefined && SAMPLES.includes(queryText)
+        ? LANGUAGES[0]
+        : selectedLanguage;
 
     // Cancel any pending rate-limit retry
     cancelRateLimit();
@@ -265,12 +269,12 @@ export default function Home() {
 
     try {
       let englishQuestion = q;
-      if (selectedLanguage.code !== "en") {
+      if (requestLanguage.code !== "en") {
         setTranslationStage("Translating question to English");
         try {
           englishQuestion = await translateText({
             text: q,
-            sourceLanguage: selectedLanguage.code,
+            sourceLanguage: requestLanguage.code,
             targetLanguage: "en",
           });
         } catch (translationError) {
@@ -313,15 +317,15 @@ export default function Home() {
         const originalAnswer = data?.answer?.answer;
         if (
           data.status === "ANSWERED" &&
-          selectedLanguage.code !== "en" &&
+          requestLanguage.code !== "en" &&
           originalAnswer
         ) {
-          setTranslationStage(`Translating answer to ${selectedLanguage.label}`);
+          setTranslationStage(`Translating answer to ${requestLanguage.label}`);
           try {
             const translatedAnswer = await translateText({
               text: originalAnswer,
               sourceLanguage: "en",
-              targetLanguage: selectedLanguage.code,
+              targetLanguage: requestLanguage.code,
               protectedTerms: collectProtectedTerms(data),
             });
             setDisplayAnswer(translatedAnswer);
@@ -689,6 +693,8 @@ export default function Home() {
                 type="button"
                 onClick={() => {
                   setQuestion(s);
+                  setSelectedLanguageCode("en");
+                  handleAsk(s);
                 }}
                 disabled={loading}
                 className="text-xs font-sans px-3 py-1.5 bg-[#141720] hover:bg-[#1c212e] text-subtext hover:text-prose border border-wireframe/80 rounded-none transition-colors text-left"
