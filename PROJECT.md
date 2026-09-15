@@ -8,7 +8,11 @@ Written 2026-09-07, at `60c4d2c` on branch `rag`.
 Updated 2026-09-16 for the final quality sprint — §2, §3 (Phase 9) and §5.3 —
 and again for the UX and data-integrity sprint (Phase 10): §2, §3, §5.7 and a
 new §5.8 recording what the source PDFs themselves are missing.
-`docs/SIH_METRICS_FINAL.md` remains the single source of truth for every number.
+`docs/METRICS_FULL_EVIDENCE.md` remains the single source of truth for every
+number, with the full working behind each one. `docs/SIH_METRICS_FINAL.md` is
+the one-page extract for the SIH panel and `docs/SUBMISSION_METRICS_FINAL.md`
+the compact submission table; neither introduces a figure the evidence document
+does not carry.
 
 ---
 
@@ -286,7 +290,7 @@ questions into abstentions, and the layer has no retry by design.
   of 14,145 ms and a p95 of 98,203 ms**, against **49 ms / 78 ms** for the
   feature reranker. It buys +2.7 pp Recall@1 and *loses* at Recall@5 and
   Recall@10. The feature reranker is now the evidence-backed choice rather than
-  the convenient one. See `docs/SIH_METRICS_FINAL.md` §7.4.
+  the convenient one. See `docs/METRICS_FULL_EVIDENCE.md` §7.4.
 * **Mode A × cross-encoder** — "expanded beats routed" is measured for identity
   and features, assumed for the cross-encoder.
 * **The 512-token truncation.** 35.8% of scored pairs were truncated and both
