@@ -244,8 +244,38 @@ $("form").onsubmit = async e => {
 
 function render(d) {
   const a = d.answer, out = $("out");
-  const conf = {HIGH:"ok", MODERATE:"", LOW:"warn", NONE:"stop"}[a.confidence] ?? "";
+  // `a` is null for SOCIAL and NEEDS_CLARIFICATION — nothing was retrieved, so
+  // there is no answer object to read a confidence off. Both were falling
+  // through to the ANSWERED branch and throwing on `a.confidence`.
+  const conf = a ? ({HIGH:"ok", MODERATE:"", LOW:"warn", NONE:"stop"}[a.confidence] ?? "") : "";
   let html = "";
+
+  if (d.status === "SOCIAL") {
+    html += `<section><div class="sec-head">Conversational reply</div><div class="sec-body">
+      <div class="answer">${esc(d.rendered || "")}</div>
+      <p style="color:var(--muted);font-size:13.5px;margin:14px 0 0">
+        No legal retrieval was performed, so this carries no citation and no
+        confidence rating. Ask an IP or regulatory-law question to run the
+        full pipeline.</p>
+      </div></section>`;
+    out.innerHTML = html;
+    return;
+  }
+
+  if (d.status === "NEEDS_CLARIFICATION") {
+    const c = d.clarification || {};
+    html += `<section><div class="sec-head">One question first</div><div class="sec-body">
+      <div class="answer">${esc(c.question || "")}</div>
+      ${c.reason ? `<p style="color:var(--muted);font-size:13.5px;margin:10px 0 0">${esc(c.reason)}.</p>` : ""}
+      ${(c.options || []).length ? `<p style="margin:12px 0 0;font-size:13.5px">
+        ${c.options.map(o => `<span class="mini">${esc(o)}</span>`).join(" ")}</p>` : ""}
+      <p style="color:var(--muted);font-size:13.5px;margin:14px 0 0">
+        Asked once. Send the question again with more detail and the pipeline
+        runs whatever it looks like.</p>
+      </div></section>`;
+    out.innerHTML = html;
+    return;
+  }
 
   if (d.status === "UNAVAILABLE") {
     const f = d.service_failure || {};

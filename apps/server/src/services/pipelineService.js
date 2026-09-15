@@ -23,7 +23,7 @@ const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || "http://127.0.0.1:800
 /**
  * Primary Service Entrypoint: Process legal question
  */
-export async function askQuestion(question) {
+export async function askQuestion(question, { clarified = false } = {}) {
   // 1. Input validation
   if (!question || typeof question !== "string") {
     return { statusCode: 400, data: normalizeInvalidRequest("Please provide a valid legal question.") };
@@ -43,7 +43,11 @@ export async function askQuestion(question) {
     const res = await fetch(`${PYTHON_SERVER_URL}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: trimmed }),
+      // `clarified` is the entire loop guard for the one clarifying question
+      // the backend is allowed to ask (app/clarify.py). This proxy used to drop
+      // it, so a user who answered the clarification was asked it again — the
+      // loop the flag exists to prevent, reintroduced by the hop through here.
+      body: JSON.stringify({ question: trimmed, clarified: clarified === true }),
       signal: AbortSignal.timeout(20000),
     });
 
@@ -52,7 +56,7 @@ export async function askQuestion(question) {
       return { statusCode: 200, data: rawPythonResult };
     }
   } catch (err) {
-    console.warn(`[pipelineService] Python server at ${PYTHON_SERVER_URL} unreachable, checking fallback fixtures...`);
+    console.warn(`[pipelineService] Python server at ${PYTHON_SERVER_URL} unreachable; reporting UNAVAILABLE`);
   }
 
   // 3. The backend could not be reached. Say so.
