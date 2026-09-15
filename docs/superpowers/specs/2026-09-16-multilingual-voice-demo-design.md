@@ -41,6 +41,14 @@ The existing Next.js page gains:
   speech recognition, translation failure, and RAG failure.
 - The required demo-layer label and the existing legal disclaimer.
 
+The UI pass will simplify the existing presentation rather than replace its
+design language: group language, microphone, transcript, editable question,
+and submit actions into one obvious interaction card; reduce competing borders
+and badges; improve spacing and mobile stacking; and retain the evidence-first
+answer, caution, source, and disclaimer hierarchy. No decorative redesign may
+obscure status, confidence, citation navigation, or the difference between an
+answer, abstention, and provider failure.
+
 The page keeps the unmodified RAG response in `result`. A separate
 `displayAnswer` value holds translated explanatory prose. Citation and source
 components continue to render from `result`, ensuring translation cannot alter
