@@ -11,6 +11,7 @@ import pytest
 
 from app.intent import (
     ACKNOWLEDGEMENT,
+    CAPABILITY,
     FAREWELL,
     GREETING,
     PHRASES,
@@ -32,6 +33,11 @@ SOCIAL = [
     ("ok", ACKNOWLEDGEMENT), ("yay", ACKNOWLEDGEMENT), ("cool", ACKNOWLEDGEMENT),
     ("got it", ACKNOWLEDGEMENT),
     ("bye", FAREWELL), ("goodbye", FAREWELL), ("see you", FAREWELL),
+    ("help", CAPABILITY), ("Help!", CAPABILITY), ("help me", CAPABILITY),
+    ("how can you help", CAPABILITY), ("How can you help me?", CAPABILITY),
+    ("what can you do", CAPABILITY), ("What can you do?", CAPABILITY),
+    ("who are you", CAPABILITY), ("what do you do", CAPABILITY),
+    ("can you help", CAPABILITY), ("how does this work", CAPABILITY),
 ]
 
 #: Real questions, off-topic questions and near-misses. Every one of these must
@@ -53,6 +59,12 @@ NOT_SOCIAL = [
     "What is the term of copyright?",
     "ok so what happens if the applicant does not respond",
     "How do I register a tradmark?",
+    # The capability table must not reach past its own exact keys. Each of
+    # these contains one of them as a substring.
+    "help me understand the opposition procedure",
+    "What can you tell me about compulsory licensing?",
+    "who are the persons entitled to apply for a patent?",
+    "how does this work for a geographical indication?",
 ]
 
 
@@ -119,3 +131,59 @@ def test_the_config_states_what_it_guarantees():
     assert config["uses_model"] is False
     assert config["deterministic"] is True
     assert config["phrase_count"] == len(PHRASES)
+
+
+# -- capability questions (issue 1, second half) ------------------------------
+
+CAPABILITY_INPUTS = ["help", "Help", "help me", "i need help", "can you help",
+                     "how can you help", "how can you help me",
+                     "what can you do", "what do you do", "what can i ask",
+                     "who are you", "what are you", "how does this work"]
+
+
+@pytest.mark.parametrize("query", CAPABILITY_INPUTS)
+def test_a_question_about_the_assistant_never_reaches_retrieval(query):
+    """The screenshot bug: "help" abstained instead of saying what this is.
+
+    It carries the same SOCIAL status as a greeting, so the answer, evidence
+    and confidence fields stay empty and nothing counts it as a legal answer.
+    """
+    result = classify(query)
+    assert result is not None, f"{query!r} should have been a capability question"
+    assert result.intent == CAPABILITY
+    assert result.to_dict()["retrieval_performed"] is False
+
+
+def test_the_capability_reply_says_what_the_corpus_is_and_how_answers_are_made():
+    reply = REPLIES[CAPABILITY]
+    assert "22" in reply and "corpus" in reply
+    assert "citations" in reply
+    # It must offer a next step rather than only describing itself.
+    assert "Ask me" in reply
+
+
+def test_the_greeting_reply_hands_the_turn_back_to_a_legal_question():
+    assert "IP-SAKTI" in REPLIES[GREETING]
+    assert "citations" in REPLIES[GREETING]
+
+
+def test_no_reply_claims_a_confidence_level_or_cites_anything():
+    """A social reply must not look like a published legal claim."""
+    for intent, reply in REPLIES.items():
+        assert "[1]" not in reply, intent
+        for word in ("HIGH", "MODERATE", "LOW"):
+            assert word not in reply, intent
+
+
+ORDINARY_LEGAL_QUESTIONS = [
+    "How must an application for registration of a trade mark be signed?",
+    "What is the term of protection of a registered design?",
+    "What does section 3(p) of the Patents Act exclude from patentability?",
+    "How do I oppose a trade mark application?",
+    "What are the grounds for revocation of a patent?",
+]
+
+
+@pytest.mark.parametrize("query", ORDINARY_LEGAL_QUESTIONS)
+def test_ordinary_legal_questions_still_bypass_the_social_layer(query):
+    assert classify(query) is None, f"{query!r} was wrongly treated as social"

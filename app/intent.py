@@ -7,6 +7,13 @@ module existed every greeting went through `app/clarify.py`, which is the wrong
 instrument: clarification exists to narrow a legal question that named no body
 of law, and "thanks" is not an under-specified legal question.
 
+"help" and "what can you do" are the same problem asked the other way round.
+They are questions *about the assistant*, so the corpus has nothing to retrieve
+against and the pipeline returned five weakly-matching passages and an
+abstention — a user's first input answered with "no answer was published". They
+are handled here as :data:`CAPABILITY`, under the same guards and the same
+`SOCIAL` status as a greeting.
+
 The whole gate is a closed set of phrases matched against the *entire* input.
 No model, no network, no embedding, no scoring threshold. That is a deliberate
 constraint rather than an optimisation: the failure this gate could cause —
@@ -50,19 +57,32 @@ from app.clarify import anchors
 INTENT_VERSION = "0.1.0"
 
 GREETING = "GREETING"
+CAPABILITY = "CAPABILITY"
 SMALL_TALK = "SMALL_TALK"
 THANKS = "THANKS"
 ACKNOWLEDGEMENT = "ACKNOWLEDGEMENT"
 FAREWELL = "FAREWELL"
 
-INTENTS = (GREETING, SMALL_TALK, THANKS, ACKNOWLEDGEMENT, FAREWELL)
+INTENTS = (GREETING, CAPABILITY, SMALL_TALK, THANKS, ACKNOWLEDGEMENT, FAREWELL)
 
 #: One reply per intent. Written out rather than generated, because a fixed
 #: string cannot hallucinate and every word here is reviewable. Each one ends by
 #: handing the turn back to the subject the system actually knows about.
 REPLIES: dict[str, str] = {
-    GREETING: "Hello! How can I help you with an intellectual-property or "
-              "regulatory-law question?",
+    GREETING: "Hello! I'm IP-SAKTI, a statutory-law assistant. Ask me a "
+              "question about the legal instruments in my corpus and I'll "
+              "retrieve the relevant provisions with citations.",
+    CAPABILITY: "I answer questions about Indian intellectual-property and "
+                "related regulatory law — patents, trade marks, copyright, "
+                "designs, geographical indications, plant varieties, "
+                "biodiversity and benefit-sharing, and drugs and cosmetics — "
+                "from a fixed corpus of 22 published legal instruments. Every "
+                "answer is generated only from passages retrieved from those "
+                "texts and is shown with its citations, so you can check each "
+                "claim against the source. Where the corpus does not support "
+                "an answer, I say so instead of guessing. Ask me something "
+                "like \"What is the term of a patent in India?\" or \"How do I "
+                "oppose a trade mark application?\"",
     SMALL_TALK: "I'm doing well, thank you. What IP question can I help you with?",
     THANKS: "You're welcome.",
     ACKNOWLEDGEMENT: "Happy to help. Ask me another question whenever you're ready.",
@@ -94,6 +114,24 @@ _register(
     "hello there", "hi all", "hello all", "hi everyone", "hello everyone",
     "good morning", "good afternoon", "good evening", "good day",
     "morning", "gm", "hi hello", "hello hi",
+)
+
+#: Questions about the assistant rather than about law. They name no provision
+#: and no regime, so retrieval has nothing to match and used to return five
+#: passages and an abstention — the screenshot behaviour this intent removes.
+#: "help" is safe as a whole-segment key for the same reason every other entry
+#: is: "help me with section 3" anchors on a provision and never reaches here.
+_register(
+    CAPABILITY,
+    "help", "help me", "i need help", "can you help", "can you help me",
+    "can u help", "can you help me out", "please help", "need help",
+    "how can you help", "how can you help me", "how can u help",
+    "how can you help me today", "what can you do", "what do you do",
+    "what can you do for me", "what can i ask", "what can i ask you",
+    "what can you help with", "what can you help me with",
+    "who are you", "what are you", "who r u", "who are u",
+    "how do you work", "how does this work", "what is ip sakti",
+    "what is ip shakti", "tell me what you can do", "your capabilities",
 )
 
 _register(
