@@ -1,0 +1,74 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  GoogleCloudTranslationProvider,
+  splitProtectedSegments,
+} from "./translation.mjs";
+
+test("keeps citations, statute names, locators, dates, URLs, and numeric ranges out of translated segments", () => {
+  const text = "Under Trade Marks Rules, 2017, Rule 23 applies on 2026-09-16 [1] at https://example.test/source for pages 59–61.";
+  const segments = splitProtectedSegments(text, [
+    "Trade Marks Rules, 2017",
+    "Rule 23",
+  ]);
+  const protectedText = segments
+    .filter((part) => part.protected)
+    .map((part) => part.text);
+
+  assert.deepEqual(protectedText, [
+    "Trade Marks Rules, 2017",
+    "Rule 23",
+    "2026-09-16",
+    "[1]",
+    "https://example.test/source",
+    "59–61",
+  ]);
+});
+
+test("translates only explanatory segments and reconstructs protected text byte for byte", async () => {
+  const calls = [];
+  const client = {
+    async translate(parts, options) {
+      calls.push({ parts, options });
+      return [parts.map((part) => `हिन्दी:${part}`)];
+    },
+  };
+  const provider = new GoogleCloudTranslationProvider({ client });
+
+  const result = await provider.translate({
+    text: "The application is signed under Trade Marks Rules, 2017 — Rule 23 [1].",
+    sourceLanguage: "en",
+    targetLanguage: "hi",
+    protectedTerms: ["Trade Marks Rules, 2017", "Rule 23"],
+  });
+
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].options, {
+    from: "en",
+    to: "hi",
+    format: "text",
+  });
+  assert.equal(
+    calls[0].parts.join("").includes("Trade Marks Rules, 2017"),
+    false,
+  );
+  assert.equal(result.includes("Trade Marks Rules, 2017 — Rule 23 [1]"), true);
+});
+
+test("returns English text unchanged without calling the external client", async () => {
+  const client = {
+    async translate() {
+      throw new Error("must not be called");
+    },
+  };
+  const provider = new GoogleCloudTranslationProvider({ client });
+
+  const result = await provider.translate({
+    text: "Already English [1].",
+    sourceLanguage: "en",
+    targetLanguage: "en",
+  });
+
+  assert.equal(result, "Already English [1].");
+});
