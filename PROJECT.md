@@ -5,7 +5,9 @@ system this is meant to become. Companion to `README.md`, which covers setup and
 layout.
 
 Written 2026-09-07, at `60c4d2c` on branch `rag`.
-Updated 2026-09-16 for the final quality sprint — §2, §3 (Phase 9) and §5.3.
+Updated 2026-09-16 for the final quality sprint — §2, §3 (Phase 9) and §5.3 —
+and again for the UX and data-integrity sprint (Phase 10): §2, §3, §5.7 and a
+new §5.8 recording what the source PDFs themselves are missing.
 `docs/SIH_METRICS_FINAL.md` remains the single source of truth for every number.
 
 ---
@@ -52,6 +54,7 @@ Four commitments follow from that, and each is visible in the code:
 | 7 | Grounded answer engine | **Provisional** — 2 answers published, of 9 live requests |
 | 8 | Ground-truth validation | **AI-complete** — 111/111 AI-judged, 0/111 human-verified |
 | 9 | Final quality sprint | **Complete** — R@1 0.802 → 0.847, R@10 1.000, 1,000-question synthetic benchmark, bounded clarification, excerpt-first citations |
+| 10 | UX and data integrity | **Complete** — social-intent gate, two-axis confidence, corpus-grounded spelling repair, extraction-damage detection; retrieval unchanged |
 
 ---
 
@@ -201,10 +204,33 @@ label author's own `notes` are withheld from the judge, each asserted absent fro
 all 111 packets.  Packets are byte-stable and hash-pinned in a frozen manifest.
 **Network requests across all of Phase 8: 0.**
 
+### Phase 10 — UX and data integrity
+Four deterministic layers, none of which touches retrieval, reranking, citation
+validation or the grounding gate, and each of which is off by construction when
+its condition does not hold.
+
+* `app/intent.py` — a closed table of 92 conversational phrases, matched against
+  the whole input and only when it anchors on no regime, document or provision.
+  A greeting returns `status: SOCIAL` with no answer and no evidence, so it is
+  counted in no answer rate. 0/111 benchmark questions are captured.
+* `app/spelling.py` — the corpus is the dictionary. Only out-of-vocabulary words
+  of four or more letters are examined and only runs of ASCII letters at all, so
+  identifiers are never offered to it. Matching is on a silent-letter skeleton
+  with Damerau distance 1. Retrieval sees the corrected string; the generator and
+  the response see the question as typed. **0/111 clean benchmark questions
+  altered.**
+* `ai/answering/confidence.py` — the single ordinal label split into
+  `source_confidence` and `support_confidence`, published as the lower of the
+  two with every contributing factor named. Nothing was promoted: level B and
+  STALE still cannot reach HIGH, asserted exhaustively.
+* `ai/text_integrity.py` — detection only. 211/3,073 chunks carry PDF-extraction
+  damage from two causes that are both upstream of this repository, and a damaged
+  passage is shown verbatim behind a disclosure rather than repaired.
+
 ### Cross-cutting
-671 tests. Fixture-driven offline paths for every layer that can reach a model or
-A network. `docs/PHASE7_FREEZE.md` freezes the Phase 7 record so no later phase
-can improve its own numbers by editing an earlier one.
+1,017 tests. Fixture-driven offline paths for every layer that can reach a model
+or a network. `docs/PHASE7_FREEZE.md` freezes the Phase 7 record so no later
+phase can improve its own numbers by editing an earlier one.
 
 ---
 
@@ -307,6 +333,28 @@ carried a table of hardcoded answers with fabricated citations and
 been through no retrieval, no citation validation and no grounding gate, and
 were indistinguishable from real output. An unreachable backend now returns
 `UNAVAILABLE`.
+
+**Fixed in the UX sprint:** the same file dropped the `clarified` flag on its way
+to the Python backend. The web app sends it and `app/pipeline.py` reads it, and
+it is the entire loop guard on the one clarifying question the system may ask —
+so a user who answered the clarification was asked it again.
+
+### 8. What the source PDFs themselves are missing
+**211 of 3,073 chunks (6.9 %) did not survive PDF extraction**, and the damage is
+upstream of every line of code here — the corrupted passage is byte-identical at
+extraction, cleaning, structuring and chunking. Two causes:
+
+* `2016DrugsandCosmeticsAct1940Rules1945.pdf` and `Trademarks rules 2017.pdf`
+  position glyphs individually — 1,604 text-positioning operators for 3,481
+  characters on one page — so any extractor must guess word boundaries from
+  horizontal gaps. poppler's `pdftotext` reproduces the breakage exactly, so
+  **changing extraction library will not fix this.**
+* The Second Schedule forms of the Patents Rules, 2003 are image scans whose
+  dotted fill lines OCR into runs of `e`, `c` and `o`.
+
+`ai/text_integrity.py` detects both and repairs neither. The real fix is a
+cleaner source copy for two PDFs, which is a corpus acquisition task and not an
+engineering one. Until then the affected passages are disclosed as damaged.
 
 ### Also unresolved
 * **Rate limiting is unmodelled.** Any future batch run hits the TPM cap again.

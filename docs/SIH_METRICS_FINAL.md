@@ -18,6 +18,9 @@ Regenerate everything with:
 # retrieval, 1,000 synthetic questions
 .venv/bin/python scripts/evaluation/generate_synthetic_benchmark.py
 .venv/bin/python scripts/evaluation/run_synthetic_benchmark.py --retrieval
+# typo tolerance, and the four UX fixes end to end
+.venv/bin/python scripts/evaluation/benchmark_typos.py
+.venv/bin/python scripts/demo/verify_ux_fixes.py --sleep 22
 .venv/bin/python -m pytest -q
 ```
 
@@ -26,6 +29,14 @@ heading-coverage reranking feature; the pre-sprint figures are kept in every
 table as the "before" column rather than overwritten. Section 2.4 adds a second,
 harder benchmark of 1,000 synthetic questions. Section 7.5 records the
 cross-encoder latency this document previously listed as unmeasured.
+
+**Updated 2026-09-16 (UX and data-integrity sprint).** Section 13 is new and
+covers four reported defects — social input, unexplained LOW confidence, typo
+intolerance, and garbled source text — with the measured root cause of each.
+Retrieval and reranking are **unchanged**: §2.1's figures are identical before
+and after, §13.5 records the one retrieval experiment that was tried and
+reverted, and §13.6 explains how much of the 1,000-question benchmark's 70.1 %
+is a labelling defect rather than a retrieval weakness.
 
 ---
 
@@ -642,7 +653,22 @@ See §6 for run-to-run variability.
 - Retrieval + reranking in **~52 ms**; end-to-end median **~1.3 s**.
 - End-to-end **API-ready architecture** with a documented response contract and
   a distinct `UNAVAILABLE` state for provider failures.
-- **706 automated tests passing.**
+- Conversational input (`hi`, `thanks`) is answered as conversation, **without
+  retrieval and without a citation** — a deterministic phrase table, 23/23
+  social inputs classified and 15/15 legal or off-topic inputs passed through.
+- Common misspellings are repaired **against the corpus's own vocabulary**
+  before retrieval, with the question as typed preserved on the response:
+  32/33 deliberate misspellings corrected, **0/26 false positives**, and
+  **0/111** clean benchmark questions altered.
+- Confidence is published as **two stated axes with every factor named** —
+  source provenance and answer support — so a LOW answer says why it is LOW.
+- **211 of 3,073 chunks (6.9 %) carry a PDF-extraction damage flag**, detected
+  deterministically and **never repaired**; the affected passage is shown
+  verbatim behind a "source text extraction issue" banner.
+- The displayed excerpt is a **verbatim substring of the stored chunk** after
+  display-whitespace normalisation and nothing else — asserted over all 3,073
+  chunks.
+- **1,017 automated tests passing.**
 
 ## 10. What We Must Not Claim
 
@@ -664,6 +690,15 @@ See §6 for run-to-run variability.
 - ❌ Reporting an answer-quality figure without its denominator — the answer
   sample is a **stratified sample of 60**, not 1,000, and Groq free-tier rate
   limits are the reason.
+- ❌ Quoting the **equivalence-adjusted** 79.9 % without the strict 70.1 %
+  beside it, or describing the adjustment as a retrieval improvement. It is a
+  correction to the benchmark's labels; the retriever did not change.
+- ❌ Claiming the garbled source text was *fixed*. It is detected and disclosed.
+  The corruption is in the source PDFs and survives a change of extractor.
+- ❌ Claiming typo tolerance improved Recall@1. It improved Recall@5 by four
+  questions and cost one at Recall@1 on the injected-typo run.
+- ❌ Treating a `SOCIAL` response as an answered or abstained request. It is
+  neither, and it carries no citation, no grounding flag and no confidence.
 
 ---
 
@@ -682,7 +717,10 @@ See §6 for run-to-run variability.
 | Primary cause of the gap | Neighbouring provisions of the same instrument (10/18) and Act-vs-Rules confusion (5/18); in 17/18 cases both retrievers agree on the wrong provision |
 | Improvement implemented | Bounded heading-coverage bonus (0.25), on top of the operative-text demotion |
 | Result | Recall@1 0.8018 → **0.8468**, Recall@5 0.9640 → **0.9910**, Recall@10 0.9730 → **1.0000**, MRR 0.8628 → **0.8995**; 5 promoted to rank 1, **0 demoted**, 0 lost from Top-5 |
-| Risk | Low — deterministic, reversible (`heading_bonus=0.0` is bit-identical on all 111), no latency cost, **821 tests green** |
+| Risk | Low — deterministic, reversible (`heading_bonus=0.0` is bit-identical on all 111), no latency cost, **1,017 tests green** |
+| Recall@1 (1,000 synthetic, equivalence-adjusted) | **79.9 % (767/960)** — §13.6; quote only beside the strict 70.1 % |
+| Source-text integrity | **211/3,073 chunks (6.9 %)** flagged as extraction-damaged; detected, disclosed, never repaired |
+| UX sprint effect on retrieval | **None** — R@1/R@5/R@10/MRR identical before and after |
 | Prototype status | **READY WITH LIMITATION** — ground truth is not human-verified and answer correctness is unmeasured |
 
 ---
@@ -731,11 +769,379 @@ and says so rather than being estimated.
 | | Questions answer-evaluated | 60 | provider-limited |
 | | Questions AI-judged | 60 | Claude Code session, 0 API calls |
 | | **Questions human-verified** | **0** | **of 111 golden and of 1,000 synthetic** |
-| **Tests** | Automated tests passing | **848 / 848** | measured |
-| | New tests this sprint | 86 | measured |
+| **Tests** | Automated tests passing | **1,017 / 1,017** | measured |
+| | New tests, quality sprint | 86 | measured |
+| | New tests, UX sprint | 169 | measured |
+| **Source integrity** | Chunks flagged extraction-damaged | **211 / 3,073 (6.9 %)** | measured, §13.4 |
+| | Instruments entirely clean | 12 / 22 | measured |
+| | Excerpt-is-a-substring invariant | 3,073 / 3,073 | asserted in tests |
 
 ### The one sentence that must accompany every number above
 
 > Evaluation uses a synthetic, AI-generated and AI-judged benchmark derived from
 > the fixed corpus. It is an engineering evaluation and not human-verified legal
 > ground truth.
+
+---
+
+## 13. UX and data-integrity sprint (2026-09-16)
+
+Four reported defects, their measured root causes, and what each fix is worth.
+Nothing in this section changed retrieval or reranking: the 111-question figures
+in §2.1 are **identical before and after** — R@1 0.8468, R@5 0.9910, R@10 1.0000,
+MRR 0.8995 — and §13.5 records the one retrieval experiment that was tried and
+reverted.
+
+```bash
+.venv/bin/python -m pytest -q                                  # 1,017 tests
+.venv/bin/python scripts/evaluation/benchmark_reranking.py \
+    --candidate-mode expanded --reranker features --tag postsprint
+.venv/bin/python scripts/evaluation/benchmark_typos.py
+.venv/bin/python scripts/evaluation/run_synthetic_benchmark.py --retrieval --tag equiv
+.venv/bin/python scripts/demo/verify_ux_fixes.py --sleep 22
+```
+
+### 13.1 Social and conversational input
+
+**Root cause.** There was no intent layer. `hi`, `thanks` and `how are you?`
+anchor on no regime, no document and no provision, and carry fewer than three
+content terms, so `app/clarify.py:pre_retrieval` matched them and every greeting
+was answered with *"Which area of IP or regulatory law does your question
+concern?"*. That is the clarifier working exactly as specified — it is the wrong
+instrument for the input, not a bug in itself.
+
+**Fix.** `app/intent.py`, a closed table of 92 phrases matched against the whole
+input, before the clarifier. Three guards, each sufficient on its own to refuse:
+an input that anchors on anything the router can see is never social; every
+segment must match, so `hi, how do I register a trade mark?` is not a greeting;
+and matching is exact, so an off-topic *question* is not swallowed. Replies are
+fixed strings. `status` is `SOCIAL`, `answer` is null and `evidence` is empty, so
+no greeting can be counted in a grounded-answer or abstention rate.
+
+**Measured.** 23/23 declared social inputs classified correctly; 15/15 legal,
+off-topic and mixed inputs pass through untouched (`tests/test_intent_gate.py`,
+45 tests). 0/111 benchmark questions are captured by the gate. `fine` and `good`
+were written into the table and then removed: a fine is a penalty and good faith
+is a doctrine, and `tests/test_intent_gate.py` now asserts neither can return.
+
+### 13.2 LOW confidence
+
+**Root cause, measured rather than assumed.** Confidence read one thing: the
+provenance of the cited *documents*. Of 41 published answers in the 60-question
+sample, 15 were LOW, and the cause decomposes exactly:
+
+| cause | count |
+| --- | ---: |
+| every cited instrument marked STALE | 13/15 |
+| conflicting provisions detected | 2/15 |
+| weak retrieval or weak grounding | **0/15** |
+
+The label was not miscalibrated in direction — put to the AI judge, LOW answers
+graded correct-or-partial **12/15 (80.0%)**, MODERATE **17/20 (85.0%)**, HIGH
+**6/6 (100%)**. It was answering a different question from the one it was
+printed under. A tier that is right four times in five is not telling a reader
+what "low confidence" means.
+
+A second defect: `statuses == {STALE}` returned LOW while a *mixed* set fell
+through to MODERATE, so an answer resting partly on an amended instrument scored
+**better** than one resting wholly on it, although the amended part carries the
+same risk either way.
+
+**Fix.** `ai/answering/confidence.py` splits the label along the seam it was
+already broken on. `source_confidence` is the old rule, unrelaxed.
+`support_confidence` is the missing axis: grounding strength, citation validity,
+and where retrieval ranked the cited passage. The published level is the lower of
+the two, and every factor that set either is on the response and rendered in the
+UI, so "LOW" is never bare.
+
+**Nothing was promoted.** Level B never reaches HIGH — `NOT_COMPARED` means the
+publisher's site was unreachable when the registry was built and the local copy
+was never compared — and neither does STALE. `tests/test_confidence.py`
+exhaustively asserts that no combination of a perfect answer and an imperfect
+source produces HIGH. The mixed-stale case is now capped at MODERATE and named.
+
+**What this changed, measured: one answer in forty-one.** Re-scoring the same 60
+question sample under the new model:
+
+| level | before | after |
+| --- | ---: | ---: |
+| HIGH | 6 (14.6%) | 5 (12.2%) |
+| MODERATE | 20 (48.8%) | 21 (51.2%) |
+| LOW | 15 (36.6%) | 15 (36.6%) |
+
+**One level moved**, and it moved down: S0061, HIGH → MODERATE, because the
+answer rests on a passage retrieval ranked second. The source-axis *outcomes* are
+identical to the old rule by construction — level B and STALE were already
+capped below HIGH, and the new `some_sources_stale` rule names a reason that was
+previously unnamed rather than changing a level.
+
+**So the value of this fix is the explanation, not the recalibration, and it
+should not be sold as the second.** The diagnosis said the label was not
+miscalibrated in direction but unexplained and conflated, and the re-scoring
+confirms it. What a user now gets is not a different word but the sentence behind
+it: *"every cited instrument has been amended since the consolidation held in
+this corpus"* instead of a bare LOW. Judge pass rate by tier is essentially
+unmoved — HIGH 5/5, MODERATE 18/21 (85.7%), LOW 12/15 (80.0%) — which is the
+expected result of a change that reorders nothing.
+
+**Support thresholds and how far to trust them.** Best-cited-rank 1 graded
+33/37 (89.2%) against 2/4 (50.0%) for rank ≥ 2; two or more citations graded
+14/15 (93.3%) against 21/26 (80.8%) for one. Those splits point the right way and
+n = 4 does not establish a threshold. The rules are a-priori defensible and the
+sample is *consistent* with them, which is a weaker claim than calibration and
+the only one the data supports. The judgements are AI-generated on a synthetic
+benchmark and are not human-verified ground truth.
+
+### 13.3 Spelling and typo tolerance
+
+**Root cause.** No normalisation layer. `tradmark` is a token no chunk contains,
+BM25 scores an unmatched term at zero, and — the larger effect — a misspelled
+regime name matches no document alias and no regime term, so the request never
+reached retrieval at all: `app/clarify.py` intercepted it and asked which area of
+law was meant, of a question that named one.
+
+**Fix.** `app/spelling.py`. The corpus is the dictionary: a word is correct if it
+occurs in corpus text, and a correction target must occur in ≥ 5 chunks. Only
+out-of-vocabulary words of ≥ 4 letters are considered, so every archaic spelling
+in the Drugs and Cosmetics Rules, 1945 is untouchable by construction, and only
+runs of ASCII letters are examined, so `85B`, `3(p)` and `31bis` are never
+offered to the corrector. Matching is on a `skeleton` — an ordered fold of silent
+letters and doubled letters — because plain edit distance cannot reach
+`copywrite` → `copyright` (three edits) without being loose enough to be
+dangerous. Distance is Damerau, so a transposition costs one edit.
+
+The correction runs **before** the clarifier, and retrieval, reranking and
+excerpt selection see the corrected string while the answer generator and the
+response see the question as typed.
+
+**Measured** (`data/evaluation/results/typo_tolerance.json`, seed 20260916, one
+seeded edit per question in the longest content word):
+
+| run | R@1 | R@5 | R@10 | MRR |
+| --- | ---: | ---: | ---: | ---: |
+| clean (baseline) | 0.8468 | 0.9910 | 1.0000 | 0.8995 |
+| **clean, corrected** | **0.8468** | **0.9910** | **1.0000** | **0.8995** |
+| typo, uncorrected | 0.8198 | 0.9459 | 0.9820 | 0.8770 |
+| typo, corrected | 0.8108 | 0.9820 | 0.9910 | 0.8785 |
+
+The second row is the one that matters: correction altered **0/111** clean
+questions and rank-1 was identical on **111/111**. It cannot regress the
+benchmark, because on clean input it does nothing.
+
+On typo'd input it restored **89/111 (80.2%)** of injected misspellings to the
+original wording. The retrieval effect is smaller than expected and is reported
+as such: **R@5 +4 questions, R@10 +1, R@1 −1**. BGE-M3's subword tokenisation
+already absorbs most single-character typos, so the rank-1 movement is noise at
+n = 111 and the honest claim is a recall-depth gain, not a precision gain.
+
+The clarifier effect is **0 → 0 → 0** on this benchmark, because its questions
+all carry three or more content terms and never reach `pre_retrieval`. It is
+real only for short queries, and is demonstrated there rather than claimed here:
+`How do I register a tradmark?` returned NEEDS_CLARIFICATION before the fix and
+ANSWERED after (`scripts/demo/verify_ux_fixes.py`, case 7).
+
+Precision was calibrated on 33 deliberate misspellings and 26 words from
+unrelated subjects: **32/33 corrected, 0/26 false positives**. Every true
+correction's target occurs in ≥ 26 chunks and every rejected one's in ≤ 13, so
+`MIN_TARGET_FREQUENCY_FOR_DISTANCE = 20` sits in an empty gap. A distance-2 tier
+was implemented and deleted: it corrected nothing distance-1 did not already
+reach and produced the only surviving false positive.
+
+### 13.4 Garbled source text
+
+**Root cause: two mechanisms, both at PDF extraction, neither introduced by any
+code in this repository.** The corrupted passage is byte-identical at
+`extracted` → `cleaned` → `structured` → `chunks`; `clean.py`, `structure.py`,
+`chunk.py` and `ai/answering/excerpt.py` are all innocent.
+
+1. **Dot-leader OCR.** The Second Schedule forms of the Patents Rules, 2003 are
+   image scans (native text layer: 9–92 characters per page, just the IndiaCode
+   watermark). Their blank fill lines are rows of full stops, which at 300 dpi
+   are rows of small disconnected blobs, and Tesseract maps them onto the
+   nearest low-x-height letters: `eee eee eee ee ee`, `oo. cccccccc`. The
+   affected pages are exactly the low-confidence ones — 62.5 to 70.8 against a
+   document mean of 81.9.
+2. **Per-glyph positioning.** `2016DrugsandCosmeticsAct1940Rules1945.pdf` emits
+   1,604 text-positioning operators for 3,481 characters on a single page, with
+   character spacing changing between fragments, so an extractor must infer word
+   boundaries from horizontal gaps: `a true copy of a letter` arrives as
+   `A t ru e c o p y of a le t t e r`. **This is not a library defect** —
+   poppler's `pdftotext`, an unrelated engine, reproduces it character for
+   character. Changing extractor will not fix it.
+
+**Fix: detect, report, never repair.** `ai/text_integrity.py` is detection only.
+Repairing would mean deciding what a statute says from what it looks like it
+might say, and the first time that is wrong it is wrong inside quotation marks,
+attributed to an Act, in the part of the interface whose entire purpose is to be
+checkable. A damaged passage is shown verbatim with a banner saying the spacing
+is the extractor's and not the Act's.
+
+Three signals, each impossible in correctly extracted English legal prose: bare
+repeated-letter tokens, runs of four or more single letters, and orphaned
+one-or-two-letter word fragments. Three further signals were **tested and
+rejected** because their top-ranked chunks are correct extractions: whitespace
+ratio and dictionary-word ratio both rank the bilingual Ayurveda and Unani
+dosage tables first, and dot-leader runs appear in 202 chunks (6.6%) where they
+are the literal blank-fill lines of statutory forms.
+
+**Measured census: 211/3,073 chunks (6.87%)**, concentrated in the four
+documents the extraction trace named. Twelve of the twenty-two instruments come
+back entirely clean, which is the evidence that the detector measures something:
+`tests/test_text_integrity.py` asserts both the rate bound and that at least ten
+documents stay untouched, so loosening the thresholds until a number flatters
+would fail the suite.
+
+| document | damaged | chunks | % |
+| --- | ---: | ---: | ---: |
+| IN-DC-RULES-1945 | 115 | 920 | 12.5 |
+| IN-TM-RULES-2017 | 41 | 180 | 22.8 |
+| IN-PATENTS-RULES-2003 | 30 | 279 | 10.8 |
+| IN-FSSAI-AYURVEDA-AAHARA-2022 | 9 | 29 | 31.0 |
+| IN-DC-ACT-1940 | 7 | 94 | 7.4 |
+| IN-PPVFR-RULES-2003 | 5 | 103 | 4.9 |
+| 4 others | 1 each | — | — |
+| **12 documents** | **0** | — | **0** |
+
+**The invariant the brief asked for**, over all 3,073 chunks: the displayed
+excerpt is a substring of the stored chunk after display normalisation and
+nothing else. `display_text` collapses runs of spaces and tabs; it has no code
+path that inserts a character. Asserted in
+`tests/test_text_integrity.py::test_every_displayed_excerpt_is_a_substring_of_its_stored_chunk`
+and again end-to-end in `tests/test_request_path.py`.
+
+Selection is deliberately **not** steered away from damaged text. The excerpt's
+job is to show the passage the answer rests on; quietly substituting a cleaner
+sentence from elsewhere in the chunk would put a tidy quotation under a claim it
+does not support.
+
+### 13.5 One retrieval experiment, tried and reverted
+
+**Hypothesis.** A question that names its instrument — "under the Trade Marks
+Rules, 2017" — has those tokens scored twice: once by `document_match`, and
+again as content by `idf_coverage` and `phrase_overlap`. The chunk that gains
+most is always the same one, the provision reciting the instrument's own title,
+which is why *"Where does replacement of national registration sit in the Trade
+Marks Rules, 2017?"* returns Rule 1, "Short title and commencement", at rank 1.
+
+**Implementation.** `INSTRUMENT_NAME_DISCOUNT`, scaling those tokens' weight in
+both features, with a guard against eating a question whose subject *is* the
+words in an instrument's name.
+
+**Result: reverted.** Sweeping 0.0 / 0.5 / 0.75 / 1.0:
+
+| discount | 111q R@1 | 111q R@5 | 960q R@1 | 960q R@5 | 960q R@10 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0.0 (shipped) | 0.847 | **0.991** | 0.7010 | 0.8740 | 0.9406 |
+| 0.5 | 0.847 | **0.991** | 0.7000 | 0.8740 | 0.9427 |
+| 0.75 | 0.847 | 0.982 | — | — | — |
+| 1.0 | 0.847 | 0.982 | 0.7021 | 0.8760 | 0.9458 |
+
+At full strength it gains **one** question of R@1 on 960 and costs one question
+of R@5 on 111 — below the project's ≥ 2 pp bar in one direction and a regression
+in the other. Decisively, it changed the rank-1 chunk on only **8/960** questions
+and did **not** move the case it was built for.
+
+**The hypothesis was wrong about the mechanism**, and the feature dump says so:
+
+| feature (weight) | Rule 1 *(wrong)* | Rule 73 *(correct)* |
+| --- | ---: | ---: |
+| `dense_percentile` (0.60) | **0.773** | 0.335 |
+| `idf_coverage` (0.10) | 0.019 | **0.557** |
+| `phrase_overlap` (0.10) | 0.385 | 0.308 |
+| heading bonus | 0.000 | **+0.250** |
+| **ranking score** | **0.679** | 0.670 |
+
+`idf_coverage` and the heading bonus — the two features the discount touched —
+were already ranking this correctly, and IDF weighting already discounts the
+instrument name because those tokens are common. The 0.009 gap is created
+entirely by the dense arm, which embeds a chunk full of "Trade Marks Rules,
+2017" as similar to a query full of the same words. Fixing that means changing
+the dense/lexical weighting, which is a larger experiment than this sprint's
+remit and cannot be done responsibly against a benchmark whose labels §13.6
+shows to be defective in a quarter of its failures. **Recorded as an open
+weakness, not fixed.**
+
+### 13.6 Why the 1,000-question benchmark scores 70.1%
+
+**It is mostly a labelling defect, not a retrieval weakness.** The generator
+writes each question *from* one chunk and labels that chunk alone; it never
+checks whether another chunk answers equally well. 930 of 960 answerable
+questions carry exactly one target, while 209 of 1,490 distinct headings in the
+corpus appear on more than one chunk.
+
+Three measured consequences: `IN-DC-RULES-1945` rules 62 and 67d are both headed
+"Sale at more than one place" with near-identical text; section 25 of the Patents
+Act is split into two chunks and the deadline a question asks about is in the
+half that is not labelled; and 32 of 59 PPVFR-Rules questions are built from
+headings like "Fee for conducting tests **under section 19**", so the question
+names a section of the *Act* while the label is a rule of the *Rules* — those
+score 3/32.
+
+**The provenance requirement is already met, and was re-verified.** All 990
+target chunk ids resolve in `data/processed/chunks/` (990/990), and every
+`expected_answer_span` is a verbatim substring of its target chunk (960/960).
+All 40 `EXPECTED_ABSTENTION` rows carry empty targets and null answers. This is
+guaranteed by construction — `generate_synthetic_benchmark.py:main` runs
+`verify()` and refuses to write the file if one check fails. The defect is
+uniqueness, not provenance.
+
+**Fix: `scripts/evaluation/target_equivalence.py`** computes, from the question
+text and the corpus only and never from the run being scored, the set of chunks
+that would be a correct answer. Three rules: another chunk of the same provision
+(same document and locator, ignoring subsection); a chunk with the same
+normalised heading, **only when the question names no instrument**; and a
+provision the question itself names, **within the target's own regime**. Both
+scopes are guards with teeth — unscoped, the third rule accepted section 19 of
+all eight Acts that have one.
+
+| metric | strict | equivalence-adjusted | delta |
+| --- | ---: | ---: | ---: |
+| Recall@1 | 0.7010 (673/960) | **0.7990 (767/960)** | +9.80 pp |
+| Recall@5 | 0.8740 (839/960) | 0.9344 (897/960) | +6.04 pp |
+| Recall@10 | 0.9406 (903/960) | 0.9583 (920/960) | +1.77 pp |
+| MRR | 0.7784 | 0.8552 | +0.0768 |
+| nDCG@5 | 0.7942 | 0.8269 | +0.0327 |
+| nDCG@10 | 0.8159 | 0.8454 | +0.0295 |
+
+255/960 questions were widened; 686/960 are left with exactly one acceptable
+chunk. Chunks added: 168 by same-provision, 212 by same-heading, 148 by
+named-provision. **Both figures are always reported together** — the strict
+number is what a single-label benchmark measures, the adjusted number is what it
+was trying to measure, and neither replaces the other.
+
+`tests/test_target_equivalence.py` bounds the adjustment so it cannot become a
+discount: fewer than 40% of questions may be widened, at least 60% must be left
+with a single acceptable chunk, and no question may accept more than 20 chunks.
+That bound caught two real over-widenings while the rules were being written,
+including a substring bug where `section=3` matched `section=30` and `section=3A`.
+
+**The residual is real.** 79.9% adjusted against 84.7% on the curated benchmark
+leaves roughly five points that are genuine, concentrated in boilerplate
+provisions winning rank 1 — "Short title and commencement" and schedule items
+take rank 1 on 20/960 questions, 14 of them wrongly — which §13.5 locates in the
+dense arm and does not fix.
+
+### 13.7 Corrected in passing
+
+Three defects found while wiring the above, none of them the subject of this
+sprint:
+
+* `apps/server/src/services/pipelineService.js` did not forward the `clarified`
+  flag to the Python backend. The web app sends it, `app/pipeline.py` reads it,
+  and it is the entire loop guard on the one clarifying question the system may
+  ask — so a user who answered the clarification was asked it again. Fixed and
+  now forwarded through `routes/ask.js`.
+* `app/static/index.html` had no branch for `NEEDS_CLARIFICATION` and fell
+  through to the ANSWERED renderer, which reads `answer.confidence` off a null
+  `answer` and throws. That has been broken since the clarifier shipped and was
+  only found because `SOCIAL` would have broken the same way. Both statuses now
+  have their own branch.
+* `app/schemas.py:serialize_result` returned `answer.text: null` for both
+  statuses, silently losing the greeting reply and the clarifying question. They
+  now travel as `reply` and `clarification`, deliberately *outside* `answer`, so
+  no client can render either through the path that expects citations and a
+  confidence level.
+
+**Test counts.** 848 before this sprint, **1,017 after** — 169 new, covering the
+intent gate (45), spelling (55), text integrity (14), confidence (19), target
+equivalence (11) and the end-to-end request path (25).
