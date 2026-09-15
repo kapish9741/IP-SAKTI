@@ -5,8 +5,8 @@ const router = Router();
 
 router.post("/ask", async (req, res) => {
   try {
-    const { question } = req.body || {};
-    const { statusCode, data } = await askQuestion(question);
+    const { question, clarified } = req.body || {};
+    const { statusCode, data } = await askQuestion(question, { clarified: clarified === true });
     return res.status(statusCode).json(data);
   } catch (err) {
     return res.status(500).json({

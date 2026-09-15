@@ -116,9 +116,15 @@ export default function Home() {
     setRateLimitQuery(null);
   };
 
-  const handleAsk = async (queryText) => {
+  // Phase E. `clarified` is the whole loop guard: the backend asks at most one
+  // clarifying question, and only when the query names no regime, instrument or
+  // provision. Whatever the user sends next goes through the full pipeline,
+  // because this flag rides with it. A second clarification is therefore not
+  // something the UI declines to show — it is something the backend never asks.
+  const handleAsk = async (queryText, opts = {}) => {
     const q = (queryText !== undefined ? queryText : question).trim();
     if (!q) return;
+    const clarified = opts.clarified === true;
 
     // Cancel any pending rate-limit retry
     cancelRateLimit();
@@ -134,7 +140,7 @@ export default function Home() {
       const res = await fetch(`${API_BASE_URL}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, clarified }),
       });
 
       const data = await res.json();
@@ -215,9 +221,29 @@ export default function Home() {
   const uncitedEvidence = evidenceList.filter((e) => !e.cited);
 
   const answerObj = result?.answer || {};
-  const isAbstained = result?.status === "ABSTAINED" || answerObj?.insufficient_evidence;
+  // A greeting. Not an answer, not an abstention, not a clarification: the
+  // corpus was never consulted, so none of those words describe what happened.
+  // Decided deterministically in app/intent.py before retrieval runs.
+  const isSocial = result?.status === "SOCIAL";
+  const needsClarification = result?.status === "NEEDS_CLARIFICATION";
+  // A clarification is not an abstention: nothing was retrieved and no evidence
+  // was weighed, so it must not be rendered as "the evidence did not support an
+  // answer" — and must not fall through to the ANSWERED branch either.
+  const isAbstained =
+    !needsClarification &&
+    !isSocial &&
+    (result?.status === "ABSTAINED" || answerObj?.insufficient_evidence);
   const isUnavailable = result?.status === "UNAVAILABLE";
+  const clarification = result?.clarification;
   const confidence = answerObj?.confidence;
+  // The two axes behind that one word, and the factors that set each. Without
+  // these the badge said "LOW" and stopped, which was the whole complaint: on
+  // the 60-question sample, 13 of the 15 LOW answers were LOW because every
+  // instrument they cited has been amended since our consolidation — a fact
+  // about the source, not about the answer, and one the reader can act on only
+  // if they are told it. See ai/answering/confidence.py.
+  const confidenceReport = answerObj?.confidence_report;
+  const confidenceFactors = confidenceReport?.factors || [];
 
   const confColor =
     confidence === "HIGH"
@@ -225,6 +251,35 @@ export default function Home() {
       : confidence === "LOW"
       ? "text-amber-400 border-amber-800/60 bg-amber-950/30"
       : "text-blue-300 border-blue-800/60 bg-blue-950/30";
+
+  // Extraction damage is reported per excerpt by ai/text_integrity.py. The
+  // chunk-level verdict on e.text_integrity is deliberately not used here: a
+  // chunk can be damaged three pages away from the sentence being shown, and
+  // warning about text the reader cannot see is noise.
+  const excerptDamaged = (e) =>
+    e?.excerpt?.integrity?.status === "EXTRACTION_DAMAGED";
+
+  // One line saying why this card is under the answer. Composed from fields the
+  // backend already decided; it states nothing the pipeline did not determine.
+  const sourceExplanation = (e) => {
+    const parts = [];
+    parts.push(
+      e.cited
+        ? "The answer cites this passage."
+        : "Retrieved as context; the answer does not cite it."
+    );
+    if (e.excerpt?.strategy === "window") {
+      parts.push(
+        "No sentence boundary was available here, so a window around the best match is shown."
+      );
+    }
+    if (e.temporal_status && e.temporal_status !== "CURRENT") {
+      parts.push(
+        "This instrument has been amended since the consolidation held here."
+      );
+    }
+    return parts.join(" ");
+  };
 
   const renderSourceCard = (e) => {
     const isExpanded = !!expandedSources[e.marker];
@@ -309,14 +364,78 @@ export default function Home() {
               )}
             </div>
 
-            {/* Collapsible Evidence Accordion */}
+            {/*
+              Phase F. What used to be here was a button revealing the whole
+              chunk — two to three printed pages of statute, which is grounded
+              and unreadable. The excerpt the backend selected is now shown by
+              default, and the full passage stays one click away for anyone
+              checking it in context.
+
+              The excerpt is a verbatim substring of e.text, chosen in
+              ai/answering/excerpt.py. Nothing here reformats it: no
+              truncation, no ellipsis, no case folding. A "window" strategy
+              means the passage had no sentence boundaries to cut on, and the
+              label says so rather than implying a sentence was quoted.
+            */}
+            {e.excerpt?.text && (
+              <div className="pt-1">
+                <div className="text-[10px] font-mono uppercase tracking-wide text-zinc-500 mb-1">
+                  {excerptDamaged(e)
+                    ? "Source text extraction issue"
+                    : e.excerpt.strategy === "window"
+                    ? "Evidence window"
+                    : "Exact relevant passage"}
+                </div>
+
+                {/*
+                  Roughly one chunk in fifteen of this corpus did not survive
+                  PDF extraction: the Drugs and Cosmetics PDF positions every
+                  glyph separately, so "true copy" arrives as "t ru e c o p y",
+                  and the scanned Patents Rules forms OCR their dotted fill
+                  lines into "eee eee ee". ai/text_integrity.py detects that and
+                  deliberately does not repair it — guessing at what a statute
+                  says, inside quotation marks, is the one thing this interface
+                  must never do. So the passage is still shown verbatim, and the
+                  banner says the spacing is the extractor's and not the Act's.
+                */}
+                {excerptDamaged(e) && (
+                  <div className="mb-1.5 px-2 py-1.5 border border-amber-800/60 bg-amber-950/20 text-[11px] text-amber-300 leading-relaxed">
+                    This passage did not extract cleanly from the source PDF —
+                    words are split or spaced wrongly. The text below is shown
+                    exactly as extracted and has not been corrected or
+                    reconstructed. Check the official document before relying on
+                    the wording.
+                  </div>
+                )}
+
+                <blockquote
+                  className={`border-l-2 pl-3 py-1 bg-[#0b0e13] font-mono text-xs leading-relaxed whitespace-pre-wrap overflow-x-auto ${
+                    excerptDamaged(e)
+                      ? "border-amber-700/70 text-zinc-400"
+                      : "border-blue-700/70 text-zinc-200"
+                  }`}
+                >
+                  {e.excerpt.text}
+                </blockquote>
+
+                {/* Why this passage is here, in one line. */}
+                <div className="mt-1 text-[11px] text-subtext leading-relaxed">
+                  {sourceExplanation(e)}
+                </div>
+              </div>
+            )}
+
+            {/* Full passage, on request */}
             <div className="pt-1">
               <button
                 type="button"
                 onClick={() => toggleSourceExpand(e.marker)}
                 className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors py-1 cursor-pointer font-semibold"
               >
-                <span>{isExpanded ? "▾ Hide evidence text" : "▸ View evidence text"}</span>
+                <span>
+                  {isExpanded ? "▾ Hide full passage" : "▸ View full passage"}
+                  {e.excerpt?.truncated ? "" : ""}
+                </span>
               </button>
 
               {isExpanded && (
@@ -483,6 +602,22 @@ export default function Home() {
         {/* 5. Result States */}
         {result && (
           <div className="space-y-6">
+            {/* A0. SOCIAL — a greeting, answered as one and labelled as one. */}
+            {isSocial && (
+              <div className="border border-wireframe bg-card p-5 sm:p-6">
+                <div className="text-[10px] font-mono uppercase tracking-wide text-subtext mb-2">
+                  Conversational reply — no legal retrieval performed
+                </div>
+                <p className="text-prose leading-relaxed">{result.rendered}</p>
+                <p className="mt-3 text-xs text-subtext leading-relaxed">
+                  Nothing was retrieved and no source was consulted, so this
+                  carries no citation and no confidence rating. Ask an
+                  intellectual-property or regulatory-law question and the full
+                  pipeline runs.
+                </p>
+              </div>
+            )}
+
             {/* A. UNAVAILABLE State */}
             {isUnavailable && (
               <section className="wireframe-box rounded-none">
@@ -588,12 +723,80 @@ export default function Home() {
                         </ul>
                       )}
                   </div>
+
+                  {/*
+                    Phase E, second stage. This sits beside the abstention and
+                    changes nothing about it: the status above still reads
+                    ABSTAINED and the reasons are still the pipeline's own. It
+                    offers a next question rather than telling the user to
+                    rephrase, and the retry carries clarified:true so this is
+                    the last time it can appear.
+                  */}
+                  {clarification && (
+                    <div className="p-3.5 border border-wireframe bg-[#0b0e13] text-xs space-y-2">
+                      <div className="text-zinc-300">{clarification.question}</div>
+                      <button
+                        type="button"
+                        onClick={() => handleAsk(question, { clarified: true })}
+                        className="font-mono text-blue-400 hover:text-blue-300 cursor-pointer"
+                      >
+                        ▸ Yes — search again on that reading
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* B2. NEEDS_CLARIFICATION — one question, then never again */}
+            {needsClarification && clarification && (
+              <section className="border border-wireframe bg-card">
+                <div className="px-5 py-3 border-b border-wireframe flex items-center justify-between">
+                  <h2 className="text-xs font-mono uppercase tracking-wider text-subtext">
+                    One quick question
+                  </h2>
+                  <span className="px-2 py-0.5 text-[10px] font-mono uppercase border border-blue-800/60 text-blue-300 bg-blue-950/20">
+                    NEEDS CLARIFICATION
+                  </span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="text-sm sm:text-base text-prose leading-relaxed">
+                    {clarification.question}
+                  </div>
+                  <div className="text-xs text-subtext font-mono">
+                    {clarification.reason}
+                  </div>
+                  {clarification.options?.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {clarification.options.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            const refined = `${question.trim()} (${option})`;
+                            setQuestion(refined);
+                            handleAsk(refined, { clarified: true });
+                          }}
+                          className="px-2.5 py-1 text-xs font-mono border border-wireframe text-zinc-300 hover:border-blue-700 hover:text-blue-300 transition-colors cursor-pointer"
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleAsk(question, { clarified: true })}
+                    className="text-xs font-mono text-blue-400 hover:text-blue-300 cursor-pointer"
+                  >
+                    ▸ Search anyway with what I typed
+                  </button>
                 </div>
               </section>
             )}
 
             {/* C. ANSWERED State */}
-            {!isAbstained && !isUnavailable && (
+            {!isAbstained && !isUnavailable && !needsClarification && !isSocial && (
               <section className="wireframe-box rounded-none">
                 <div className="border-b border-wireframe px-4 py-2.5 bg-[#141822] text-xs font-mono uppercase tracking-wider text-muted font-semibold flex items-center justify-between">
                   <span>Answer</span>
@@ -615,6 +818,12 @@ export default function Home() {
                         Confidence: {confidence}
                       </span>
                     )}
+                    {confidenceReport?.source_confidence && (
+                      <span className="px-2 py-1 border border-wireframe text-zinc-400 bg-zinc-900">
+                        Sources: {confidenceReport.source_confidence} · Support:{" "}
+                        {confidenceReport.support_confidence}
+                      </span>
+                    )}
                     <span className="px-2 py-1 border border-emerald-800/60 text-emerald-400 bg-emerald-950/20">
                       Grounded — every sentence cites evidence
                     </span>
@@ -622,6 +831,43 @@ export default function Home() {
                       Citations validated ({answerObj.citations?.length || 0})
                     </span>
                   </div>
+
+                  {/*
+                    Why the badge says what it says. A bare "LOW" is the thing
+                    users complained about, and it is not fixable by changing
+                    the level: on the measured sample the commonest reason for
+                    LOW is that every cited instrument has been amended since
+                    the consolidation in this corpus, which is true, is worth
+                    knowing, and is invisible in one word.
+                  */}
+                  {confidenceFactors.length > 0 && (
+                    <div className="border border-wireframe bg-[#0b0e13] px-3.5 py-2.5 space-y-1">
+                      <div className="text-[10px] font-mono uppercase tracking-wide text-subtext">
+                        Why this confidence
+                      </div>
+                      <ul className="space-y-1">
+                        {confidenceFactors.map((f) => (
+                          <li
+                            key={`${f.axis}-${f.code}`}
+                            className="text-xs text-zinc-400 leading-relaxed flex gap-2"
+                          >
+                            <span
+                              className={`font-mono text-[10px] uppercase shrink-0 pt-0.5 ${
+                                f.caps_at === "HIGH"
+                                  ? "text-emerald-500"
+                                  : f.caps_at === "LOW"
+                                  ? "text-amber-500"
+                                  : "text-blue-400"
+                              }`}
+                            >
+                              {f.axis}
+                            </span>
+                            <span>{f.detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {/* Conflicting Evidence Alert */}
                   {answerObj.conflict_detected && (

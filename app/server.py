@@ -106,11 +106,18 @@ class Handler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(self.rfile.read(length) or b"{}")
             question = payload.get("question", "")
+            # Phase E: the client sets this on the request it sends *after*
+            # showing a clarifying question, and it is the only thing that stops
+            # a second one being asked. Anything other than a literal true is
+            # treated as false, so a malformed flag cannot silently disable the
+            # feature.
+            clarified = payload.get("clarified") is True
         except (json.JSONDecodeError, UnicodeDecodeError):
             return self._error(400, "Malformed request.")
 
         try:
-            return self._json(200, PIPELINE.answer(question))
+            return self._json(200, PIPELINE.answer(
+                question, allow_clarification=not clarified))
         except ValueError as exc:
             return self._error(400, str(exc))
         except Exception:  # noqa: BLE001 - the demo must not die on one question
