@@ -5,6 +5,8 @@ system this is meant to become. Companion to `README.md`, which covers setup and
 layout.
 
 Written 2026-09-07, at `60c4d2c` on branch `rag`.
+Updated 2026-09-16 for the final quality sprint — §2, §3 (Phase 9) and §5.3.
+`docs/SIH_METRICS_FINAL.md` remains the single source of truth for every number.
 
 ---
 
@@ -49,8 +51,7 @@ Four commitments follow from that, and each is visible in the code:
 | 6 | Reranking | **Provisional** — `bge-m3` wins; F3 and latency unmeasured |
 | 7 | Grounded answer engine | **Provisional** — 2 answers published, of 9 live requests |
 | 8 | Ground-truth validation | **AI-complete** — 111/111 AI-judged, 0/111 human-verified |
-
-Everything above is committed on `rag`. Nothing beyond Phase 8 exists.
+| 9 | Final quality sprint | **Complete** — R@1 0.802 → 0.847, R@10 1.000, 1,000-question synthetic benchmark, bounded clarification, excerpt-first citations |
 
 ---
 
@@ -254,9 +255,12 @@ questions into abstentions, and the layer has no retry by design.
 ### 3. The measurements that were cut
 * **F3** — `bge-m3` with the authority policy. The run was killed ten minutes in
   and wrote no output; the table row is empty rather than guessed.
-* **Reranker latency.** Unmeasured, and it is what decides whether the 568M
-  model is affordable or whether the feature reranker (+0.072 R@1, pure
-  arithmetic) is the right trade.
+* ~~**Reranker latency.** Unmeasured~~ — **resolved 2026-09-16.** It was in the
+  Phase 6 artifact the whole time: the 568M cross-encoder reranks at a **median
+  of 14,145 ms and a p95 of 98,203 ms**, against **49 ms / 78 ms** for the
+  feature reranker. It buys +2.7 pp Recall@1 and *loses* at Recall@5 and
+  Recall@10. The feature reranker is now the evidence-backed choice rather than
+  the convenient one. See `docs/SIH_METRICS_FINAL.md` §7.4.
 * **Mode A × cross-encoder** — "expanded beats routed" is measured for identity
   and features, assumed for the cross-encoder.
 * **The 512-token truncation.** 35.8% of scored pairs were truncated and both
@@ -291,9 +295,18 @@ different Hindi text path — re-OCR or a corrected font mapping — before anyt
 downstream can use it.
 
 ### 7. Everything user-facing
-No server, no API, no UI, no voice. The answer layer returns an `Answer` object
-and `render.py` turns it into text; nothing surrounds that. The system-level
-disclaimer assumes a caller that shows it once, and no such caller exists.
+~~No server, no API, no UI~~ — a stdlib server, a Flask API and a Next.js UI now
+exist (`app/server.py`, `app/api_server.py`, `apps/web/`). Still absent: voice,
+and any Hindi path. As of the final sprint every cited source shows a verbatim
+excerpt rather than the whole 2–3 page chunk, and a question naming no body of
+law gets one deterministic clarifying question instead of a shrug.
+
+**Removed in the final sprint:** `apps/server/src/services/pipelineService.js`
+carried a table of hardcoded answers with fabricated citations and
+`grounded: true`, served whenever the Python backend was unreachable. They had
+been through no retrieval, no citation validation and no grounding gate, and
+were indistinguishable from real output. An unreachable backend now returns
+`UNAVAILABLE`.
 
 ### Also unresolved
 * **Rate limiting is unmodelled.** Any future batch run hits the TPM cap again.
