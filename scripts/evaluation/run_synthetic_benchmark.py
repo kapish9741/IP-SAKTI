@@ -101,7 +101,13 @@ def run_retrieval(questions: Sequence[dict[str, Any]], *, top_k: int = 10,
     from ai.retrieval.dense import DenseRetriever
     from ai.retrieval.identifiers import BM25IdentifierBoostRetriever
 
+    from evaluation.target_equivalence import EquivalenceIndex, equivalence_config
+
     chunks = load_chunks()
+    # Which other chunks answer each question as well as its single label does.
+    # Built from the corpus and the question text, before any run happens, so it
+    # cannot be influenced by what retrieval returned. See target_equivalence.py.
+    equivalence = EquivalenceIndex.build(chunks)
     bm25 = BM25Retriever(chunks)
     lexical = BM25IdentifierBoostRetriever(bm25)
     dense = DenseRetriever(chunks)
@@ -114,6 +120,8 @@ def run_retrieval(questions: Sequence[dict[str, Any]], *, top_k: int = 10,
     answerable = [q for q in questions if q["label_kind"] == "ANSWERABLE"]
     rows: list[dict[str, Any]] = []
     per_question: list[dict[str, float]] = []
+    per_question_adjusted: list[dict[str, float]] = []
+    equivalence_counts: collections.Counter = collections.Counter()
     retrieval_ms: list[float] = []
     rerank_ms: list[float] = []
 
@@ -128,7 +136,19 @@ def run_retrieval(questions: Sequence[dict[str, Any]], *, top_k: int = 10,
         documents = [r.document_id for r in ranked]
         metrics = score_question(ids, record["target_chunk_ids"], documents,
                                  [record["document_id"]])
+        # The same run, scored a second time against the set of chunks that
+        # would be a correct answer rather than the one the generator happened
+        # to build from. Both figures are kept; neither replaces the other.
+        accepted, rules = equivalence.acceptable(record["question"],
+                                                 record["target_chunk_ids"])
+        adjusted = score_question(ids, sorted(accepted), documents,
+                                  [record["document_id"]])
         per_question.append(metrics)
+        per_question_adjusted.append(adjusted)
+        for rule, count in rules.items():
+            equivalence_counts[rule] += count
+        if len(accepted) > len(record["target_chunk_ids"]):
+            equivalence_counts["questions_widened"] += 1
         retrieval_ms.append((t1 - t0) * 1000)
         rerank_ms.append((t2 - t1) * 1000)
         pool_ids = [c.chunk_id for c in pool.candidates]
@@ -141,7 +161,10 @@ def run_retrieval(questions: Sequence[dict[str, Any]], *, top_k: int = 10,
             "domain": record["domain"],
             "document_id": record["document_id"],
             "target_chunk_ids": record["target_chunk_ids"],
+            "acceptable_chunk_ids": sorted(accepted),
             "rank_of_expected": first_hit_rank(ids, record["target_chunk_ids"]),
+            "rank_of_acceptable": first_hit_rank(ids, sorted(accepted)),
+            "metrics_equivalence_adjusted": adjusted,
             "pool_rank_of_expected": first_hit_rank(pool_ids, record["target_chunk_ids"]),
             "pool_size": len(pool.candidates),
             "ranked": ids,
@@ -153,6 +176,7 @@ def run_retrieval(questions: Sequence[dict[str, Any]], *, top_k: int = 10,
             print(f"  {index}/{len(answerable)}", flush=True)
 
     overall = aggregate(per_question, METRIC_KEYS)
+    overall_adjusted = aggregate(per_question_adjusted, METRIC_KEYS)
 
     def segment(key: str) -> dict[str, dict[str, Any]]:
         out: dict[str, dict[str, Any]] = {}
@@ -190,6 +214,24 @@ def run_retrieval(questions: Sequence[dict[str, Any]], *, top_k: int = 10,
         "aggregate": {k: round(v, 4) for k, v in overall.items()},
         "counts": {k: int(round(v * len(rows))) for k, v in overall.items()
                    if k.startswith("recall")},
+        # The headline figure above scores each question against the single
+        # chunk the generator wrote it from. The corpus contains provisions that
+        # answer the same question equally well — duplicate headings, two halves
+        # of one section, the Act section a Rule's own heading names — and the
+        # figures below score the identical run against all of them. Reported
+        # together, never merged: the first is what a single-label benchmark
+        # measures, the second is what it was trying to measure.
+        "equivalence_adjusted": {
+            "aggregate": {k: round(v, 4) for k, v in overall_adjusted.items()},
+            "counts": {k: int(round(v * len(rows)))
+                       for k, v in overall_adjusted.items()
+                       if k.startswith("recall")},
+            "questions_widened": int(equivalence_counts["questions_widened"]),
+            "chunks_added_by_rule": {
+                rule: int(count) for rule, count in sorted(equivalence_counts.items())
+                if rule != "questions_widened"},
+            "config": equivalence_config(),
+        },
         "rank_buckets": dict(buckets),
         "by_difficulty": segment("difficulty"),
         "by_answer_type": segment("answer_type"),
