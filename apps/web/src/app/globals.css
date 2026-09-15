@@ -1,73 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: #0b0d11;
-  color: #f3f4f6;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d1017;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #252b38;
-  border-radius: 3px;
+  background: #e2e8f0;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3b4354;
+  background: #cbd5e1;
 }
 
-/* Wireframe Card styling matching user reference */
-.wireframe-box {
-  border: 1px solid #232834;
-  background-color: #12151c;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
-}
-
-.wireframe-subtle-border {
-  border-color: #232834;
-}
-
-/* Flash animation for citation targeting */
-@keyframes flash-highlight {
-  0%, 40% {
-    background-color: #1c273e;
-    border-color: #3b82f6;
+/* Keyframes for loading dots */
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    opacity: 0.2;
+    transform: scale(0.85);
   }
-  100% {
-    background-color: #0f1218;
-    border-color: #232834;
+  40% {
+    opacity: 1;
+    transform: scale(1.15);
   }
 }
 
-.flash-target {
-  animation: flash-highlight 1.4s ease-out;
+.dot-1 {
+  animation: dot-pulse 1.4s infinite ease-in-out both;
+  animation-delay: -0.32s;
+}
+.dot-2 {
+  animation: dot-pulse 1.4s infinite ease-in-out both;
+  animation-delay: -0.16s;
+}
+.dot-3 {
+  animation: dot-pulse 1.4s infinite ease-in-out both;
 }
 
-/* Sliding progress bar animation */
-@keyframes slide-bar {
+/* Circular ring spinner */
+@keyframes spin-clean {
   0% {
-    margin-left: -35%;
+    transform: rotate(0deg);
   }
   100% {
-    margin-left: 100%;
+    transform: rotate(360deg);
   }
 }
 
-.animate-slide-bar {
-  animation: slide-bar 1.15s ease-in-out infinite;
+.animate-spin-ring {
+  animation: spin-clean 0.85s linear infinite;
 }
+
+/* Word blur fade in animation */
+@keyframes word-blur-in {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+  }
+}
+
+.animate-word-blur {
+  animation: word-blur-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
