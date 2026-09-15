@@ -28,6 +28,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Sequence
 
 from ai.answering.citation_validator import ValidationOutcome, validate_citations
+from ai.answering.confidence import assess as assess_confidence, confidence_config
 from ai.answering.grounding import (
     GroundingReport,
     check_grounding,
@@ -35,13 +36,9 @@ from ai.answering.grounding import (
 )
 from ai.answering.models import (
     ANSWERING_VERSION,
-    CURRENT,
-    HIGH,
-    LOW,
-    MODERATE,
     NONE,
-    STALE,
     Answer,
+    Citation,
     EvidenceSet,
     Failure,
 )
@@ -58,6 +55,28 @@ from ai.answering.providers import (
     build_request,
 )
 from ai.answering.render import INSUFFICIENT_EVIDENCE_MESSAGE
+
+
+def _best_cited_rank(citations: Sequence[Citation],
+                     evidence_set: Any) -> int | None:
+    """Where retrieval ranked the best of the passages this answer cites.
+
+    The evidence set is ordered by rank, so a passage's position in it is its
+    rank — `Evidence.marker` is assigned from that order by
+    `EvidenceSet.from_results`. `retrieval_rank` is preferred where a retriever
+    supplied one, and the marker is the fallback rather than a guess.
+    """
+    if not citations:
+        return None
+    by_chunk = {item.chunk_id: item for item in getattr(evidence_set, "items", ())}
+    ranks: list[int] = []
+    for citation in citations:
+        item = by_chunk.get(citation.chunk_id)
+        if item is None:
+            continue
+        rank = getattr(item, "retrieval_rank", None)
+        ranks.append(int(rank) if rank else int(item.marker))
+    return min(ranks) if ranks else None
 
 
 class AnswerEngine(ABC):
@@ -151,6 +170,11 @@ class GroundedAnswerEngine(AnswerEngine):
         # Policy's cautions are about the evidence that was supplied; these are
         # about the sources the answer actually cites, and they can only be
         # written now that the citations exist. Phase 7.8.
+        confidence = assess_confidence(
+            validation.citations, grounding,
+            conflicts=bool(report.conflicts),
+            best_cited_rank=_best_cited_rank(validation.citations, evidence_set))
+
         cautions = list(report.cautions) + list(citation_cautions(validation.citations))
         if grounding.weakly_grounded:
             cautions.append(
@@ -160,7 +184,8 @@ class GroundedAnswerEngine(AnswerEngine):
         return Answer(
             answer=text.strip(),
             citations=validation.citations,
-            confidence=self._confidence(report, validation, grounding),
+            confidence=confidence.level,
+            confidence_report=confidence.to_dict(),
             grounded=grounding.grounded,
             insufficient_evidence=False,
             conflict_detected=bool(report.conflicts),
@@ -232,32 +257,9 @@ class GroundedAnswerEngine(AnswerEngine):
             diagnostics=diagnostics,
         )
 
-    def _confidence(self, report: PolicyReport, validation: ValidationOutcome,
-                    grounding: GroundingReport) -> str:
-        """An ordinal read of the evidence behind a published answer.
-
-        Deliberately not a number. Nothing in this pipeline estimates the
-        probability that an answer is legally correct, and a decimal would be
-        read as though something did. What this ranks is the provenance of the
-        sources the answer actually cites — level, currency, and whether they
-        agree — which is a different and much smaller claim.
-        """
-        citations = validation.citations
-        if not citations or not grounding.grounded:
-            return LOW
-        levels = {c.source_evidence_level for c in citations}
-        statuses = {c.temporal_status for c in citations}
-
-        if report.conflicts:
-            return LOW
-        if statuses == {STALE} or levels & {"C", "D"}:
-            return LOW
-        if levels == {"A"} and statuses == {CURRENT} and not grounding.weakly_grounded:
-            return HIGH
-        return MODERATE
-
     def config(self) -> dict[str, Any]:
         return {"engine": self.name, "version": self.version,
                 "provider": self.provider.config(),
                 "policy": self.policy.to_dict(),
+                "confidence": confidence_config(),
                 "retrieval_performed_here": False}
