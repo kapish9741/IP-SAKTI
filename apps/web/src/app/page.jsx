@@ -1,22 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  FileText,
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Shield,
-  Search,
-} from "lucide-react";
+import { Mic, Square, Volume2 } from "lucide-react";
+
+import { LANGUAGES, languageByCode } from "../lib/languages.mjs";
+import { collectProtectedTerms } from "../lib/translation-client.mjs";
 
 // Production (Vercel): NEXT_PUBLIC_API_URL="" → uses relative /api/... path → Next.js proxy → Render
 // Local dev: falls back to Express gateway on :5001
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5001";
-
+const TRANSLATION_FALLBACK =
+  "Translation is unavailable right now. You can continue in English.";
 
 const SAMPLES = [
   "How must an application for registration of a trade mark be signed?",
@@ -35,6 +29,29 @@ const STEPS = [
   "Checking grounding",
 ];
 
+async function translateText({
+  text,
+  sourceLanguage,
+  targetLanguage,
+  protectedTerms = [],
+}) {
+  const response = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text,
+      sourceLanguage,
+      targetLanguage,
+      protectedTerms,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || typeof data.translatedText !== "string") {
+    throw new Error(data.message || TRANSLATION_FALLBACK);
+  }
+  return data.translatedText;
+}
+
 export default function Home() {
   const [question, setQuestion] = useState(SAMPLES[0]);
   const [loading, setLoading] = useState(false);
@@ -47,9 +64,22 @@ export default function Home() {
   const [flashTarget, setFlashTarget] = useState(null);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(null);
   const [rateLimitQuery, setRateLimitQuery] = useState(null);
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState("en");
+  const [displayAnswer, setDisplayAnswer] = useState("");
+  const [translationNotice, setTranslationNotice] = useState(null);
+  const [translationStage, setTranslationStage] = useState("");
+  const [recognitionSupported, setRecognitionSupported] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [voiceMessage, setVoiceMessage] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
 
   const stepTimerRef = useRef(null);
   const rateLimitTimerRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  const selectedLanguage = languageByCode(selectedLanguageCode);
 
   // Health only. Asking a question on mount spent a provider completion on
   // every page load and every refresh — before anyone had clicked anything —
@@ -58,11 +88,67 @@ export default function Home() {
   // SAMPLES[0], so the first question is still one click away.
   useEffect(() => {
     fetchHealth();
+    setSpeechSupported(
+      "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
+    );
 
     return () => {
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+      if (rateLimitTimerRef.current) clearInterval(rateLimitTimerRef.current);
+      if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    const Recognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      setRecognitionSupported(false);
+      recognitionRef.current = null;
+      return undefined;
+    }
+
+    setRecognitionSupported(true);
+    const recognition = new Recognition();
+    recognition.lang = selectedLanguage.speechLocale;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (event) => {
+      let finalText = "";
+      let interimText = "";
+      for (let index = 0; index < event.results.length; index += 1) {
+        const transcript = event.results[index][0]?.transcript || "";
+        if (event.results[index].isFinal) finalText += transcript;
+        else interimText += transcript;
+      }
+      if (finalText.trim()) setQuestion(finalText.trim());
+      setInterimTranscript(interimText.trim());
+    };
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      setInterimTranscript("");
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setVoiceMessage(
+          "Microphone access was denied. Allow access in your browser or type your question.",
+        );
+      } else if (event.error !== "aborted") {
+        setVoiceMessage(
+          "Voice input stopped. You can try again or type your question.",
+        );
+      }
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      setInterimTranscript("");
+    };
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.onend = null;
+      recognition.abort();
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
+    };
+  }, [selectedLanguage.speechLocale]);
 
   const fetchHealth = async () => {
     try {
@@ -116,6 +202,50 @@ export default function Home() {
     setRateLimitQuery(null);
   };
 
+  const toggleListening = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition || loading) return;
+    setVoiceMessage("");
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+      return;
+    }
+
+    setQuestion("");
+    setInterimTranscript("");
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      setVoiceMessage(
+        "Voice input is already active. Stop it before starting again.",
+      );
+    }
+  };
+
+  const toggleSpeech = () => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const text = displayAnswer || result?.answer?.answer;
+    if (!text) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = selectedLanguage.speechLocale;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setVoiceMessage("Audio playback is unavailable in this browser.");
+    };
+    setIsSpeaking(true);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
   const handleAsk = async (queryText) => {
     const q = (queryText !== undefined ? queryText : question).trim();
     if (!q) return;
@@ -126,20 +256,44 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setDisplayAnswer("");
+    setTranslationNotice(null);
+    setTranslationStage("");
     setExpandedSources({});
     setShowUncitedCandidates(false);
     startStepAnimation();
 
     try {
+      let englishQuestion = q;
+      if (selectedLanguage.code !== "en") {
+        setTranslationStage("Translating question to English");
+        try {
+          englishQuestion = await translateText({
+            text: q,
+            sourceLanguage: selectedLanguage.code,
+            targetLanguage: "en",
+          });
+        } catch (translationError) {
+          setTranslationNotice(
+            translationError.message || TRANSLATION_FALLBACK,
+          );
+          setSelectedLanguageCode("en");
+          return;
+        }
+      }
+
+      setTranslationStage("");
       const res = await fetch(`${API_BASE_URL}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: englishQuestion }),
       });
 
-      const data = await res.json();
-      if (!res.ok && data.status === "invalid_request") {
-        setError(data.message || "Invalid question.");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok && (data.status === "invalid_request" || data.status === "INVALID_REQUEST")) {
+        setError(data.message || data.error?.message || "Invalid question.");
+      } else if (!res.ok && data.status !== "UNAVAILABLE") {
+        throw new Error(data.error?.message || data.error || "RAG request failed.");
       } else {
         setResult(data);
         // If rate limited, auto-schedule retry
@@ -155,11 +309,39 @@ export default function Home() {
             setExpandedSources({});
           }
         }
+
+        const originalAnswer = data?.answer?.answer;
+        if (
+          data.status === "ANSWERED" &&
+          selectedLanguage.code !== "en" &&
+          originalAnswer
+        ) {
+          setTranslationStage(`Translating answer to ${selectedLanguage.label}`);
+          try {
+            const translatedAnswer = await translateText({
+              text: originalAnswer,
+              sourceLanguage: "en",
+              targetLanguage: selectedLanguage.code,
+              protectedTerms: collectProtectedTerms(data),
+            });
+            setDisplayAnswer(translatedAnswer);
+          } catch (translationError) {
+            setDisplayAnswer(originalAnswer);
+            setTranslationNotice(
+              translationError.message || TRANSLATION_FALLBACK,
+            );
+          }
+        } else {
+          setDisplayAnswer(originalAnswer || "");
+        }
       }
     } catch (err) {
       console.error("API call error:", err);
-      setError("Could not reach the IP-SAKTI server. Is it running?");
+      setError(
+        "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
+      );
     } finally {
+      setTranslationStage("");
       stopStepAnimation();
       setLoading(false);
     }
@@ -218,6 +400,7 @@ export default function Home() {
   const isAbstained = result?.status === "ABSTAINED" || answerObj?.insufficient_evidence;
   const isUnavailable = result?.status === "UNAVAILABLE";
   const confidence = answerObj?.confidence;
+  const jurisdiction = result?.jurisdiction ?? answerObj?.jurisdiction;
 
   const confColor =
     confidence === "HIGH"
@@ -376,46 +559,121 @@ export default function Home() {
           against that evidence. When it cannot, it abstains instead of guessing.
         </p>
 
-        {/* 2. Question Form Box */}
+        {/* 2. Voice-first question box */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleAsk(question);
           }}
-          className="wireframe-box p-5 space-y-4 rounded-none"
+          className="wireframe-box p-4 sm:p-6 space-y-5 rounded-md"
         >
-          <label htmlFor="question-input" className="block text-xs font-mono uppercase tracking-wider text-prose font-semibold">
-            Ask an intellectual-property legal question
-          </label>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+            <div className="flex-1 space-y-2">
+              <label
+                htmlFor="language-select"
+                className="block text-[11px] font-mono uppercase tracking-wider text-subtext"
+              >
+                Answer language
+              </label>
+              <select
+                id="language-select"
+                value={selectedLanguageCode}
+                onChange={(event) => {
+                  if (isListening) recognitionRef.current?.stop();
+                  window.speechSynthesis?.cancel();
+                  setIsSpeaking(false);
+                  setSelectedLanguageCode(event.target.value);
+                  setTranslationNotice(null);
+                  setVoiceMessage("");
+                }}
+                disabled={loading}
+                className="w-full bg-[#0b0e14] border border-wireframe rounded px-3 py-2.5 text-sm text-prose focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                {LANGUAGES.map((language) => (
+                  <option key={language.code} value={language.code}>
+                    {language.label} · {language.nativeLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <textarea
-            id="question-input"
-            rows={2}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleAsk(question);
-              }
-            }}
-            placeholder="e.g. How must an application for registration of a trade mark be signed?"
-            disabled={loading}
-            className="w-full bg-[#0a0c10] border border-wireframe rounded-none px-3.5 py-2.5 text-sm text-prose placeholder:text-muted focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-sans resize-vertical"
-          />
+            <button
+              type="button"
+              onClick={toggleListening}
+              disabled={!recognitionSupported || loading}
+              aria-pressed={isListening}
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded px-4 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-45 ${
+                isListening
+                  ? "bg-red-950/50 text-red-200 border border-red-700/70"
+                  : "bg-blue-600 text-white hover:bg-blue-500 border border-blue-500"
+              }`}
+            >
+              {isListening ? <Square size={16} /> : <Mic size={17} />}
+              {isListening ? "Stop listening" : "Speak question"}
+            </button>
+          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div
+            aria-live="polite"
+            className={`min-h-12 rounded border px-3 py-2.5 text-sm ${
+              isListening
+                ? "border-blue-700/70 bg-blue-950/20 text-blue-100"
+                : "border-wireframe bg-[#0b0e14] text-subtext"
+            }`}
+          >
+            {interimTranscript ||
+              (isListening
+                ? `Listening in ${selectedLanguage.label}…`
+                : recognitionSupported
+                ? "Live speech transcript will appear here. You can edit it below."
+                : "Voice input is not supported in this browser. Type your question below.")}
+          </div>
+
+          {voiceMessage && (
+            <div
+              role="status"
+              className="rounded border border-amber-800/60 bg-amber-950/25 px-3 py-2.5 text-xs text-amber-200"
+            >
+              {voiceMessage}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label
+              htmlFor="question-input"
+              className="block text-[11px] font-mono uppercase tracking-wider text-subtext"
+            >
+              Edit your question
+            </label>
+
+            <textarea
+              id="question-input"
+              rows={3}
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAsk(question);
+                }
+              }}
+              placeholder="Speak or type an intellectual-property question"
+              disabled={loading}
+              className="w-full bg-[#0a0c10] border border-wireframe rounded px-3.5 py-3 text-sm text-prose placeholder:text-muted focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-sans resize-y"
+            />
+          </div>
+
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span className="text-[11px] leading-relaxed text-muted">
+              Demo multilingual layer: Google Cloud Translation + browser voice. Bhashini integration will be enabled after API approval.
+            </span>
             <button
               type="submit"
               disabled={loading || !question.trim()}
-              className="px-6 py-2 bg-[#1c2436] hover:bg-[#25314a] text-prose font-mono text-xs uppercase tracking-wider border border-wireframe-bright hover:border-blue-500/80 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+              className="w-full sm:w-auto shrink-0 rounded bg-blue-600 hover:bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-45"
             >
-              Ask IP-SAKTI
+              {loading ? "Working…" : "Ask IP-SAKTI"}
             </button>
-
-            <span className="text-[11px] font-mono text-muted">
-              Patents · Trade marks · Copyright · Designs · GI · Biodiversity
-            </span>
           </div>
         </form>
 
@@ -431,7 +689,6 @@ export default function Home() {
                 type="button"
                 onClick={() => {
                   setQuestion(s);
-                  handleAsk(s);
                 }}
                 disabled={loading}
                 className="text-xs font-sans px-3 py-1.5 bg-[#141720] hover:bg-[#1c212e] text-subtext hover:text-prose border border-wireframe/80 rounded-none transition-colors text-left"
@@ -450,26 +707,41 @@ export default function Home() {
               <div className="h-full w-[35%] bg-blue-500 animate-slide-bar" />
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              {STEPS.map((stepName, sIdx) => {
-                const isCurrent = activeStep === sIdx;
-                const isDone = activeStep > sIdx;
-                return (
-                  <span
-                    key={sIdx}
-                    className={`text-xs font-mono px-2.5 py-1 border transition-all ${
-                      isCurrent
-                        ? "bg-blue-950/60 border-blue-500 text-blue-300 font-semibold"
-                        : isDone
-                        ? "bg-[#141822] border-wireframe text-zinc-400"
-                        : "bg-transparent border-transparent text-zinc-600"
-                    }`}
-                  >
-                    {stepName}
-                  </span>
-                );
-              })}
-            </div>
+            {translationStage ? (
+              <div className="text-xs font-mono text-blue-300" aria-live="polite">
+                {translationStage}…
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {STEPS.map((stepName, sIdx) => {
+                  const isCurrent = activeStep === sIdx;
+                  const isDone = activeStep > sIdx;
+                  return (
+                    <span
+                      key={sIdx}
+                      className={`text-xs font-mono px-2.5 py-1 border transition-all ${
+                        isCurrent
+                          ? "bg-blue-950/60 border-blue-500 text-blue-300 font-semibold"
+                          : isDone
+                          ? "bg-[#141822] border-wireframe text-zinc-400"
+                          : "bg-transparent border-transparent text-zinc-600"
+                      }`}
+                    >
+                      {stepName}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {translationNotice && (
+          <div
+            role="status"
+            className="rounded border border-amber-800/60 bg-amber-950/25 px-4 py-3 text-sm text-amber-100"
+          >
+            {translationNotice}
           </div>
         )}
 
@@ -605,22 +877,36 @@ export default function Home() {
                 <div className="p-5 space-y-4">
                   {/* Prose with in-text citation markers */}
                   <div className="text-base sm:text-[17px] leading-relaxed font-sans text-prose">
-                    {renderGroundedProse(answerObj.answer)}
+                    {renderGroundedProse(displayAnswer || answerObj.answer)}
                   </div>
 
-                  {/* Badges line */}
-                  <div className="flex flex-wrap gap-2 pt-1 font-mono text-xs">
-                    {confidence && (
-                      <span className={`px-2 py-1 border ${confColor}`}>
-                        Confidence: {confidence}
+                  <div className="flex flex-col gap-3 border-t border-wireframe/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap gap-2 font-mono text-xs">
+                      {confidence && (
+                        <span className={`px-2 py-1 border ${confColor}`}>
+                          Confidence: {confidence}
+                        </span>
+                      )}
+                      {jurisdiction !== undefined && jurisdiction !== null && (
+                        <span className="px-2 py-1 border border-wireframe text-zinc-300">
+                          Jurisdiction: {String(jurisdiction)}
+                        </span>
+                      )}
+                      <span className="px-2 py-1 text-emerald-400">
+                        Grounded · {answerObj.citations?.length || 0} citations validated
                       </span>
-                    )}
-                    <span className="px-2 py-1 border border-emerald-800/60 text-emerald-400 bg-emerald-950/20">
-                      Grounded — every sentence cites evidence
-                    </span>
-                    <span className="px-2 py-1 border border-emerald-800/60 text-emerald-400 bg-emerald-950/20">
-                      Citations validated ({answerObj.citations?.length || 0})
-                    </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={toggleSpeech}
+                      disabled={!speechSupported}
+                      aria-pressed={isSpeaking}
+                      className="inline-flex items-center justify-center gap-2 rounded border border-wireframe-bright px-3 py-2 text-xs font-semibold text-prose transition-colors hover:border-blue-500 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      {isSpeaking ? <Square size={14} /> : <Volume2 size={15} />}
+                      {isSpeaking ? "Stop audio" : "Listen to answer"}
+                    </button>
                   </div>
 
                   {/* Conflicting Evidence Alert */}
