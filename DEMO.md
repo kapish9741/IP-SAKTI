@@ -73,6 +73,45 @@ HEALTH 200
 `GET /api/health` returns the same as JSON. `dense=ready` is the line to check:
 `unavailable` means the server degraded to lexical-only and retrieval is weaker.
 
+## 3A. Multilingual voice interface
+
+The voice-first hackathon UI runs through the existing Next.js workspace. It
+uses Google Cloud Translation on the Next.js server and the browser Web Speech
+APIs for microphone input and answer playback. No speech text is sent to a paid
+speech service.
+
+Enable the Cloud Translation API for the service account, then set its local
+file as Application Default Credentials. Do not copy the JSON into the repo:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+npm install
+npm run dev
+```
+
+Keep `.venv/bin/python -m app.server` running in the other terminal, then open
+**http://localhost:3001**. The Next.js UI uses the existing API gateway at
+`http://localhost:5001`, which forwards questions to the Python service at
+`http://127.0.0.1:8000`.
+
+Quick demo check:
+
+1. Choose Hindi and speak or type a question; edit the live transcript if
+   needed, then submit it.
+2. Confirm the explanatory answer is Hindi while citation markers, statute
+   names, rule/section identifiers, confidence, source metadata, links and the
+   English legal disclaimer are unchanged.
+3. Click a citation and expand its source text; confirm the retrieved legal text
+   is still the original English text.
+4. Click **Listen to answer**, then stop playback.
+5. Deny microphone access once to confirm the typed-input fallback message.
+6. Start without `GOOGLE_APPLICATION_CREDENTIALS` to confirm the UI clearly
+   returns to English instead of failing or sending a non-English query to RAG.
+
+Chrome or Edge is recommended because Web Speech recognition support varies by
+browser. Browser speech synthesis support and installed voices can also vary by
+operating system.
+
 ## 4. Rehearse the demo questions
 
 ```bash
