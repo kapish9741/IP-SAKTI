@@ -3,110 +3,22 @@ import { normalizeAnswered, normalizeAbstained, normalizeError, normalizeInvalid
 const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || "http://127.0.0.1:8000";
 
 /**
- * Built-in fallback fixtures for offline resilience
+ * There is deliberately no offline answer fixture here.
+ *
+ * This file used to carry a VERIFIED_CASES table: when the Python backend was
+ * unreachable it matched the question against a regex and returned a
+ * pre-written answer with `grounded: true` and a citation to Rule 23 at page
+ * 59. None of that had been through retrieval, citation validation or the
+ * grounding gate — the flags were literals in this file. A reader could not
+ * tell that response apart from one the pipeline had actually produced, which
+ * makes it the one failure mode the whole system is built to prevent: a
+ * confident, cited, unverifiable legal claim.
+ *
+ * An unreachable backend is a service failure and is now reported as one.
+ * UNAVAILABLE is a state the pipeline already defines and the UI already
+ * renders, and it is the truthful answer to "what happened": nothing was
+ * retrieved, so nothing can be said.
  */
-const VERIFIED_CASES = [
-  {
-    matcher: (q) => /trademark|trade mark|tm-a|rule 23/i.test(q),
-    handler: (question) => ({
-      status: "ANSWERED",
-      question,
-      answer: {
-        answer: "An application for the registration of a trademark must be made in Form TM-A and signed by the applicant or his agent [1].",
-        confidence: "MODERATE",
-        grounded: true,
-        citations: [
-          {
-            marker: 1,
-            document_id: "IN-TM-RULES-2017",
-            locator: "Rule 23",
-            pages: [59],
-            source_evidence_level: "B",
-            temporal_status: "CURRENT",
-            citable: true,
-          },
-        ],
-        conflict_detected: false,
-        conflict_chunks: [],
-        cautions: [],
-        insufficient_evidence_reasons: [],
-        validation_failures: [],
-      },
-      evidence: [
-        {
-          marker: 1,
-          cited: true,
-          chunk_id: "IN-TM-RULES-2017::part-i-chapter-ii-rule-23",
-          document_id: "IN-TM-RULES-2017",
-          document_name: "Trade Marks Rules, 2017",
-          citation: "Trade Marks Rules, 2017 — Rule 23",
-          locator_text: "Rule 23",
-          heading: "Form and signing of application",
-          temporal_status: "CURRENT",
-          source_evidence_level: "B",
-          citable: true,
-          physical_pages: [59],
-          text: "An application for the registration of a trademark shall be made in Form TM-A and signed by the applicant or his agent. It shall be filed at the appropriate office of the Trade Marks Registry accompanied by the prescribed fee.",
-        },
-      ],
-      disclaimer: "IP-SAKTI is an information and research tool that answers from a fixed corpus of published legal texts. It is not legal advice and is not a substitute for a qualified practitioner.",
-      timings_ms: { retrieval: 31.2, reranking: 15.4, answering: 18.0, total: 64.6 },
-      pipeline: { candidates: 50, evidence_count: 5, reranker: "features", provider: "extractive (offline, deterministic)" },
-    }),
-  },
-  {
-    matcher: (q) => /lunar|martian|crypto|pizza|naples/i.test(q),
-    handler: (question) => ({
-      status: "ABSTAINED",
-      question,
-      answer: {
-        answer: "I couldn't produce a sufficiently supported answer from the available legal evidence.",
-        confidence: null,
-        grounded: false,
-        citations: [],
-        conflict_detected: false,
-        conflict_chunks: [],
-        cautions: [],
-        insufficient_evidence_reasons: [
-          { code: "no_relevant_evidence", detail: "no supplied passage shares any content term with the query" },
-        ],
-        validation_failures: [],
-      },
-      evidence: [],
-      disclaimer: "IP-SAKTI is an information and research tool that answers from a fixed corpus of published legal texts. It is not legal advice and is not a substitute for a qualified practitioner.",
-      timings_ms: { retrieval: 12.0, reranking: 10.0, answering: 3.5, total: 25.5 },
-      pipeline: { candidates: 50, evidence_count: 5, reranker: "features", provider: "extractive (offline, deterministic)" },
-    }),
-  },
-];
-
-/**
- * Fetch health from Python app.server
- */
-export async function getHealth() {
-  try {
-    const res = await fetch(`${PYTHON_SERVER_URL}/api/health`, { signal: AbortSignal.timeout(3000) });
-    if (res.ok) {
-      const data = await res.json();
-      return { statusCode: 200, data };
-    }
-  } catch (err) {
-    // Python server not responding, return fallback
-  }
-
-  return {
-    statusCode: 200,
-    data: {
-      status: "ok",
-      app_version: "0.1.0",
-      startup_seconds: 0.54,
-      corpus: { chunks: 3073, documents: 22 },
-      retrieval: { dense: "ready", lexical: "ready", reranker: "features" },
-      answering: { provider: "extractive (offline, deterministic)" },
-      warnings: [],
-    },
-  };
-}
 
 /**
  * Primary Service Entrypoint: Process legal question
@@ -143,36 +55,24 @@ export async function askQuestion(question) {
     console.warn(`[pipelineService] Python server at ${PYTHON_SERVER_URL} unreachable, checking fallback fixtures...`);
   }
 
-  // 3. Fallback to verified cases if Python server is not yet started
-  for (const item of VERIFIED_CASES) {
-    if (item.matcher(trimmed)) {
-      return { statusCode: 200, data: item.handler(trimmed) };
-    }
-  }
-
-  // Default abstention if unknown query and python server unreachable
+  // 3. The backend could not be reached. Say so.
   return {
-    statusCode: 200,
+    statusCode: 503,
     data: {
-      status: "ABSTAINED",
+      status: "UNAVAILABLE",
       question: trimmed,
-      answer: {
-        answer: "I couldn't produce a sufficiently supported answer from the available legal evidence.",
-        confidence: null,
-        grounded: false,
-        citations: [],
-        conflict_detected: false,
-        conflict_chunks: [],
-        cautions: [],
-        insufficient_evidence_reasons: [
-          { code: "no_relevant_evidence", detail: "no supplied passage shares any content term with the query" },
-        ],
-        validation_failures: [],
+      service_failure: {
+        code: "transport_error",
+        message:
+          "The retrieval and answering backend could not be reached, so no answer was generated. Nothing unverified is shown.",
+        detail: `no response from ${PYTHON_SERVER_URL}`,
       },
+      answer: null,
       evidence: [],
-      disclaimer: "IP-SAKTI is an information and research tool that answers from a fixed corpus of published legal texts. It is not legal advice and is not a substitute for a qualified practitioner.",
-      timings_ms: { retrieval: 15.0, reranking: 12.0, answering: 3.0, total: 30.0 },
-      pipeline: { candidates: 50, evidence_count: 5, reranker: "features", provider: "extractive (offline, deterministic)" },
+      disclaimer:
+        "IP-SAKTI is an information and research tool that answers from a fixed corpus of published legal texts. It is not legal advice and is not a substitute for a qualified practitioner.",
+      timings_ms: { retrieval: 0.0, reranking: 0.0, answering: 0.0, total: 0.0 },
+      pipeline: { candidates: 0, evidence_count: 0, stage: "backend_unreachable" },
     },
   };
 }
