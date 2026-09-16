@@ -135,3 +135,85 @@ def test_correction_is_idempotent(speller):
 def test_an_empty_query_is_handled(speller):
     assert speller.correct("").corrected == ""
     assert speller.correct(None).corrected == ""
+
+
+# -- issue 3: the corrected string is what retrieval actually sees ------------
+#
+# The module was already repairing every misspelling the brief names. What no
+# test pinned was the half that matters to the user: that the repaired term
+# reaches the retriever, and that the pipeline searches for it rather than for
+# what was typed. `app/pipeline.answer` computes `search_query` from
+# `speller.correct(question)` and passes *that* to candidate generation,
+# reranking and excerpt selection, while the generator is asked the original.
+
+BRIEF_TYPOS = [
+    ("trademrk", "trademark"),
+    ("copyrght", "copyright"),
+    ("patnt", "patent"),
+    ("regstration", "registration"),
+    ("geographcal indication", "geographical indication"),
+]
+
+
+@pytest.mark.parametrize("typed,term", BRIEF_TYPOS)
+def test_the_corrected_query_carries_the_intended_legal_term(speller, typed, term):
+    assert speller.correct(typed).corrected == term
+
+
+@pytest.mark.parametrize("typed,term", BRIEF_TYPOS)
+def test_the_term_survives_inside_a_whole_question(speller, typed, term):
+    """A correction that only works on a bare word is not a correction."""
+    question = f"What is the procedure for {typed} in India?"
+    corrected = speller.correct(question).corrected
+    assert term in corrected
+    assert typed not in corrected
+    assert corrected.startswith("What is the procedure for ")
+    assert corrected.endswith(" in India?")
+
+
+@pytest.mark.parametrize("typed,term", BRIEF_TYPOS)
+def test_the_correction_is_reported_so_the_transcript_shows_both(speller, typed, term):
+    correction = speller.correct(f"how do I file for {typed}")
+    assert correction.original != correction.corrected
+    assert correction.replacements, "a silent rewrite is not auditable"
+    assert any(r.corrected in term.split() for r in correction.replacements)
+
+
+def test_the_tokenizer_already_folds_trademark_onto_trade_mark():
+    """Why "trademrk" -> "trademark" is enough to reach a "trade mark" corpus.
+
+    The Act writes "trade mark" and the Rules write "trademark", so the lexical
+    index opens the closed compound on both sides. Spelling repair does not have
+    to know about the split, and must not try to.
+    """
+    from ai.retrieval.tokenizer import tokenize
+
+    assert tokenize("trademark") == tokenize("trade mark") == ["trade", "mark"]
+    assert tokenize("trade-mark") == ["trade", "mark"]
+
+
+def test_a_correction_never_rewrites_a_provision_identifier(speller):
+    """Restated against the brief's own list, because this is the unsafe one."""
+    for query in ("Section 3(p) of the Patents Act", "Rule 23", "Article 31bis",
+                  "section 85B", "sub-section (2) of section 25",
+                  "Rule 31bis and Form TM-A", "the 1999 Act"):
+        assert speller.correct(query).corrected == query
+
+
+def test_the_pipeline_searches_for_the_correction_and_asks_about_the_original():
+    """The seam itself, read from the source rather than asserted about it.
+
+    Running the pipeline here would load BGE-M3 for a claim that is structural,
+    so the ordering is checked where it is written.
+    """
+    import inspect
+
+    from app import pipeline as pipeline_module
+
+    source = inspect.getsource(pipeline_module.Pipeline.answer)
+    assert "correction = self.speller.correct(question)" in source
+    assert "search_query = correction.corrected" in source
+    assert "self.generator.generate(search_query)" in source
+    assert "self.reranker.rerank(search_query" in source
+    # The provider is asked what the user typed, not what was searched for.
+    assert "self.engine.answer(question, evidence)" in source

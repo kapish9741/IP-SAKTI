@@ -160,3 +160,47 @@ def test_support_axis_alone_never_reports_high_without_citations():
     level, factors = support_confidence(_Grounding(), [], None)
     assert level == LOW
     assert factors
+
+
+# -- issue 2: a conflict between passages the answer never cited --------------
+#
+# `apply_policy` detects conflicts across every supplied passage, and the engine
+# used to hand that whole flag to `assess`. On the 60-question sample it was the
+# only cause of 3 of the 15 LOW answers, and in each one the conflicting pair
+# belonged to a different instrument from the one cited: an answer resting on GI
+# Act s.26 alone was published LOW because two TRIPS articles elsewhere in the
+# evidence set render the same citation string. The engine now scopes the flag
+# to conflicts that touch a cited chunk; these tests pin both directions.
+
+def test_a_conflict_among_passages_the_answer_cites_still_forces_low():
+    """The safety half. Unchanged behaviour, stated as a test."""
+    report = assess([_citation(chunk="c1")], _Grounding(),
+                    conflicts=True, best_cited_rank=1)
+    assert report.level == LOW
+    assert any(f.code == "conflicting_provisions" for f in report.factors)
+
+
+def test_a_clean_citation_is_not_demoted_by_a_conflict_elsewhere_in_the_set():
+    """The bug half, at the level `assess` sees it: no conflict, no penalty."""
+    report = assess([_citation(chunk="c1", level="B")], _Grounding(),
+                    conflicts=False, best_cited_rank=1)
+    assert report.level == MODERATE
+    assert not any(f.code == "conflicting_provisions" for f in report.factors)
+
+
+def test_the_scoping_itself_is_tested_against_the_real_engine():
+    """Where the scoping lives, and where it is actually exercised.
+
+    `assess` only ever sees a boolean, so it cannot tell a foreign conflict from
+    a cited one — deciding which is which is the engine's job. That decision is
+    pinned end to end in `tests/test_answer_publication.py`, which drives
+    `GroundedAnswerEngine` over an evidence set carrying a conflict the answer
+    does not cite; this line records the seam so the two files are not read
+    apart.
+    """
+    import tests.test_answer_publication as publication
+
+    assert hasattr(publication,
+                   "test_a_conflict_touching_no_cited_chunk_does_not_demote_the_answer")
+    assert hasattr(publication,
+                   "test_a_conflict_that_does_touch_a_cited_chunk_still_forces_low")

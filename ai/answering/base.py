@@ -170,9 +170,25 @@ class GroundedAnswerEngine(AnswerEngine):
         # Policy's cautions are about the evidence that was supplied; these are
         # about the sources the answer actually cites, and they can only be
         # written now that the citations exist. Phase 7.8.
+        #
+        # The conflict penalty is scoped the same way, and for the same reason.
+        # `detect_conflicts` runs over every supplied passage, so it fires on
+        # two chunks of an instrument the answer never mentions — a section the
+        # chunker split in two, or two provisions that render the same citation
+        # string. Feeding that to `assess_confidence` published LOW for an
+        # answer whose own citation was clean: on the 60-question sample it was
+        # the sole cause of 3 of the 15 LOW answers, and in all three the
+        # conflicting passages belonged to a different instrument from the one
+        # cited (an answer citing GI Act s.26 was demoted by two TRIPS articles
+        # sharing a citation string). A conflict is a fact about the evidence
+        # set and is still cautioned in full below; it only reduces confidence
+        # in the answer when it touches a passage the answer actually rests on.
+        cited_chunks = {citation.chunk_id for citation in validation.citations}
+        cited_conflicts = tuple(conflict for conflict in report.conflicts
+                                if cited_chunks.intersection(conflict.chunk_ids))
         confidence = assess_confidence(
             validation.citations, grounding,
-            conflicts=bool(report.conflicts),
+            conflicts=bool(cited_conflicts),
             best_cited_rank=_best_cited_rank(validation.citations, evidence_set))
 
         cautions = list(report.cautions) + list(citation_cautions(validation.citations))
