@@ -73,6 +73,65 @@ HEALTH 200
 `GET /api/health` returns the same as JSON. `dense=ready` is the line to check:
 `unavailable` means the server degraded to lexical-only and retrieval is weaker.
 
+## 3A. Multilingual voice interface
+
+The voice-first hackathon UI runs through the existing Next.js workspace. It
+uses Google Cloud Translation on the Next.js server and the browser Web Speech
+APIs for microphone input and answer playback. No speech text is sent to a paid
+speech service.
+
+Enable the Cloud Translation API for the service account, then set its local
+file as Application Default Credentials. Do not copy the JSON into the repo:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+npm install
+npm run dev
+```
+
+Keep `.venv/bin/python -m app.server` running in the other terminal, then open
+**http://localhost:3001**. The Next.js UI uses the existing API gateway at
+`http://localhost:5001`, which forwards questions to the Python service at
+`http://127.0.0.1:8000`.
+
+Quick demo check:
+
+1. Choose Hindi and speak or type a question; edit the live transcript if
+   needed, then submit it.
+2. Confirm the explanatory answer is Hindi while citation markers, statute
+   names, rule/section identifiers, confidence, source metadata, links and the
+   English legal disclaimer are unchanged.
+3. Click a citation and expand its source text; confirm the retrieved legal text
+   is still the original English text.
+4. Click **Listen to answer**, then stop playback.
+   The answer heading and button name the playback language. If available,
+   choose a pleasant locale-specific voice from **Voice persona** first.
+5. Deny microphone access once to confirm the typed-input fallback message.
+6. Start without `GOOGLE_APPLICATION_CREDENTIALS` to confirm the UI clearly
+   returns to English instead of failing or sending a non-English query to RAG.
+
+Chrome or Edge is recommended because Web Speech recognition support varies by
+browser. Browser speech synthesis support and installed voices can also vary by
+operating system.
+
+### Deployment credentials
+
+`GOOGLE_APPLICATION_CREDENTIALS` points to a file on one computer, so it is a
+local-development setting only. On Vercel or another serverless host, add these
+as encrypted/sensitive environment variables for the deployed Next.js service:
+
+```bash
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_CLIENT_EMAIL=translator@your-project.iam.gserviceaccount.com
+GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+Copy those fields manually from the service-account JSON, do not upload or
+commit the file, and never expose them through a `NEXT_PUBLIC_` variable. Apply
+them to the intended deployment environments and redeploy. The translation
+adapter uses these server-only values in production and otherwise falls back to
+Application Default Credentials for local development.
+
 ## 4. Rehearse the demo questions
 
 ```bash
