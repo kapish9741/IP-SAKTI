@@ -13,6 +13,21 @@ export const SUPPORTED_LANGUAGE_CODES = new Set([
   "pa",
 ]);
 
+export function googleClientOptionsFromEnvironment(env = {}) {
+  const projectId = env.GOOGLE_CLOUD_PROJECT_ID?.trim();
+  const clientEmail = env.GOOGLE_CLOUD_CLIENT_EMAIL?.trim();
+  const privateKey = env.GOOGLE_CLOUD_PRIVATE_KEY;
+  if (!projectId || !clientEmail || !privateKey) return {};
+
+  return {
+    projectId,
+    credentials: {
+      client_email: clientEmail,
+      private_key: privateKey.replace(/\\n/g, "\n"),
+    },
+  };
+}
+
 const BUILT_IN_PROTECTED_PATTERNS = [
   /\[\d+\]/gu,
   /https?:\/\/[^\s<>"]+/gu,
@@ -104,8 +119,10 @@ export function splitProtectedSegments(text, protectedTerms = []) {
 }
 
 export class GoogleCloudTranslationProvider {
-  constructor({ client } = {}) {
-    this.client = client || new translateV2.Translate();
+  constructor({ client, env = process.env } = {}) {
+    this.client =
+      client ||
+      new translateV2.Translate(googleClientOptionsFromEnvironment(env));
   }
 
   async translate({

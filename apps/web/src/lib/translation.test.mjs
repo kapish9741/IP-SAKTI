@@ -3,8 +3,36 @@ import assert from "node:assert/strict";
 
 import {
   GoogleCloudTranslationProvider,
+  googleClientOptionsFromEnvironment,
   splitProtectedSegments,
 } from "./translation.mjs";
+
+test("builds server-only Google credentials from deployment environment variables", () => {
+  assert.deepEqual(
+    googleClientOptionsFromEnvironment({
+      GOOGLE_CLOUD_PROJECT_ID: "demo-project",
+      GOOGLE_CLOUD_CLIENT_EMAIL: "translator@demo-project.iam.gserviceaccount.com",
+      GOOGLE_CLOUD_PRIVATE_KEY: "first-line\\nsecond-line",
+    }),
+    {
+      projectId: "demo-project",
+      credentials: {
+        client_email: "translator@demo-project.iam.gserviceaccount.com",
+        private_key: "first-line\nsecond-line",
+      },
+    },
+  );
+});
+
+test("uses Application Default Credentials when deployment variables are absent or incomplete", () => {
+  assert.deepEqual(googleClientOptionsFromEnvironment({}), {});
+  assert.deepEqual(
+    googleClientOptionsFromEnvironment({
+      GOOGLE_CLOUD_PROJECT_ID: "incomplete-project",
+    }),
+    {},
+  );
+});
 
 test("keeps citations, statute names, locators, dates, URLs, and numeric ranges out of translated segments", () => {
   const text = "Under Trade Marks Rules, 2017, Rule 23 applies on 2026-09-16 [1] at https://example.test/source for pages 59–61.";

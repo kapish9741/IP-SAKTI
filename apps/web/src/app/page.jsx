@@ -5,6 +5,10 @@ import { Mic, Square, Volume2 } from "lucide-react";
 
 import { LANGUAGES, languageByCode } from "../lib/languages.mjs";
 import { collectProtectedTerms } from "../lib/translation-client.mjs";
+import {
+  selectPreferredVoice,
+  voicesForLocale,
+} from "../lib/voice-selection.mjs";
 
 // Production (Vercel): NEXT_PUBLIC_API_URL="" → uses relative /api/... path → Next.js proxy → Render
 // Local dev: falls back to Express gateway on :5001
@@ -74,12 +78,20 @@ export default function Home() {
   const [voiceMessage, setVoiceMessage] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
+  const [displayLanguageCode, setDisplayLanguageCode] = useState("en");
 
   const stepTimerRef = useRef(null);
   const rateLimitTimerRef = useRef(null);
   const recognitionRef = useRef(null);
 
   const selectedLanguage = languageByCode(selectedLanguageCode);
+  const displayLanguage = languageByCode(displayLanguageCode);
+  const matchingVoices = voicesForLocale(
+    availableVoices,
+    selectedLanguage.speechLocale,
+  );
 
   // Health only. Asking a question on mount spent a provider completion on
   // every page load and every refresh — before anyone had clicked anything —
@@ -91,13 +103,27 @@ export default function Home() {
     setSpeechSupported(
       "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
     );
+    const synth = window.speechSynthesis;
+    const loadVoices = () => setAvailableVoices(synth?.getVoices() || []);
+    loadVoices();
+    synth?.addEventListener?.("voiceschanged", loadVoices);
 
     return () => {
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);
       if (rateLimitTimerRef.current) clearInterval(rateLimitTimerRef.current);
+      synth?.removeEventListener?.("voiceschanged", loadVoices);
       if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    const preferredVoice = selectPreferredVoice(
+      availableVoices,
+      selectedLanguage.speechLocale,
+      selectedVoiceURI,
+    );
+    setSelectedVoiceURI(preferredVoice?.voiceURI || "");
+  }, [availableVoices, selectedLanguage.speechLocale, selectedVoiceURI]);
 
   useEffect(() => {
     const Recognition =
@@ -235,7 +261,13 @@ export default function Home() {
     const text = displayAnswer || result?.answer?.answer;
     if (!text) return;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = selectedLanguage.speechLocale;
+    const voice = selectPreferredVoice(
+      availableVoices,
+      displayLanguage.speechLocale,
+      displayLanguage.code === selectedLanguage.code ? selectedVoiceURI : "",
+    );
+    utterance.lang = voice?.lang || displayLanguage.speechLocale;
+    if (voice) utterance.voice = voice;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => {
       setIsSpeaking(false);
@@ -261,6 +293,7 @@ export default function Home() {
     setError(null);
     setResult(null);
     setDisplayAnswer("");
+    setDisplayLanguageCode("en");
     setTranslationNotice(null);
     setTranslationStage("");
     setExpandedSources({});
@@ -329,14 +362,17 @@ export default function Home() {
               protectedTerms: collectProtectedTerms(data),
             });
             setDisplayAnswer(translatedAnswer);
+            setDisplayLanguageCode(requestLanguage.code);
           } catch (translationError) {
             setDisplayAnswer(originalAnswer);
+            setDisplayLanguageCode("en");
             setTranslationNotice(
               translationError.message || TRANSLATION_FALLBACK,
             );
           }
         } else {
           setDisplayAnswer(originalAnswer || "");
+          setDisplayLanguageCode("en");
         }
       }
     } catch (err) {
@@ -572,33 +608,62 @@ export default function Home() {
           className="wireframe-box p-4 sm:p-6 space-y-5 rounded-md"
         >
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-            <div className="flex-1 space-y-2">
-              <label
-                htmlFor="language-select"
-                className="block text-[11px] font-mono uppercase tracking-wider text-subtext"
-              >
-                Answer language
-              </label>
-              <select
-                id="language-select"
-                value={selectedLanguageCode}
-                onChange={(event) => {
-                  if (isListening) recognitionRef.current?.stop();
-                  window.speechSynthesis?.cancel();
-                  setIsSpeaking(false);
-                  setSelectedLanguageCode(event.target.value);
-                  setTranslationNotice(null);
-                  setVoiceMessage("");
-                }}
-                disabled={loading}
-                className="w-full bg-[#0b0e14] border border-wireframe rounded px-3 py-2.5 text-sm text-prose focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                {LANGUAGES.map((language) => (
-                  <option key={language.code} value={language.code}>
-                    {language.label} · {language.nativeLabel}
-                  </option>
-                ))}
-              </select>
+            <div className="grid flex-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="language-select"
+                  className="block text-[11px] font-mono uppercase tracking-wider text-subtext"
+                >
+                  Answer language
+                </label>
+                <select
+                  id="language-select"
+                  value={selectedLanguageCode}
+                  onChange={(event) => {
+                    if (isListening) recognitionRef.current?.stop();
+                    window.speechSynthesis?.cancel();
+                    setIsSpeaking(false);
+                    setSelectedLanguageCode(event.target.value);
+                    setSelectedVoiceURI("");
+                    setTranslationNotice(null);
+                    setVoiceMessage("");
+                  }}
+                  disabled={loading}
+                  className="w-full bg-[#0b0e14] border border-wireframe rounded px-3 py-2.5 text-sm text-prose focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  {LANGUAGES.map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.label} · {language.nativeLabel}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="voice-select"
+                  className="block text-[11px] font-mono uppercase tracking-wider text-subtext"
+                >
+                  Voice persona
+                </label>
+                <select
+                  id="voice-select"
+                  value={selectedVoiceURI}
+                  onChange={(event) => setSelectedVoiceURI(event.target.value)}
+                  disabled={loading || !speechSupported || matchingVoices.length === 0}
+                  className="w-full bg-[#0b0e14] border border-wireframe rounded px-3 py-2.5 text-sm text-prose focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {matchingVoices.length === 0 ? (
+                    <option value="">Browser default for {selectedLanguage.label}</option>
+                  ) : (
+                    matchingVoices.map((voice) => (
+                      <option key={voice.voiceURI} value={voice.voiceURI}>
+                        {voice.name} · {voice.lang}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
             </div>
 
             <button
@@ -874,7 +939,7 @@ export default function Home() {
             {!isAbstained && !isUnavailable && (
               <section className="wireframe-box rounded-none">
                 <div className="border-b border-wireframe px-4 py-2.5 bg-[#141822] text-xs font-mono uppercase tracking-wider text-muted font-semibold flex items-center justify-between">
-                  <span>Answer</span>
+                  <span>Answer · {displayLanguage.label}</span>
                   <span className="text-[10px] px-2 py-0.5 border border-emerald-800/60 text-emerald-400 bg-emerald-950/30">
                     ANSWERED
                   </span>
@@ -911,7 +976,9 @@ export default function Home() {
                       className="inline-flex items-center justify-center gap-2 rounded border border-wireframe-bright px-3 py-2 text-xs font-semibold text-prose transition-colors hover:border-blue-500 hover:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-45"
                     >
                       {isSpeaking ? <Square size={14} /> : <Volume2 size={15} />}
-                      {isSpeaking ? "Stop audio" : "Listen to answer"}
+                      {isSpeaking
+                        ? "Stop audio"
+                        : `Listen to answer · ${displayLanguage.label}`}
                     </button>
                   </div>
 

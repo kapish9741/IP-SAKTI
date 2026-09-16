@@ -106,6 +106,26 @@ Open **http://localhost:3001**. The Python demo/API remains available at
 **http://127.0.0.1:8000**. Chrome or Edge is recommended for browser speech
 recognition. If Google Translation credentials or the API are unavailable, the
 interface stays usable in English and shows a non-technical status message.
+The answer heading and playback button show the language actually displayed.
+Speech playback automatically prefers a locale-matching, female-associated
+voice when the browser provides one; the **Voice persona** menu lets the user
+choose any other installed voice for that language.
+
+For a deployed Next.js app, the local JSON file does not travel with the code.
+Configure these values as encrypted/sensitive, server-only environment
+variables in the hosting dashboard, then redeploy:
+
+```bash
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_CLIENT_EMAIL=translator@your-project.iam.gserviceaccount.com
+GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+Copy the three values yourself from the service-account JSON without adding the
+file to the repository. Do not use a `NEXT_PUBLIC_` prefix. Locally,
+`GOOGLE_APPLICATION_CREDENTIALS` remains the recommended option; if the three
+deployment variables are absent, the adapter falls back to Application Default
+Credentials.
 
 ---
 

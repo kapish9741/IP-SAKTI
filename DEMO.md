@@ -104,6 +104,8 @@ Quick demo check:
 3. Click a citation and expand its source text; confirm the retrieved legal text
    is still the original English text.
 4. Click **Listen to answer**, then stop playback.
+   The answer heading and button name the playback language. If available,
+   choose a pleasant locale-specific voice from **Voice persona** first.
 5. Deny microphone access once to confirm the typed-input fallback message.
 6. Start without `GOOGLE_APPLICATION_CREDENTIALS` to confirm the UI clearly
    returns to English instead of failing or sending a non-English query to RAG.
@@ -111,6 +113,24 @@ Quick demo check:
 Chrome or Edge is recommended because Web Speech recognition support varies by
 browser. Browser speech synthesis support and installed voices can also vary by
 operating system.
+
+### Deployment credentials
+
+`GOOGLE_APPLICATION_CREDENTIALS` points to a file on one computer, so it is a
+local-development setting only. On Vercel or another serverless host, add these
+as encrypted/sensitive environment variables for the deployed Next.js service:
+
+```bash
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_CLIENT_EMAIL=translator@your-project.iam.gserviceaccount.com
+GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+Copy those fields manually from the service-account JSON, do not upload or
+commit the file, and never expose them through a `NEXT_PUBLIC_` variable. Apply
+them to the intended deployment environments and redeploy. The translation
+adapter uses these server-only values in production and otherwise falls back to
+Application Default Credentials for local development.
 
 ## 4. Rehearse the demo questions
 
