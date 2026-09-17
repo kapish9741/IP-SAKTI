@@ -92,8 +92,8 @@ export function createTranslationHandler({ provider, logger = console }) {
         },
         200,
       );
-    } catch {
-      logger.warn("[translation] Google Cloud Translation is unavailable.");
+    } catch (err) {
+      logger.warn(`[translation] Google Cloud Translation is unavailable: ${err?.message || err}`);
       return json(FALLBACK_BODY, 503);
     }
   };

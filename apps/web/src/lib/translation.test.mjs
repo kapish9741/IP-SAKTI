@@ -24,6 +24,43 @@ test("builds server-only Google credentials from deployment environment variable
   );
 });
 
+test("supports JSON credentials string or object from deployment environment variables", () => {
+  const jsonString = JSON.stringify({
+    project_id: "demo-project",
+    client_email: "translator@demo-project.iam.gserviceaccount.com",
+    private_key: "-----BEGIN KEY-----\\nabc\\n-----END KEY-----",
+  });
+  assert.deepEqual(
+    googleClientOptionsFromEnvironment({
+      GOOGLE_APPLICATION_CREDENTIALS_JSON: jsonString,
+    }),
+    {
+      projectId: "demo-project",
+      credentials: {
+        client_email: "translator@demo-project.iam.gserviceaccount.com",
+        private_key: "-----BEGIN KEY-----\nabc\n-----END KEY-----",
+      },
+    },
+  );
+});
+
+test("strips surrounding quotes from private key string", () => {
+  assert.deepEqual(
+    googleClientOptionsFromEnvironment({
+      GOOGLE_CLOUD_PROJECT_ID: "demo-project",
+      GOOGLE_CLOUD_CLIENT_EMAIL: "translator@demo-project.iam.gserviceaccount.com",
+      GOOGLE_CLOUD_PRIVATE_KEY: '"-----BEGIN KEY-----\\nabc\\n-----END KEY-----"',
+    }),
+    {
+      projectId: "demo-project",
+      credentials: {
+        client_email: "translator@demo-project.iam.gserviceaccount.com",
+        private_key: "-----BEGIN KEY-----\nabc\n-----END KEY-----",
+      },
+    },
+  );
+});
+
 test("uses Application Default Credentials when deployment variables are absent or incomplete", () => {
   assert.deepEqual(googleClientOptionsFromEnvironment({}), {});
   assert.deepEqual(

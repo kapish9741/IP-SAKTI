@@ -14,16 +14,61 @@ export const SUPPORTED_LANGUAGE_CODES = new Set([
 ]);
 
 export function googleClientOptionsFromEnvironment(env = {}) {
+  const jsonCreds =
+    env.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
+    env.GOOGLE_CREDENTIALS ||
+    env.GOOGLE_CLOUD_CREDENTIALS;
+
+  if (jsonCreds) {
+    try {
+      const parsed =
+        typeof jsonCreds === "string" ? JSON.parse(jsonCreds) : jsonCreds;
+      if (parsed.project_id && parsed.client_email && parsed.private_key) {
+        let privateKey = parsed.private_key;
+        if (typeof privateKey === "string") {
+          privateKey = privateKey.trim();
+          if (
+            (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+            (privateKey.startsWith("'") && privateKey.endsWith("'"))
+          ) {
+            privateKey = privateKey.slice(1, -1);
+          }
+          privateKey = privateKey.replace(/\\n/g, "\n");
+        }
+        return {
+          projectId: parsed.project_id,
+          credentials: {
+            client_email: parsed.client_email,
+            private_key: privateKey,
+          },
+        };
+      }
+    } catch {
+      // Fall through to individual environment variables
+    }
+  }
+
   const projectId = env.GOOGLE_CLOUD_PROJECT_ID?.trim();
   const clientEmail = env.GOOGLE_CLOUD_CLIENT_EMAIL?.trim();
-  const privateKey = env.GOOGLE_CLOUD_PRIVATE_KEY;
+  let privateKey = env.GOOGLE_CLOUD_PRIVATE_KEY;
   if (!projectId || !clientEmail || !privateKey) return {};
+
+  if (typeof privateKey === "string") {
+    privateKey = privateKey.trim();
+    if (
+      (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+      (privateKey.startsWith("'") && privateKey.endsWith("'"))
+    ) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    privateKey = privateKey.replace(/\\n/g, "\n");
+  }
 
   return {
     projectId,
     credentials: {
       client_email: clientEmail,
-      private_key: privateKey.replace(/\\n/g, "\n"),
+      private_key: privateKey,
     },
   };
 }
