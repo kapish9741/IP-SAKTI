@@ -17,7 +17,10 @@ export function googleClientOptionsFromEnvironment(env = {}) {
   const jsonCreds =
     env.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
     env.GOOGLE_CREDENTIALS ||
-    env.GOOGLE_CLOUD_CREDENTIALS;
+    env.GOOGLE_CLOUD_CREDENTIALS ||
+    (env.GOOGLE_APPLICATION_CREDENTIALS?.trim().startsWith("{")
+      ? env.GOOGLE_APPLICATION_CREDENTIALS
+      : null);
 
   if (jsonCreds) {
     try {
@@ -48,9 +51,26 @@ export function googleClientOptionsFromEnvironment(env = {}) {
     }
   }
 
-  const projectId = env.GOOGLE_CLOUD_PROJECT_ID?.trim();
-  const clientEmail = env.GOOGLE_CLOUD_CLIENT_EMAIL?.trim();
-  let privateKey = env.GOOGLE_CLOUD_PRIVATE_KEY;
+  const projectId = (
+    env.GOOGLE_CLOUD_PROJECT_ID ||
+    env.GOOGLE_PROJECT_ID ||
+    env.GCP_PROJECT_ID ||
+    env.PROJECT_ID
+  )?.trim();
+
+  const clientEmail = (
+    env.GOOGLE_CLOUD_CLIENT_EMAIL ||
+    env.GOOGLE_CLIENT_EMAIL ||
+    env.GCP_CLIENT_EMAIL ||
+    env.CLIENT_EMAIL
+  )?.trim();
+
+  let privateKey =
+    env.GOOGLE_CLOUD_PRIVATE_KEY ||
+    env.GOOGLE_PRIVATE_KEY ||
+    env.GCP_PRIVATE_KEY ||
+    env.PRIVATE_KEY;
+
   if (!projectId || !clientEmail || !privateKey) return {};
 
   if (typeof privateKey === "string") {
@@ -164,10 +184,17 @@ export function splitProtectedSegments(text, protectedTerms = []) {
 }
 
 export class GoogleCloudTranslationProvider {
-  constructor({ client, env = process.env } = {}) {
-    this.client =
-      client ||
-      new translateV2.Translate(googleClientOptionsFromEnvironment(env));
+  constructor({ client, env } = {}) {
+    this.customClient = client;
+    this.env = env;
+  }
+
+  getClient() {
+    if (this.customClient) return this.customClient;
+    const currentEnv = this.env || process.env;
+    return new translateV2.Translate(
+      googleClientOptionsFromEnvironment(currentEnv),
+    );
   }
 
   async translate({
@@ -193,7 +220,8 @@ export class GoogleCloudTranslationProvider {
       };
     });
     const translatableText = translatableParts.map((part) => part.text);
-    const [translated] = await this.client.translate(translatableText, {
+    const client = this.getClient();
+    const [translated] = await client.translate(translatableText, {
       from: sourceLanguage,
       to: targetLanguage,
       format: "text",
