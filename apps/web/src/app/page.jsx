@@ -29,7 +29,6 @@ import {
   Lightbulb as LightbulbIcon,
   Search as SearchIcon,
   Zap as ZapIcon,
-  Grid as GridIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Stepper, { Step } from "../components/Stepper/Stepper";
@@ -638,11 +637,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Center Title (Hidden on small screens to prevent header overlap) */}
-        <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-base tracking-tight text-slate-900 pointer-events-none">
-          IP-SAKTI AI
-        </div>
-
+        
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <span
@@ -703,15 +698,6 @@ export default function Home() {
               </div>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-            className="flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-700 text-white text-[11px] sm:text-xs font-semibold hover:bg-emerald-800 transition shadow-sm"
-          >
-            <span>Upgrade</span>
-            <GridIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-300" />
-          </button>
         </div>
       </header>
 
@@ -856,21 +842,6 @@ export default function Home() {
                         onStop={stopGeneration}
                         className="glass-input-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col items-stretch transition-all"
                       >
-                        {/* Top Pro Banner strip */}
-                        <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50/80 to-green-50/80 border border-emerald-100/80 rounded-xl px-2.5 py-1 sm:px-3 sm:py-1.5 mb-2.5 sm:mb-3 text-[11px] sm:text-xs text-slate-700">
-                          <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate">
-                            <GridIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span className="truncate">Unlock more with Pro Plan</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-                            className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[10px] sm:text-[11px] shadow-2xs transition shrink-0"
-                          >
-                            Upgrade Now
-                          </button>
-                        </div>
-
                         {/* Input Area */}
                         <div className="relative w-full px-0.5 min-h-[48px] sm:min-h-[56px]">
                           <ChatInputTextArea
@@ -1411,9 +1382,6 @@ export default function Home() {
             >
               <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-white">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center shadow-2xs">
-                    <BalanceIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                  </div>
                   <div>
                     <h3 className="text-xs sm:text-sm font-semibold text-slate-900 leading-none">
                       IP-SAKTI Quick Guide
@@ -1465,10 +1433,6 @@ export default function Home() {
                 >
                   <Step>
                     <div className="space-y-3">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-semibold text-emerald-700 uppercase tracking-widest">
-                        <BalanceIcon className="w-3 h-3" />
-                        Statutory AI
-                      </div>
                       <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
                         Search Indian Statutory Law
                       </h2>
@@ -1496,10 +1460,6 @@ export default function Home() {
 
                   <Step>
                     <div className="space-y-3">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-semibold text-emerald-700 uppercase tracking-widest">
-                        <MagnifyingGlassIcon className="w-3.5 h-3.5" />
-                        Auditable Evidence
-                      </div>
                       <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
                         Inspect Citations &amp; Try A Query
                       </h2>

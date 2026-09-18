@@ -43,6 +43,8 @@ module.exports = {
         "ambernotice-border": "#b45309",
       },
       fontFamily: {
+        sans: ["var(--font-poppins)", "Poppins", "sans-serif"],
+        poppins: ["var(--font-poppins)", "Poppins", "sans-serif"],
         mono: [
           "ui-monospace",
           "SFMono-Regular",
