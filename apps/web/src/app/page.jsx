@@ -101,17 +101,17 @@ function SourceItem({ src, index }) {
   const marker = src.marker || index + 1;
 
   return (
-    <div className="border border-[#e8edf3] rounded-2xl p-3.5 sm:p-4 bg-white/80 backdrop-blur-sm transition hover:border-slate-300">
-      <div className="flex items-start justify-between gap-2.5">
+    <div className="border border-[#e8edf3] rounded-2xl p-3 sm:p-4 bg-white/80 backdrop-blur-sm transition hover:border-slate-300">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2 sm:gap-2.5 min-w-0">
-          <span className="text-xs font-bold text-[#334155] mt-0.5 shrink-0">
+          <span className="text-[11px] sm:text-xs font-bold text-[#334155] mt-0.5 shrink-0">
             [{marker}]
           </span>
           <div className="space-y-1 min-w-0">
             <h4 className="text-xs font-semibold text-[#0f172a] leading-tight break-words">
               {src.document_name || src.document_id}
             </h4>
-            <p className="text-[11px] text-[#64748b] break-words">
+            <p className="text-[10px] sm:text-[11px] text-[#64748b] break-words">
               {src.locator_text || "Example record · Section 1"}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -620,31 +620,31 @@ export default function Home() {
   const handleAsk = handleSendMessage;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden hero-gradient-bg text-[#0f172a]">
-      {/* ─── TOP HEADER BAR (EDGE-TO-EDGE) ─────────────────────────────────── */}
-      <header className="h-14 sm:h-16 topbar-bg flex items-center justify-between px-4 sm:px-8 shrink-0 z-20">
+    <div className="flex flex-col h-screen h-[100dvh] w-screen overflow-hidden hero-gradient-bg text-[#0f172a]">
+      {/* ─── TOP HEADER BAR (RESPONSIVE) ─────────────────────────────────── */}
+      <header className="h-14 sm:h-16 topbar-bg flex items-center justify-between px-3 sm:px-6 md:px-8 shrink-0 z-20">
         {/* Left Model Selector Pill */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <button
             type="button"
             onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs text-xs font-semibold text-slate-800 hover:bg-white transition"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs text-[11px] sm:text-xs font-semibold text-slate-800 hover:bg-white transition truncate max-w-[170px] sm:max-w-none"
           >
-            <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-bold">
+            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[8px] sm:text-[9px] font-bold shrink-0">
               AI
             </div>
-            <span>IP-SAKTI 3.5 Pro</span>
-            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+            <span className="truncate">IP-SAKTI 3.5 Pro</span>
+            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400 ml-0.5 shrink-0" />
           </button>
         </div>
 
-        {/* Center Title */}
-        <div className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-base tracking-tight text-slate-900 pointer-events-none">
+        {/* Center Title (Hidden on small screens to prevent header overlap) */}
+        <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-base tracking-tight text-slate-900 pointer-events-none">
           IP-SAKTI AI
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <span
             className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-slate-100/90 text-slate-600 border border-slate-200/60"
             title={health?.status === "ok" ? "RAG service ready" : "RAG service unavailable"}
@@ -682,7 +682,7 @@ export default function Home() {
           <div className="relative">
             <button
               onClick={() => setOptionsDropdownOpen(!optionsDropdownOpen)}
-              className="w-8 h-8 rounded-full bg-white/80 border border-slate-200/80 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-white transition"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/80 border border-slate-200/80 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-white transition"
               title="More options"
             >
               <DotsHorizontalIcon className="w-4 h-4" />
@@ -707,10 +707,10 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0b0f19] text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-700 text-white text-[11px] sm:text-xs font-semibold hover:bg-emerald-800 transition shadow-sm"
           >
             <span>Upgrade</span>
-            <GridIcon className="w-3.5 h-3.5 text-blue-400" />
+            <GridIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-300" />
           </button>
         </div>
       </header>
@@ -722,7 +722,7 @@ export default function Home() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="settings-bar-bg px-4 py-2.5 sm:px-8 z-10 shrink-0 border-b border-slate-200/60"
+            className="settings-bar-bg px-3 py-2.5 sm:px-8 z-10 shrink-0 border-b border-slate-200/60"
           >
             <div className="mx-auto flex max-w-[960px] flex-col gap-2 lg:flex-row lg:items-center">
               <div className="grid flex-1 gap-2 sm:grid-cols-2">
@@ -741,7 +741,7 @@ export default function Home() {
                       setTranslationNotice("");
                     }}
                     disabled={isGenerating}
-                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-blue-400 disabled:opacity-50"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-emerald-400 disabled:opacity-50"
                     aria-label="Answer language"
                   >
                     {LANGUAGES.map((language) => (
@@ -760,7 +760,7 @@ export default function Home() {
                     disabled={
                       isGenerating || !speechSupported || matchingVoices.length === 0
                     }
-                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-blue-400 disabled:opacity-50"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-emerald-400 disabled:opacity-50"
                     aria-label="Voice persona"
                   >
                     {matchingVoices.length === 0 ? (
@@ -788,13 +788,13 @@ export default function Home() {
 
       {/* Voice/Translation Status Notice Banner */}
       {(voiceMessage || translationNotice || interimTranscript || isListening) && (
-        <div className="px-4 pt-2 shrink-0">
+        <div className="px-3 pt-2 shrink-0">
           <div
             className={`mx-auto max-w-[960px] rounded-xl border px-3 py-1.5 text-[11px] ${
               voiceMessage || translationNotice
                 ? "border-amber-200 bg-amber-50/90 text-amber-800"
                 : isListening
-                  ? "border-blue-200 bg-blue-50/90 text-blue-700"
+                  ? "border-emerald-200 bg-emerald-50/90 text-emerald-700"
                   : "border-slate-200 bg-white/80 text-slate-500"
             }`}
             aria-live="polite"
@@ -808,8 +808,8 @@ export default function Home() {
       )}
 
       {/* ─── MAIN CHAT CANVAS ─────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 py-6 space-y-6 scroll-smooth scroll-pt-6 hero-gradient-bg">
-        <div className="max-w-[760px] mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto px-2.5 sm:px-8 md:px-12 py-4 sm:py-6 space-y-4 sm:space-y-6 scroll-smooth scroll-pt-4 sm:scroll-pt-6 hero-gradient-bg flex flex-col">
+        <div className="max-w-[760px] mx-auto space-y-4 sm:space-y-6 w-full flex-1 flex flex-col justify-center">
 
           {/* ─── HERO EMPTY STATE ─────────────────────────────────────────── */}
           <AnimatePresence mode="wait">
@@ -819,23 +819,23 @@ export default function Home() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                className="flex flex-col items-center justify-center min-h-[76vh] text-center px-2 py-4"
+                className="flex flex-col items-center justify-center flex-1 my-auto min-h-[calc(100dvh-56px-2rem)] sm:min-h-[calc(100dvh-64px-3rem)] text-center px-3 sm:px-2 py-4 sm:py-6"
               >
-                <div className="w-full max-w-[720px] space-y-7">
+                <div className="w-full max-w-[720px] space-y-6 sm:space-y-7">
 
-                  {/* Clean Minimal Headline */}
+                  {/* Headline */}
                   <motion.div
                     exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
                     transition={{ duration: 0.25 }}
                     className="space-y-2 sm:space-y-3"
                   >
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal text-slate-700 tracking-tight leading-tight">
-                      HI Kapish <span className="font-bold text-[#0f172a]">Ready to</span>
+                    <h1 className="text-[26px] leading-[1.15] sm:text-4xl md:text-5xl font-normal text-slate-600 tracking-tight">
+                      Hi Kapish,{" "}<span className="font-bold text-[#0f172a]">Ready to</span>
                     </h1>
-                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0f172a] tracking-tight leading-tight">
+                    <h2 className="text-[26px] leading-[1.15] sm:text-4xl md:text-5xl font-bold text-[#0f172a] tracking-tight">
                       Achieve Great Things?
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto pt-1 font-normal">
+                    <p className="text-[12px] sm:text-sm text-slate-500 max-w-md mx-auto pt-1.5 font-normal px-1">
                       What do you want to know? Statutory intelligence across Patents, Trade Marks, Copyright &amp; Biodiversity law.
                     </p>
                   </motion.div>
@@ -854,38 +854,38 @@ export default function Home() {
                         onSubmit={() => handleSendMessage()}
                         loading={isGenerating}
                         onStop={stopGeneration}
-                        className="glass-input-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col items-stretch transition-all"
+                        className="glass-input-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col items-stretch transition-all"
                       >
                         {/* Top Pro Banner strip */}
-                        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100/80 rounded-xl px-3 py-1.5 mb-3 text-xs text-slate-700">
-                          <div className="flex items-center gap-2 font-medium">
-                            <GridIcon className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Unlock more with Pro Plan</span>
+                        <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50/80 to-green-50/80 border border-emerald-100/80 rounded-xl px-2.5 py-1 sm:px-3 sm:py-1.5 mb-2.5 sm:mb-3 text-[11px] sm:text-xs text-slate-700">
+                          <div className="flex items-center gap-1.5 sm:gap-2 font-medium truncate">
+                            <GridIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span className="truncate">Unlock more with Pro Plan</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-                            className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-2xs transition"
+                            className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[10px] sm:text-[11px] shadow-2xs transition shrink-0"
                           >
                             Upgrade Now
                           </button>
                         </div>
 
                         {/* Input Area */}
-                        <div className="relative w-full px-1 min-h-[56px]">
+                        <div className="relative w-full px-0.5 min-h-[48px] sm:min-h-[56px]">
                           <ChatInputTextArea
                             ref={textareaRef}
                             rows={2}
                             placeholder=""
                             onKeyDown={handleInputKeyDown}
-                            className="w-full bg-transparent resize-none border-none outline-none text-sm sm:text-base text-[#0f172a] leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
+                            className="w-full bg-transparent resize-none border-none outline-none text-xs sm:text-base text-[#0f172a] leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
                           />
 
                           {/* Animated Blur Text Placeholder Overlay */}
                           {!inputText && (
                             <div
                               onClick={applyPlaceholderText}
-                              className="absolute inset-0 cursor-text z-0 flex items-start select-none overflow-hidden pr-4"
+                              className="absolute inset-0 cursor-text z-0 flex items-start select-none overflow-hidden pr-2 sm:pr-4"
                             >
                               <AnimatePresence mode="wait">
                                 <motion.div
@@ -894,9 +894,9 @@ export default function Home() {
                                   animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
                                   exit={{ opacity: 0, filter: "blur(8px)", y: -4 }}
                                   transition={{ duration: 0.45, ease: "easeInOut" }}
-                                  className="text-xs sm:text-sm text-slate-400 leading-relaxed flex flex-wrap items-center gap-x-1"
+                                  className="text-xs sm:text-sm text-slate-400 leading-normal sm:leading-relaxed flex flex-wrap items-center gap-x-1"
                                 >
-                                  <ZapIcon className="w-3.5 h-3.5 text-blue-500 inline mr-0.5" />
+                                  <ZapIcon className="w-3.5 h-3.5 text-emerald-500 inline mr-0.5 shrink-0" />
                                   {DEMO_QUESTIONS[placeholderQuestionIndex].split(" ").map((word, wIdx) => (
                                     <motion.span
                                       key={`${placeholderQuestionIndex}-${wIdx}`}
@@ -912,7 +912,7 @@ export default function Home() {
                                       {word}
                                     </motion.span>
                                   ))}
-                                  <span className="inline-flex items-center text-[10px] font-mono font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 ml-1.5 self-center shadow-2xs">
+                                  <span className="hidden sm:inline-flex items-center text-[10px] font-mono font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 ml-1.5 self-center shadow-2xs">
                                     Tab ⇥
                                   </span>
                                 </motion.div>
@@ -922,25 +922,25 @@ export default function Home() {
                         </div>
 
                         {/* Bottom Toolbar inside Card */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100/90 mt-2">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <div className="flex items-center justify-between gap-1.5 pt-2.5 sm:pt-3 border-t border-slate-100/90 mt-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             <button
                               type="button"
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] sm:text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
                               title="Attach File"
                             >
                               <PaperclipIcon className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Attach File</span>
+                              <span className="hidden xs:inline sm:inline">Attach File</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] sm:text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
                               title="Reasoning"
                             >
                               <LightbulbIcon className="w-3.5 h-3.5 text-amber-500" />
-                              <span>Reasoning</span>
+                              <span className="hidden xs:inline sm:inline">Reasoning</span>
                             </button>
 
                             <button
@@ -949,32 +949,32 @@ export default function Home() {
                               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
                               title="Deep Research"
                             >
-                              <SearchIcon className="w-3.5 h-3.5 text-blue-500" />
+                              <SearchIcon className="w-3.5 h-3.5 text-emerald-500" />
                               <span>Deep Research</span>
                             </button>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                             <button
                               type="button"
                               onClick={toggleListening}
                               disabled={!recognitionSupported || isGenerating}
                               aria-pressed={isListening}
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 shadow-2xs ${
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 shadow-2xs ${
                                 isListening
                                   ? "bg-red-500 text-white"
-                                  : "bg-indigo-600/90 hover:bg-indigo-600 text-white"
+                                  : "bg-emerald-600/90 hover:bg-emerald-600 text-white"
                               }`}
                               title={isListening ? "Stop voice input" : "Start voice input"}
                             >
                               {isListening ? (
-                                <StopIcon className="w-4 h-4" />
+                                <StopIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               ) : (
-                                <MicrophoneIcon className="w-4 h-4" />
+                                <MicrophoneIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               )}
                             </button>
 
-                            <ChatInputSubmit className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition disabled:bg-slate-200 disabled:text-slate-400 flex items-center justify-center p-0 shadow-sm" />
+                            <ChatInputSubmit className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:bg-slate-200 disabled:text-slate-400 flex items-center justify-center p-0 shadow-sm" />
                           </div>
                         </div>
                       </ChatInput>
@@ -983,24 +983,43 @@ export default function Home() {
                     {/* Legal Question Chips Below Card */}
                     <motion.div
                       exit={{ opacity: 0, y: 12, transition: { duration: 0.2 } }}
-                      className="flex flex-wrap items-center justify-center gap-2 pt-5"
+                      className="pt-3 sm:pt-5 px-0"
                     >
-                      {SAMPLES.map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => {
-                            setQuestion(s);
-                            handleAsk(s);
-                          }}
-                          className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-slate-200/80 text-slate-700 bg-white/90 hover:bg-white hover:border-slate-300 hover:text-slate-900 transition shadow-2xs"
-                        >
-                          {s.length > 42 ? `${s.slice(0, 40)}…` : s}
-                        </button>
-                      ))}
+                      {/* Mobile: full-width stacked list */}
+                      <div className="flex flex-col gap-2 sm:hidden">
+                        {SAMPLES.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              setQuestion(s);
+                              handleAsk(s);
+                            }}
+                            className="w-full text-left flex items-center gap-2.5 px-4 py-3 rounded-2xl text-[12px] font-medium border border-slate-200/90 text-slate-700 bg-white/95 hover:bg-white hover:border-slate-300 hover:text-slate-900 active:scale-[0.98] transition-all shadow-sm leading-snug"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-px" />
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Desktop: horizontal wrap pills */}
+                      <div className="hidden sm:flex flex-wrap items-center justify-center gap-2">
+                        {SAMPLES.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              setQuestion(s);
+                              handleAsk(s);
+                            }}
+                            className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-slate-200/80 text-slate-700 bg-white/90 hover:bg-white hover:border-slate-300 hover:text-slate-900 transition shadow-2xs max-w-[92vw] truncate"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
                     </motion.div>
 
                     {/* Subtle Disclaimer */}
-                    <p className="text-center text-[11px] text-slate-400 font-normal pt-5">
+                    <p className="text-center text-[10px] sm:text-[11px] text-slate-400 font-normal pt-3 sm:pt-5 px-2">
                       {LEGAL_DISCLAIMER}
                     </p>
                   </div>
@@ -1020,10 +1039,10 @@ export default function Home() {
                 <div
                   key={msg.id}
                   ref={isLatestUser ? latestTurnRef : null}
-                  className="flex items-start justify-end gap-3 group pt-1 scroll-mt-4"
+                  className="flex items-start justify-end gap-2 sm:gap-3 group pt-1 scroll-mt-4"
                 >
-                  <div className="flex flex-col items-end max-w-[85%] sm:max-w-lg">
-                    <div className="bg-[#0b0f19] text-white rounded-2xl sm:rounded-3xl px-4 sm:px-5 py-3 text-sm shadow-sm font-normal break-words leading-relaxed">
+                  <div className="flex flex-col items-end max-w-[90%] sm:max-w-lg">
+                    <div className="bg-[#0b0f19] text-white rounded-2xl sm:rounded-3xl px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm font-normal break-words leading-relaxed">
                       {msg.content}
                     </div>
                     <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
@@ -1043,7 +1062,7 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-[#0b0f19] text-white font-semibold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0b0f19] text-white font-semibold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                     KS
                   </div>
                 </div>
@@ -1052,19 +1071,19 @@ export default function Home() {
 
             if (msg.status === "loading") {
               return (
-                <div key={msg.id} className="flex items-start gap-3 pt-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <div key={msg.id} className="flex items-start gap-2.5 sm:gap-3 pt-2">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                     AI
                   </div>
-                  <div className="flex-1 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 shadow-sm">
+                  <div className="flex-1 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm">
                     <div className="flex items-center justify-between pb-3">
                       <div className="flex items-center gap-2">
                         <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dot-1" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dot-2" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dot-3" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dot-1" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dot-2" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dot-3" />
                         </span>
-                        <span className="text-xs font-medium text-slate-600">
+                        <span className="text-[11px] sm:text-xs font-medium text-slate-600">
                           {currentStepIndex >= ANALYSIS_STEPS.length
                             ? "Evidence verified · Finalizing answer..."
                             : "Analyzing legal evidence..."}
@@ -1073,7 +1092,7 @@ export default function Home() {
                       {currentStepIndex < ANALYSIS_STEPS.length && (
                         <button
                           onClick={stopGeneration}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 text-xs text-slate-500 hover:bg-slate-50 transition"
+                          className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-slate-200 text-[11px] text-slate-500 hover:bg-slate-50 transition"
                         >
                           <StopIcon className="w-3 h-3" />
                           <span>Stop</span>
@@ -1081,17 +1100,17 @@ export default function Home() {
                       )}
                     </div>
 
-                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+                    <div className="border border-slate-100 rounded-2xl p-3 sm:p-4 bg-slate-50/50">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
                           Evidence Analysis
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400">
                           Secure
                         </span>
                       </div>
 
-                      <div className="space-y-2.5">
+                      <div className="space-y-2">
                         {ANALYSIS_STEPS.map((stepText, idx) => {
                           const isDone = idx < currentStepIndex;
                           const isCurrent = idx === currentStepIndex;
@@ -1099,14 +1118,14 @@ export default function Home() {
                           return (
                             <div
                               key={stepText}
-                              className="flex items-center gap-2.5 text-xs"
+                              className="flex items-center gap-2 text-xs"
                             >
                               {isDone ? (
-                                <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />
+                                <CheckIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                               ) : isCurrent ? (
-                                <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 text-emerald-600 animate-spin shrink-0" />
                               ) : (
-                                <div className="w-3.5 h-3.5 rounded-full border border-slate-200" />
+                                <div className="w-3.5 h-3.5 rounded-full border border-slate-200 shrink-0" />
                               )}
                               <span
                                 className={`${
@@ -1131,13 +1150,13 @@ export default function Home() {
 
             if (msg.status === "error") {
               return (
-                <div key={msg.id} className="flex items-start gap-3 pt-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
+                <div key={msg.id} className="flex items-start gap-2.5 sm:gap-3 pt-2">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
                     AI
                   </div>
                   <div
                     role="alert"
-                    className="flex-1 rounded-2xl border border-red-100 bg-red-50/80 p-4 text-sm text-red-700"
+                    className="flex-1 rounded-2xl border border-red-100 bg-red-50/80 p-3.5 sm:p-4 text-xs sm:text-sm text-red-700"
                   >
                     {msg.error}
                   </div>
@@ -1151,39 +1170,39 @@ export default function Home() {
             return (
               <div
                 key={msg.id}
-                className="flex items-start gap-3 pt-2 scroll-mt-4"
+                className="flex items-start gap-2.5 sm:gap-3 pt-2 scroll-mt-4"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                   AI
                 </div>
-                <div className="flex-1 min-w-0 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
+                <div className="flex-1 min-w-0 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 text-slate-500">
-                      <ShieldIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                      <span className="text-[10px] font-semibold tracking-widest uppercase">
+                      <ShieldIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase">
                         Answer · {answerLanguage.label}
                       </span>
                     </div>
                     {msg.confidence && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-slate-100 text-slate-600 border border-slate-200/60 uppercase shrink-0">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold tracking-wide bg-slate-100 text-slate-600 border border-slate-200/60 uppercase shrink-0">
                         {msg.confidence}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-sm sm:text-[15px] leading-relaxed text-slate-800 font-normal break-words">
+                  <p className="text-xs sm:text-[15px] leading-relaxed text-slate-800 font-normal break-words">
                     {msg.answer}
                   </p>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                    <div className="flex flex-wrap gap-1.5 text-[10px] font-medium text-slate-500">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5 sm:pt-3">
+                    <div className="flex flex-wrap gap-1.5 text-[9px] sm:text-[10px] font-medium text-slate-500">
                       {msg.jurisdiction !== undefined &&
                         msg.jurisdiction !== null && (
-                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 sm:py-1">
                             {String(msg.jurisdiction)}
                           </span>
                         )}
-                      <span className="rounded-full border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-1 text-emerald-700">
+                      <span className="rounded-full border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-0.5 sm:py-1 text-emerald-700">
                         {msg.citations?.length || 0} citations validated
                       </span>
                     </div>
@@ -1192,12 +1211,12 @@ export default function Home() {
                       onClick={() => toggleSpeech(msg)}
                       disabled={!speechSupported}
                       aria-pressed={isSpeakingMessageId === msg.id}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
                     >
                       {isSpeakingMessageId === msg.id ? (
                         <StopIcon className="h-3.5 w-3.5" />
                       ) : (
-                        <SpeakerLoudIcon className="h-3.5 w-3.5 text-blue-600" />
+                        <SpeakerLoudIcon className="h-3.5 w-3.5 text-emerald-600" />
                       )}
                       {isSpeakingMessageId === msg.id
                         ? "Stop audio"
@@ -1221,7 +1240,7 @@ export default function Home() {
                     <div className="pt-2 border-t border-slate-100 space-y-2">
                       <div className="flex items-center gap-1.5 text-slate-400">
                         <FileTextIcon className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-semibold tracking-widest uppercase">
+                        <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase">
                           Sources
                         </span>
                       </div>
@@ -1238,7 +1257,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  <p className="border-t border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-400">
+                  <p className="border-t border-slate-100 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] leading-relaxed text-slate-400">
                     {msg.disclaimer || LEGAL_DISCLAIMER}
                   </p>
                 </div>
@@ -1257,7 +1276,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.25 }}
-            className="relative px-4 sm:px-8 py-3 shrink-0 z-20 hero-gradient-bg border-t border-slate-200/50"
+            className="relative px-3 sm:px-8 py-2.5 sm:py-3 shrink-0 z-20 hero-gradient-bg border-t border-slate-200/50"
           >
             <div className="max-w-[760px] mx-auto space-y-2 relative">
               <motion.div
@@ -1272,7 +1291,7 @@ export default function Home() {
                   onSubmit={() => handleSendMessage()}
                   loading={isGenerating}
                   onStop={stopGeneration}
-                  className="glass-input-card rounded-2xl p-3.5 sm:p-4 flex flex-col items-stretch"
+                  className="glass-input-card rounded-2xl p-3 sm:p-4 flex flex-col items-stretch"
                 >
                   <div className="relative w-full">
                     <ChatInputTextArea
@@ -1280,13 +1299,13 @@ export default function Home() {
                       rows={2}
                       placeholder=""
                       onKeyDown={handleInputKeyDown}
-                      className="w-full bg-transparent resize-none border-none outline-none text-sm sm:text-base text-slate-800 leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
+                      className="w-full bg-transparent resize-none border-none outline-none text-xs sm:text-base text-slate-800 leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
                     />
 
                     {!inputText && (
                       <div
                         onClick={applyPlaceholderText}
-                        className="absolute inset-0 cursor-text z-0 flex items-start select-none overflow-hidden pr-4"
+                        className="absolute inset-0 cursor-text z-0 flex items-start select-none overflow-hidden pr-2 sm:pr-4"
                       >
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -1295,7 +1314,7 @@ export default function Home() {
                             animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
                             exit={{ opacity: 0, filter: "blur(8px)", y: -4 }}
                             transition={{ duration: 0.45, ease: "easeInOut" }}
-                            className="text-xs sm:text-sm text-slate-400 leading-relaxed flex flex-wrap items-center gap-x-1"
+                            className="text-xs sm:text-sm text-slate-400 leading-normal sm:leading-relaxed flex flex-wrap items-center gap-x-1"
                           >
                             {DEMO_QUESTIONS[placeholderQuestionIndex].split(" ").map((word, wIdx) => (
                               <motion.span
@@ -1312,7 +1331,7 @@ export default function Home() {
                                 {word}
                               </motion.span>
                             ))}
-                            <span className="inline-flex items-center text-[10px] font-mono font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 ml-1 self-center">
+                            <span className="hidden sm:inline-flex items-center text-[10px] font-mono font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 ml-1 self-center">
                               Tab ⇥
                             </span>
                           </motion.div>
@@ -1321,7 +1340,7 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between w-full pt-2.5 border-t border-slate-100 mt-2">
+                  <div className="flex items-center justify-between w-full pt-2 sm:pt-2.5 border-t border-slate-100 mt-2">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -1332,12 +1351,12 @@ export default function Home() {
                       </button>
 
                       <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] font-medium text-slate-600">
-                        <BalanceIcon className="w-3 h-3 text-blue-600" />
+                        <BalanceIcon className="w-3 h-3 text-emerald-600" />
                         <span>Indian Statutory Law</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <button
                         type="button"
                         onClick={toggleListening}
@@ -1357,13 +1376,13 @@ export default function Home() {
                         )}
                       </button>
 
-                      <ChatInputSubmit className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition disabled:bg-slate-100 disabled:text-slate-300 flex items-center justify-center p-0 shadow-2xs" />
+                      <ChatInputSubmit className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:bg-slate-100 disabled:text-slate-300 flex items-center justify-center p-0 shadow-2xs" />
                     </div>
                   </div>
                 </ChatInput>
               </motion.div>
 
-              <p className="text-center text-[11px] text-slate-400 font-normal pt-1">
+              <p className="text-center text-[10px] sm:text-[11px] text-slate-400 font-normal pt-1 px-2">
                 {LEGAL_DISCLAIMER}
               </p>
             </div>
@@ -1388,18 +1407,18 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 z-10 overflow-hidden my-auto"
+              className="relative w-full max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 z-10 overflow-hidden my-auto"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-white">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xs">
-                    <BalanceIcon className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center shadow-2xs">
+                    <BalanceIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900 leading-none">
+                    <h3 className="text-xs sm:text-sm font-semibold text-slate-900 leading-none">
                       IP-SAKTI Quick Guide
                     </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
                       Citation-grounded statutory AI assistant
                     </p>
                   </div>
@@ -1446,7 +1465,7 @@ export default function Home() {
                 >
                   <Step>
                     <div className="space-y-3">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-semibold text-blue-700 uppercase tracking-widest">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-semibold text-emerald-700 uppercase tracking-widest">
                         <BalanceIcon className="w-3 h-3" />
                         Statutory AI
                       </div>
@@ -1459,14 +1478,14 @@ export default function Home() {
                       <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
                         <div className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/60">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <BookmarkIcon className="w-3 h-3 text-blue-600" />
+                            <BookmarkIcon className="w-3 h-3 text-emerald-600" />
                             <span className="font-semibold text-slate-800 text-[11px]">4 Official Acts</span>
                           </div>
                           <span className="text-[10px] text-slate-400">Patents, Trade Marks, Copyright &amp; Biodiversity.</span>
                         </div>
                         <div className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/60">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <ShieldIcon className="w-3 h-3 text-blue-600" />
+                            <ShieldIcon className="w-3 h-3 text-emerald-600" />
                             <span className="font-semibold text-slate-800 text-[11px]">Verified or Silent</span>
                           </div>
                           <span className="text-[10px] text-slate-400">Requires statutory evidence or abstains safely.</span>
@@ -1477,7 +1496,7 @@ export default function Home() {
 
                   <Step>
                     <div className="space-y-3">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-semibold text-blue-700 uppercase tracking-widest">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-semibold text-emerald-700 uppercase tracking-widest">
                         <MagnifyingGlassIcon className="w-3.5 h-3.5" />
                         Auditable Evidence
                       </div>
@@ -1498,10 +1517,10 @@ export default function Home() {
                               setGuideCompleted(true);
                               handleSendMessage(q);
                             }}
-                            className="w-full text-left p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/50 hover:border-blue-200 transition text-xs text-slate-800 flex items-center justify-between group"
+                            className="w-full text-left p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50/50 hover:border-emerald-200 transition text-xs text-slate-800 flex items-center justify-between group"
                           >
                             <span className="font-medium truncate pr-2 text-[11px]">{q}</span>
-                            <span className="text-[10px] text-blue-600 font-semibold group-hover:translate-x-0.5 transition-all shrink-0">
+                            <span className="text-[10px] text-emerald-600 font-semibold group-hover:translate-x-0.5 transition-all shrink-0">
                               Ask →
                             </span>
                           </button>
