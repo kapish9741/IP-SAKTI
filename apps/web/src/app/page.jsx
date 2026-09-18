@@ -763,10 +763,6 @@ export default function Home() {
                   </select>
                 </label>
               </div>
-
-              <p className="text-[10px] leading-relaxed text-slate-500 lg:max-w-xs">
-                Demo multilingual layer: Google Cloud Translation + browser voice.
-              </p>
             </div>
           </motion.section>
         )}
