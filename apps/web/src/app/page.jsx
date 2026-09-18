@@ -2,27 +2,34 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Shield,
-  AlertTriangle,
-  FileText,
-  Square,
-  Volume2,
-  Check,
+  PlusIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ExclamationTriangleIcon,
+  FileTextIcon,
+  StopIcon,
+  SpeakerLoudIcon,
+  CheckIcon,
+  UpdateIcon,
+  DotsHorizontalIcon,
+  ReloadIcon,
+  Pencil1Icon,
+  TrashIcon,
+  GlobeIcon,
+  BookmarkIcon,
+  MagnifyingGlassIcon,
+  Cross2Icon,
+} from "@radix-ui/react-icons";
+import {
   Loader2,
-  Mic,
-  MoreHorizontal,
-  RefreshCw,
-  Edit2,
-  Navigation,
-  Trash2,
-  Compass,
-  BookOpen,
-  Sparkles,
-  X,
-  Scale,
+  Shield as ShieldIcon,
+  Mic as MicrophoneIcon,
+  Scale as BalanceIcon,
+  Paperclip as PaperclipIcon,
+  Lightbulb as LightbulbIcon,
+  Search as SearchIcon,
+  Zap as ZapIcon,
+  Grid as GridIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Stepper, { Step } from "../components/Stepper/Stepper";
@@ -38,7 +45,6 @@ import {
   voicesForLocale,
 } from "../lib/voice-selection.mjs";
 
-
 // Rehearsed demo legal questions for the animated blur placeholder and onboarding
 const DEMO_QUESTIONS = [
   "How must an application for registration of a trade mark be signed?",
@@ -49,7 +55,7 @@ const DEMO_QUESTIONS = [
 ];
 const SAMPLES = DEMO_QUESTIONS;
 
-// API endpoints: Express Gateway on :5001 with direct fallback to Python server on :8000
+// API endpoints
 const PRIMARY_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 const FALLBACK_API_URL = "http://localhost:8000";
 const TRANSLATION_FALLBACK =
@@ -95,7 +101,7 @@ function SourceItem({ src, index }) {
   const marker = src.marker || index + 1;
 
   return (
-    <div className="border border-[#e2e8f0] rounded-xl p-3 sm:p-4 bg-white transition">
+    <div className="border border-[#e8edf3] rounded-2xl p-3.5 sm:p-4 bg-white/80 backdrop-blur-sm transition hover:border-slate-300">
       <div className="flex items-start justify-between gap-2.5">
         <div className="flex items-start gap-2 sm:gap-2.5 min-w-0">
           <span className="text-xs font-bold text-[#334155] mt-0.5 shrink-0">
@@ -109,11 +115,11 @@ function SourceItem({ src, index }) {
               {src.locator_text || "Example record · Section 1"}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] uppercase">
-                VERIFIED
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] uppercase tracking-wide">
+                Verified
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] uppercase">
-                PROVENANCE {src.source_evidence_level || "A"}
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] uppercase tracking-wide">
+                Level {src.source_evidence_level || "A"}
               </span>
             </div>
           </div>
@@ -121,19 +127,19 @@ function SourceItem({ src, index }) {
 
         <button
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="flex items-center gap-1 text-[11px] font-medium text-[#64748b] hover:text-[#0f172a] shrink-0 pt-0.5"
+          className="flex items-center gap-1 text-[11px] font-medium text-[#64748b] hover:text-[#0f172a] shrink-0 pt-0.5 transition"
         >
-          <span>{isExpanded ? "Hide evidence" : "View evidence"}</span>
+          <span>{isExpanded ? "Hide" : "View"}</span>
           {isExpanded ? (
-            <ChevronUp className="w-3.5 h-3.5" />
+            <ChevronUpIcon className="w-3.5 h-3.5" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDownIcon className="w-3.5 h-3.5" />
           )}
         </button>
       </div>
 
       {isExpanded && (
-        <div className="mt-3 pt-3 border-t border-[#f1f5f9] text-xs text-gray-700 bg-gray-50 p-3 rounded-lg font-mono leading-relaxed max-h-60 overflow-y-auto">
+        <div className="mt-3 pt-3 border-t border-[#f1f5f9] text-xs text-gray-700 bg-gray-50/80 p-3 rounded-xl font-mono leading-relaxed max-h-60 overflow-y-auto">
           <p className="whitespace-pre-wrap break-words">{src.text}</p>
         </div>
       )}
@@ -143,8 +149,9 @@ function SourceItem({ src, index }) {
 
 export default function Home() {
   const [optionsDropdownOpen, setOptionsDropdownOpen] = useState(false);
+  const [settingsBarOpen, setSettingsBarOpen] = useState(false);
 
-  // Active chat messages - Clean initial state with no old mock messages
+  // Active chat messages
   const [messages, setMessages] = useState([]);
 
   const [inputText, setInputText] = useState("");
@@ -201,7 +208,7 @@ export default function Home() {
           return;
         }
       } catch {
-        // Try the direct Python service when the local gateway is unavailable.
+        // Fallback
       }
     }
     setHealth(null);
@@ -268,7 +275,7 @@ export default function Home() {
 
   // Cycle through demo questions one-by-one when textarea is empty
   useEffect(() => {
-    if (inputText.trim()) return; // Pause cycling while user is actively typing
+    if (inputText.trim()) return;
     const interval = setInterval(() => {
       setPlaceholderQuestionIndex((prev) => (prev + 1) % DEMO_QUESTIONS.length);
     }, 4500);
@@ -300,7 +307,6 @@ export default function Home() {
     }
   };
 
-  // Global Tab key listener to autocomplete active question when on empty home state
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.key === "Tab" && !inputText && messages.length === 0 && !showGuide) {
@@ -312,7 +318,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [inputText, messages.length, showGuide, placeholderQuestionIndex]);
 
-  // Keep the active question and AI answer text visible on screen (laptop & mobile)
   useEffect(() => {
     if (latestTurnRef.current) {
       latestTurnRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -433,13 +438,6 @@ export default function Home() {
     setCurrentStepIndex(0);
     setTranslationNotice("");
 
-    // Realistic pipeline durations: each step spins only once!
-    // Step 0: Query processing (~300ms)
-    // Step 1: Evidence retrieval (~800ms)
-    // Step 2: Reranking sources (~600ms)
-    // Step 3: Selecting evidence (~450ms)
-    // Step 4: Generating grounded answer (~1200ms)
-    // Step 5: Validating citations (stays active until backend response completes, never loops)
     clearStepTimers();
     const stepDelays = [300, 800, 600, 450, 1200];
     const timeouts = [];
@@ -515,7 +513,6 @@ export default function Home() {
         }
       }
 
-      // Stop intermediate timers and briefly show all steps verified
       clearStepTimers();
       setCurrentStepIndex(ANALYSIS_STEPS.length);
       await new Promise((resolve) => setTimeout(resolve, 350));
@@ -623,186 +620,198 @@ export default function Home() {
   const handleAsk = handleSendMessage;
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-white text-[#0f172a]">
-      {/* ─── TOP NAVIGATION BAR ───────────────────────────────────────────── */}
-      <header className="h-14 flex items-center justify-between px-3 sm:px-6 bg-white z-10 shrink-0">
-        {/* Model Selector Pill on Left */}
-        {/* Brand Logo & Name */}
-        <button
-          type="button"
-          onClick={handleStartNewChat}
-          className="flex items-center gap-2.5 text-left group focus:outline-none"
-          title="IP-SAKTI Home"
-        >
-          <div className="w-8 h-8 rounded-xl bg-[#0f172a] flex items-center justify-center text-white shadow-xs border border-slate-800 group-hover:scale-105 transition-transform duration-200">
-            <Scale className="w-4 h-4 text-white stroke-[2.2]" />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[16px] sm:text-[17px] font-bold tracking-tight text-[#0f172a] group-hover:text-slate-700 transition">
-              IP-SAKTI
-            </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100/90 text-slate-600 border border-slate-200/80">
-              Statutory Law AI
-            </span>
-          </div>
-        </button>
+    <div className="flex flex-col h-screen w-screen overflow-hidden hero-gradient-bg text-[#0f172a]">
+      {/* ─── TOP HEADER BAR (EDGE-TO-EDGE) ─────────────────────────────────── */}
+      <header className="h-14 sm:h-16 topbar-bg flex items-center justify-between px-4 sm:px-8 shrink-0 z-20">
+        {/* Left Model Selector Pill */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSettingsBarOpen(!settingsBarOpen)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs text-xs font-semibold text-slate-800 hover:bg-white transition"
+          >
+            <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-[9px] font-bold">
+              AI
+            </div>
+            <span>IP-SAKTI 3.5 Pro</span>
+            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+          </button>
+        </div>
 
-        {/* Action Controls on Right */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+        {/* Center Title */}
+        <div className="absolute left-1/2 -translate-x-1/2 font-semibold text-sm sm:text-base tracking-tight text-slate-900 pointer-events-none">
+          IP-SAKTI AI
+        </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <span
-            className="hidden items-center gap-1.5 text-[10px] font-medium text-slate-500 md:flex"
+            className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-slate-100/90 text-slate-600 border border-slate-200/60"
             title={health?.status === "ok" ? "RAG service ready" : "RAG service unavailable"}
           >
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                health?.status === "ok" ? "bg-emerald-500" : "bg-slate-300"
+                health?.status === "ok" ? "bg-emerald-500" : "bg-amber-400"
               }`}
             />
-            {health?.status === "ok" ? "RAG ready" : "Connecting"}
+            {health?.status === "ok" ? "RAG Ready" : "Connecting"}
           </span>
+
           <button
             type="button"
             onClick={() => {
               setShowGuide(true);
               setGuideCompleted(false);
             }}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#e2e8f0] text-xs font-medium text-[#334155] hover:text-[#0f172a] hover:bg-gray-50 transition"
-            title="Open interactive walkthrough guide"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200/80 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-white transition"
+            title="Open guide"
           >
-            <Compass className="w-3.5 h-3.5" />
+            <GlobeIcon className="w-3.5 h-3.5" />
             <span>Guide</span>
           </button>
 
           <button
             onClick={handleStartNewChat}
-            className="flex items-center gap-1 px-3 py-1 rounded-full border border-[#e2e8f0] text-xs font-medium text-[#334155] hover:text-[#0f172a] hover:bg-gray-50 transition"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200/80 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-white transition"
             title="Start new chat"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <PlusIcon className="w-3.5 h-3.5" />
             <span>New Chat</span>
           </button>
 
           <div className="relative">
             <button
               onClick={() => setOptionsDropdownOpen(!optionsDropdownOpen)}
-              className="w-8 h-8 rounded-full border border-[#e2e8f0] flex items-center justify-center text-[#64748b] hover:text-[#0f172a] hover:bg-gray-50 transition"
+              className="w-8 h-8 rounded-full bg-white/80 border border-slate-200/80 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-white transition"
               title="More options"
             >
-              <MoreHorizontal className="w-4 h-4" />
+              <DotsHorizontalIcon className="w-4 h-4" />
             </button>
 
             {optionsDropdownOpen && (
-              <div className="absolute top-full right-0 mt-1.5 w-44 bg-white border border-[#e2e8f0] rounded-xl shadow-lg p-1.5 z-30">
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-30">
                 <button
                   onClick={() => {
                     handleStartNewChat();
                     setOptionsDropdownOpen(false);
                   }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-500 hover:bg-red-50 transition"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <TrashIcon className="w-3.5 h-3.5" />
                   <span>Clear conversation</span>
                 </button>
               </div>
             )}
           </div>
 
-          <div
-            className="w-8 h-8 rounded-full bg-[#0f172a] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0"
-            title="John Doe"
+          <button
+            type="button"
+            onClick={() => setSettingsBarOpen(!settingsBarOpen)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0b0f19] text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
           >
-            JD
-          </div>
+            <span>Upgrade</span>
+            <GridIcon className="w-3.5 h-3.5 text-blue-400" />
+          </button>
         </div>
       </header>
 
-      <section className="border-y border-slate-200/80 bg-slate-50/70 px-3 py-2.5 sm:px-6">
-        <div className="mx-auto flex max-w-[1040px] flex-col gap-2.5 lg:flex-row lg:items-center">
-          <div className="grid flex-1 gap-2 sm:grid-cols-2">
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-              <span className="shrink-0">Language</span>
-              <select
-                value={selectedLanguageCode}
-                onChange={(event) => {
-                  recognitionRef.current?.abort();
-                  window.speechSynthesis?.cancel();
-                  setIsListening(false);
-                  setIsSpeakingMessageId(null);
-                  setSelectedLanguageCode(event.target.value);
-                  setSelectedVoiceURI("");
-                  setVoiceMessage("");
-                  setTranslationNotice("");
-                }}
-                disabled={isGenerating}
-                className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-slate-400 disabled:opacity-50"
-                aria-label="Answer language"
-              >
-                {LANGUAGES.map((language) => (
-                  <option key={language.code} value={language.code}>
-                    {language.label} · {language.nativeLabel}
-                  </option>
-                ))}
-              </select>
-            </label>
+      {/* ─── LANGUAGE & VOICE SETTINGS BAR (COLLAPSIBLE) ──────────────────── */}
+      <AnimatePresence>
+        {settingsBarOpen && (
+          <motion.section
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="settings-bar-bg px-4 py-2.5 sm:px-8 z-10 shrink-0 border-b border-slate-200/60"
+          >
+            <div className="mx-auto flex max-w-[960px] flex-col gap-2 lg:flex-row lg:items-center">
+              <div className="grid flex-1 gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                  <span className="shrink-0">Language</span>
+                  <select
+                    value={selectedLanguageCode}
+                    onChange={(event) => {
+                      recognitionRef.current?.abort();
+                      window.speechSynthesis?.cancel();
+                      setIsListening(false);
+                      setIsSpeakingMessageId(null);
+                      setSelectedLanguageCode(event.target.value);
+                      setSelectedVoiceURI("");
+                      setVoiceMessage("");
+                      setTranslationNotice("");
+                    }}
+                    disabled={isGenerating}
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-blue-400 disabled:opacity-50"
+                    aria-label="Answer language"
+                  >
+                    {LANGUAGES.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.label} · {language.nativeLabel}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-              <span className="shrink-0">Voice</span>
-              <select
-                value={selectedVoiceURI}
-                onChange={(event) => setSelectedVoiceURI(event.target.value)}
-                disabled={
-                  isGenerating || !speechSupported || matchingVoices.length === 0
-                }
-                className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-slate-400 disabled:opacity-50"
-                aria-label="Voice persona"
-              >
-                {matchingVoices.length === 0 ? (
-                  <option value="">
-                    Browser default for {selectedLanguage.label}
-                  </option>
-                ) : (
-                  matchingVoices.map((voice) => (
-                    <option key={voice.voiceURI} value={voice.voiceURI}>
-                      {voice.name} · {voice.lang}
-                    </option>
-                  ))
-                )}
-              </select>
-            </label>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                  <span className="shrink-0">Voice</span>
+                  <select
+                    value={selectedVoiceURI}
+                    onChange={(event) => setSelectedVoiceURI(event.target.value)}
+                    disabled={
+                      isGenerating || !speechSupported || matchingVoices.length === 0
+                    }
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-blue-400 disabled:opacity-50"
+                    aria-label="Voice persona"
+                  >
+                    {matchingVoices.length === 0 ? (
+                      <option value="">
+                        Browser default for {selectedLanguage.label}
+                      </option>
+                    ) : (
+                      matchingVoices.map((voice) => (
+                        <option key={voice.voiceURI} value={voice.voiceURI}>
+                          {voice.name} · {voice.lang}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </label>
+              </div>
+
+              <p className="text-[10px] leading-relaxed text-slate-500 lg:max-w-xs">
+                Demo multilingual layer: Google Cloud Translation + browser voice.
+              </p>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Voice/Translation Status Notice Banner */}
+      {(voiceMessage || translationNotice || interimTranscript || isListening) && (
+        <div className="px-4 pt-2 shrink-0">
+          <div
+            className={`mx-auto max-w-[960px] rounded-xl border px-3 py-1.5 text-[11px] ${
+              voiceMessage || translationNotice
+                ? "border-amber-200 bg-amber-50/90 text-amber-800"
+                : isListening
+                  ? "border-blue-200 bg-blue-50/90 text-blue-700"
+                  : "border-slate-200 bg-white/80 text-slate-500"
+            }`}
+            aria-live="polite"
+          >
+            {translationNotice ||
+              voiceMessage ||
+              interimTranscript ||
+              (isListening ? `Listening in ${selectedLanguage.label}…` : "")}
           </div>
-
-          <p className="text-[10px] leading-relaxed text-slate-500 lg:max-w-sm">
-            Demo multilingual layer: Google Cloud Translation + browser voice.
-            Bhashini integration will be enabled after API approval.
-          </p>
         </div>
+      )}
 
-        <div
-          className={`mx-auto mt-2 max-w-[1040px] rounded-lg border px-2.5 py-1.5 text-[11px] ${
-            voiceMessage || translationNotice
-              ? "border-amber-200 bg-amber-50 text-amber-800"
-              : isListening
-                ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-slate-200 bg-white text-slate-500"
-          }`}
-          aria-live="polite"
-        >
-          {translationNotice ||
-            voiceMessage ||
-            interimTranscript ||
-            (isListening
-              ? `Listening in ${selectedLanguage.label}…`
-              : recognitionSupported
-                ? "Live speech transcript appears here and remains editable in the question box."
-                : "Voice input is not supported in this browser. Type your question below.")}
-        </div>
-      </section>
+      {/* ─── MAIN CHAT CANVAS ─────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 py-6 space-y-6 scroll-smooth scroll-pt-6 hero-gradient-bg">
+        <div className="max-w-[760px] mx-auto space-y-6">
 
-      {/* ─── CHAT CANVAS / MESSAGES ───────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-8 md:px-12 py-3 sm:py-4 space-y-5 sm:space-y-6 scroll-smooth scroll-pt-3 sm:scroll-pt-4">
-        <div className="max-w-[1040px] mx-auto space-y-5 sm:space-y-6">
-
-          {/* Empty State when no messages - Centered Hero like Perplexity */}
+          {/* ─── HERO EMPTY STATE ─────────────────────────────────────────── */}
           <AnimatePresence mode="wait">
             {messages.length === 0 && !isGenerating && (
               <motion.div
@@ -810,31 +819,29 @@ export default function Home() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                className="flex flex-col items-center justify-center min-h-[68vh] sm:min-h-[72vh] text-center px-2 py-4"
+                className="flex flex-col items-center justify-center min-h-[76vh] text-center px-2 py-4"
               >
-                <div className="w-full max-w-[760px] space-y-6">
-                  {/* Hero Title and Subtitle */}
+                <div className="w-full max-w-[720px] space-y-7">
+
+                  {/* Clean Minimal Headline */}
                   <motion.div
                     exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
                     transition={{ duration: 0.25 }}
-                    className="space-y-2"
+                    className="space-y-2 sm:space-y-3"
                   >
-                    <span className="text-xs font-semibold uppercase tracking-widest text-[#64748b]">
-                      Search &amp; Inquire
-                    </span>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0f172a] tracking-tight">
-                      What do you want to know?
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal text-slate-700 tracking-tight leading-tight">
+                      HI Kapish <span className="font-bold text-[#0f172a]">Ready to</span>
                     </h1>
-                    <p className="text-xs sm:text-sm text-[#64748b] max-w-lg mx-auto">
-                      Indian statutory intelligence across Patents, Trade Marks, Copyright &amp; Biodiversity law.
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#0f172a] tracking-tight leading-tight">
+                      Achieve Great Things?
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto pt-1 font-normal">
+                      What do you want to know? Statutory intelligence across Patents, Trade Marks, Copyright &amp; Biodiversity law.
                     </p>
                   </motion.div>
 
-                  {/* Centered Perplexity-style Input Box */}
+                  {/* Main Floating Glass Input Card */}
                   <div className="text-left w-full relative">
-                    {/* Soft blur div behind chat card */}
-                    <div className="absolute -inset-1 rounded-[28px] bg-slate-100/70 backdrop-blur-md -z-10 pointer-events-none" />
-
                     <motion.div
                       layoutId="unified-chat-card"
                       transition={{ type: "spring", stiffness: 280, damping: 28 }}
@@ -847,15 +854,31 @@ export default function Home() {
                         onSubmit={() => handleSendMessage()}
                         loading={isGenerating}
                         onStop={stopGeneration}
-                        className="relative border border-[#e2e8f0] bg-white/95 backdrop-blur-md rounded-[24px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-within:border-slate-400 focus-within:shadow-[0_4px_24px_rgba(0,0,0,0.1)] transition-all p-3.5 sm:p-5 flex flex-col items-stretch"
+                        className="glass-input-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col items-stretch transition-all"
                       >
-                        <div className="relative w-full">
+                        {/* Top Pro Banner strip */}
+                        <div className="flex items-center justify-between bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100/80 rounded-xl px-3 py-1.5 mb-3 text-xs text-slate-700">
+                          <div className="flex items-center gap-2 font-medium">
+                            <GridIcon className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Unlock more with Pro Plan</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSettingsBarOpen(!settingsBarOpen)}
+                            className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-2xs transition"
+                          >
+                            Upgrade Now
+                          </button>
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="relative w-full px-1 min-h-[56px]">
                           <ChatInputTextArea
                             ref={textareaRef}
                             rows={2}
                             placeholder=""
                             onKeyDown={handleInputKeyDown}
-                            className="w-full bg-transparent resize-none border-none outline-none text-sm sm:text-[16px] text-[#0f172a] leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
+                            className="w-full bg-transparent resize-none border-none outline-none text-sm sm:text-base text-[#0f172a] leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
                           />
 
                           {/* Animated Blur Text Placeholder Overlay */}
@@ -871,8 +894,9 @@ export default function Home() {
                                   animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
                                   exit={{ opacity: 0, filter: "blur(8px)", y: -4 }}
                                   transition={{ duration: 0.45, ease: "easeInOut" }}
-                                  className="text-sm sm:text-[16px] text-[#94a3b8] leading-relaxed flex flex-wrap items-center gap-x-1"
+                                  className="text-xs sm:text-sm text-slate-400 leading-relaxed flex flex-wrap items-center gap-x-1"
                                 >
+                                  <ZapIcon className="w-3.5 h-3.5 text-blue-500 inline mr-0.5" />
                                   {DEMO_QUESTIONS[placeholderQuestionIndex].split(" ").map((word, wIdx) => (
                                     <motion.span
                                       key={`${placeholderQuestionIndex}-${wIdx}`}
@@ -888,7 +912,7 @@ export default function Home() {
                                       {word}
                                     </motion.span>
                                   ))}
-                                  <span className="inline-flex items-center text-[10px] font-mono font-medium text-[#64748b] bg-slate-100/90 border border-slate-200/90 rounded px-1.5 py-0.5 ml-1 self-center shadow-2xs">
+                                  <span className="inline-flex items-center text-[10px] font-mono font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 ml-1.5 self-center shadow-2xs">
                                     Tab ⇥
                                   </span>
                                 </motion.div>
@@ -897,20 +921,37 @@ export default function Home() {
                           )}
                         </div>
 
-                        {/* Bottom toolbar inside input card */}
-                        <div className="flex items-center justify-between w-full pt-2 border-t border-slate-100 mt-2">
-                          <div className="flex items-center gap-2">
+                        {/* Bottom Toolbar inside Card */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100/90 mt-2">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                             <button
                               type="button"
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100 transition"
-                              title="Attach file"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                              title="Attach File"
                             >
-                              <Plus className="w-4 h-4 stroke-[2]" />
+                              <PaperclipIcon className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Attach File</span>
                             </button>
 
-                            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/80 text-[11px] font-medium text-[#334155]">
-                              <span>⚖️ Indian Statutory Law</span>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSettingsBarOpen(!settingsBarOpen)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                              title="Reasoning"
+                            >
+                              <LightbulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                              <span>Reasoning</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => { setShowGuide(true); setGuideCompleted(false); }}
+                              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                              title="Deep Research"
+                            >
+                              <SearchIcon className="w-3.5 h-3.5 text-blue-500" />
+                              <span>Deep Research</span>
+                            </button>
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -919,30 +960,30 @@ export default function Home() {
                               onClick={toggleListening}
                               disabled={!recognitionSupported || isGenerating}
                               aria-pressed={isListening}
-                              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 ${
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 shadow-2xs ${
                                 isListening
-                                  ? "bg-red-50 text-red-600"
-                                  : "text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100"
+                                  ? "bg-red-500 text-white"
+                                  : "bg-indigo-600/90 hover:bg-indigo-600 text-white"
                               }`}
                               title={isListening ? "Stop voice input" : "Start voice input"}
                             >
                               {isListening ? (
-                                <Square className="w-3.5 h-3.5 stroke-[2]" />
+                                <StopIcon className="w-4 h-4" />
                               ) : (
-                                <Mic className="w-4 h-4 stroke-[2]" />
+                                <MicrophoneIcon className="w-4 h-4" />
                               )}
                             </button>
 
-                            <ChatInputSubmit className="w-8 h-8 sm:w-9 sm:h-9 bg-[#0f172a] text-white hover:bg-slate-800 transition disabled:bg-[#f1f5f9] disabled:text-[#94a3b8] flex items-center justify-center p-0" />
+                            <ChatInputSubmit className="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition disabled:bg-slate-200 disabled:text-slate-400 flex items-center justify-center p-0 shadow-sm" />
                           </div>
                         </div>
                       </ChatInput>
                     </motion.div>
 
-                    {/* Suggestion Chips underneath centered input */}
+                    {/* Legal Question Chips Below Card */}
                     <motion.div
                       exit={{ opacity: 0, y: 12, transition: { duration: 0.2 } }}
-                      className="flex flex-wrap items-center justify-center gap-2 pt-4"
+                      className="flex flex-wrap items-center justify-center gap-2 pt-5"
                     >
                       {SAMPLES.map((s) => (
                         <button
@@ -951,116 +992,102 @@ export default function Home() {
                             setQuestion(s);
                             handleAsk(s);
                           }}
-                          className="px-3.5 py-1 rounded-full text-xs font-medium border border-[#e2e8f0] text-[#334155] bg-white hover:bg-slate-50 hover:border-slate-300 transition shadow-2xs"
+                          className="px-3.5 py-1.5 rounded-full text-xs font-medium border border-slate-200/80 text-slate-700 bg-white/90 hover:bg-white hover:border-slate-300 hover:text-slate-900 transition shadow-2xs"
                         >
-                          {s.length > 44 ? `${s.slice(0, 42)}…` : s}
+                          {s.length > 42 ? `${s.slice(0, 40)}…` : s}
                         </button>
                       ))}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowGuide(true);
-                          setGuideCompleted(false);
-                        }}
-                        className="px-3.5 py-1 rounded-full text-xs font-medium border border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-50 transition flex items-center gap-1.5"
-                      >
-                        <Compass className="w-3.5 h-3.5" />
-                        <span>Onboarding Guide</span>
-                      </button>
                     </motion.div>
 
-                    {/* Subtle disclaimer */}
-                    <p className="text-center text-[11px] text-[#94a3b8] font-normal pt-4">
+                    {/* Subtle Disclaimer */}
+                    <p className="text-center text-[11px] text-slate-400 font-normal pt-5">
                       {LEGAL_DISCLAIMER}
                     </p>
                   </div>
+
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Active Conversation Messages */}
+          {/* ─── ACTIVE MESSAGES LIST ─────────────────────────────────────── */}
           {messages.map((msg, idx) => {
             const lastUserIndex = messages.map((m) => m.role).lastIndexOf("user");
 
-            // User message turn (right side bubble with JD avatar matching screenshot)
             if (msg.role === "user") {
               const isLatestUser = idx === lastUserIndex;
               return (
                 <div
                   key={msg.id}
                   ref={isLatestUser ? latestTurnRef : null}
-                  className="flex items-start justify-end gap-2.5 sm:gap-3 group pt-1 scroll-mt-3 sm:scroll-mt-4"
+                  className="flex items-start justify-end gap-3 group pt-1 scroll-mt-4"
                 >
-                  <div className="flex flex-col items-end max-w-[86%] sm:max-w-lg">
-                    <div className="bg-[#18181b] text-white rounded-2xl px-4 sm:px-5 py-2.5 text-sm shadow-xs font-normal break-words leading-relaxed">
+                  <div className="flex flex-col items-end max-w-[85%] sm:max-w-lg">
+                    <div className="bg-[#0b0f19] text-white rounded-2xl sm:rounded-3xl px-4 sm:px-5 py-3 text-sm shadow-sm font-normal break-words leading-relaxed">
                       {msg.content}
                     </div>
-                    <div className="flex items-center gap-3 mt-1.5 text-[11px] text-[#94a3b8]">
+                    <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
                       <button
                         onClick={() => setInputText(msg.content)}
-                        className="flex items-center gap-1 hover:text-gray-600"
+                        className="flex items-center gap-1 hover:text-slate-600 transition"
                       >
-                        <Edit2 className="w-3 h-3" />
+                        <Pencil1Icon className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleSendMessage(msg.content)}
-                        className="flex items-center gap-1 hover:text-gray-600"
+                        className="flex items-center gap-1 hover:text-slate-600 transition"
                       >
-                        <RefreshCw className="w-3 h-3" />
+                        <ReloadIcon className="w-3 h-3" />
                         <span>Resend</span>
                       </button>
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-[#0f172a] text-white font-bold text-xs flex items-center justify-center shrink-0">
-                    JD
+                  <div className="w-8 h-8 rounded-full bg-[#0b0f19] text-white font-semibold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                    KS
                   </div>
                 </div>
               );
             }
 
-            // Assistant message: Step loader state (Image 2)
             if (msg.status === "loading") {
               return (
                 <div key={msg.id} className="flex items-start gap-3 pt-2">
-                  <div className="w-8 h-8 rounded-full bg-[#0f172a] text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                     AI
                   </div>
-                  <div className="flex-1 max-w-[1080px] bg-white border border-[#e2e8f0] rounded-2xl p-5 shadow-xs">
-                    {/* Top Bar */}
+                  <div className="flex-1 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 shadow-sm">
                     <div className="flex items-center justify-between pb-3">
                       <div className="flex items-center gap-2">
                         <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500 dot-1" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500 dot-2" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500 dot-3" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dot-1" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dot-2" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dot-3" />
                         </span>
-                        <span className="text-xs font-medium text-[#334155]">
+                        <span className="text-xs font-medium text-slate-600">
                           {currentStepIndex >= ANALYSIS_STEPS.length
                             ? "Evidence verified · Finalizing answer..."
-                            : "IP-SAKTI is analyzing the legal evidence..."}
+                            : "Analyzing legal evidence..."}
                         </span>
                       </div>
                       {currentStepIndex < ANALYSIS_STEPS.length && (
                         <button
                           onClick={stopGeneration}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#e2e8f0] text-xs text-[#475569] hover:bg-gray-50 transition"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 text-xs text-slate-500 hover:bg-slate-50 transition"
                         >
-                          <Square className="w-3 h-3" />
-                          <span>Pause</span>
+                          <StopIcon className="w-3 h-3" />
+                          <span>Stop</span>
                         </button>
                       )}
                     </div>
 
-                    {/* Inner Box: EVIDENCE-FIRST ANALYSIS */}
-                    <div className="border border-[#e2e8f0] rounded-xl p-4 bg-white">
+                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                          EVIDENCE-FIRST ANALYSIS
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+                          Evidence Analysis
                         </span>
-                        <span className="text-xs text-[#94a3b8]">
-                          Working securely
+                        <span className="text-[10px] text-slate-400">
+                          Secure
                         </span>
                       </div>
 
@@ -1075,19 +1102,20 @@ export default function Home() {
                               className="flex items-center gap-2.5 text-xs"
                             >
                               {isDone ? (
-                                <Check className="w-4 h-4 text-emerald-500 stroke-[2.5]" />
+                                <CheckIcon className="w-3.5 h-3.5 text-emerald-500" />
                               ) : isCurrent ? (
-                                <Loader2 className="w-4 h-4 text-gray-900 animate-spin stroke-[2]" />
+                                <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
                               ) : (
-                                <div className="w-4 h-4 rounded-full border border-gray-300" />
+                                <div className="w-3.5 h-3.5 rounded-full border border-slate-200" />
                               )}
                               <span
-                                className={`${isDone
-                                  ? "text-gray-700"
-                                  : isCurrent
-                                    ? "text-gray-900 font-medium"
-                                    : "text-gray-400"
-                                  }`}
+                                className={`${
+                                  isDone
+                                    ? "text-slate-500"
+                                    : isCurrent
+                                      ? "text-slate-800 font-medium"
+                                      : "text-slate-300"
+                                }`}
                               >
                                 {stepText}
                               </span>
@@ -1104,12 +1132,12 @@ export default function Home() {
             if (msg.status === "error") {
               return (
                 <div key={msg.id} className="flex items-start gap-3 pt-2">
-                  <div className="w-8 h-8 rounded-full bg-[#0f172a] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
                     AI
                   </div>
                   <div
                     role="alert"
-                    className="flex-1 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+                    className="flex-1 rounded-2xl border border-red-100 bg-red-50/80 p-4 text-sm text-red-700"
                   >
                     {msg.error}
                   </div>
@@ -1117,49 +1145,46 @@ export default function Home() {
               );
             }
 
-            // Assistant message: Completed Answer Card (matching screenshot 1 directly)
             const answerLanguage = languageByCode(
               msg.displayLanguageCode || "en",
             );
             return (
               <div
                 key={msg.id}
-                className="flex items-start gap-2.5 sm:gap-3 pt-2 scroll-mt-3 sm:scroll-mt-4"
+                className="flex items-start gap-3 pt-2 scroll-mt-4"
               >
-                <div className="w-8 h-8 rounded-full bg-[#0f172a] text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                   AI
                 </div>
-                <div className="flex-1 min-w-0 max-w-[1080px] bg-white border border-[#e2e8f0] rounded-2xl p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
-                  {/* Header: ANSWER & CONFIDENCE */}
+                <div className="flex-1 min-w-0 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 text-[#64748b]">
-                      <Shield className="w-4 h-4 text-[#64748b] shrink-0" />
-                      <span className="text-[11px] font-bold tracking-wider uppercase">
-                        ANSWER · {answerLanguage.label}
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <ShieldIcon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span className="text-[10px] font-semibold tracking-widest uppercase">
+                        Answer · {answerLanguage.label}
                       </span>
                     </div>
                     {msg.confidence && (
-                      <span className="px-2.5 sm:px-3 py-1 rounded-full text-[10px] font-bold tracking-wider bg-[#f1f5f9] text-[#334155] uppercase shrink-0">
-                        CONFIDENCE: {msg.confidence}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-slate-100 text-slate-600 border border-slate-200/60 uppercase shrink-0">
+                        {msg.confidence}
                       </span>
                     )}
                   </div>
 
-                  {/* Answer Prose - This text stays visible on screen */}
-                  <p className="text-sm sm:text-[15px] leading-relaxed text-[#1e293b] font-normal break-words">
+                  <p className="text-sm sm:text-[15px] leading-relaxed text-slate-800 font-normal break-words">
                     {msg.answer}
                   </p>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                    <div className="flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    <div className="flex flex-wrap gap-1.5 text-[10px] font-medium text-slate-500">
                       {msg.jurisdiction !== undefined &&
                         msg.jurisdiction !== null && (
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">
-                            Jurisdiction: {String(msg.jurisdiction)}
+                            {String(msg.jurisdiction)}
                           </span>
                         )}
-                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">
-                        Grounded · {msg.citations?.length || 0} citations validated
+                      <span className="rounded-full border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-1 text-emerald-700">
+                        {msg.citations?.length || 0} citations validated
                       </span>
                     </div>
                     <button
@@ -1167,39 +1192,37 @@ export default function Home() {
                       onClick={() => toggleSpeech(msg)}
                       disabled={!speechSupported}
                       aria-pressed={isSpeakingMessageId === msg.id}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
                     >
                       {isSpeakingMessageId === msg.id ? (
-                        <Square className="h-3.5 w-3.5" />
+                        <StopIcon className="h-3.5 w-3.5" />
                       ) : (
-                        <Volume2 className="h-4 w-4" />
+                        <SpeakerLoudIcon className="h-3.5 w-3.5 text-blue-600" />
                       )}
                       {isSpeakingMessageId === msg.id
                         ? "Stop audio"
-                        : `Listen to answer · ${answerLanguage.label}`}
+                        : `Listen · ${answerLanguage.label}`}
                     </button>
                   </div>
 
-                  {/* Source Notice Banner */}
                   {msg.caution && (
-                    <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-xl p-3 sm:p-3.5 flex items-start gap-2.5">
-                      <AlertTriangle className="w-4 h-4 text-[#d97706] shrink-0 mt-0.5" />
-                      <div className="text-xs text-[#92400e] space-y-0.5">
+                    <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 sm:p-3.5 flex items-start gap-2.5">
+                      <ExclamationTriangleIcon className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="text-xs text-amber-800 space-y-0.5">
                         <div className="font-semibold">
                           {msg.caution.title}
                         </div>
-                        <div className="opacity-95">{msg.caution.detail}</div>
+                        <div className="opacity-90">{msg.caution.detail}</div>
                       </div>
                     </div>
                   )}
 
-                  {/* SOURCES section - Flows naturally below */}
                   {msg.evidence && msg.evidence.length > 0 && (
-                    <div className="pt-2 border-t border-[#f1f5f9] space-y-2">
-                      <div className="flex items-center gap-1.5 text-[#64748b]">
-                        <FileText className="w-4 h-4" />
-                        <span className="text-[11px] font-bold tracking-wider uppercase">
-                          SOURCES
+                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center gap-1.5 text-slate-400">
+                        <FileTextIcon className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-semibold tracking-widest uppercase">
+                          Sources
                         </span>
                       </div>
 
@@ -1215,7 +1238,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  <p className="border-t border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-500">
+                  <p className="border-t border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-400">
                     {msg.disclaimer || LEGAL_DISCLAIMER}
                   </p>
                 </div>
@@ -1225,7 +1248,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ─── BOTTOM FLOATING INPUT DOCK (ONLY ON ACTIVE CHAT) ─────────────── */}
+      {/* ─── BOTTOM FLOATING INPUT DOCK ──────────────────────────────────── */}
       <AnimatePresence>
         {(messages.length > 0 || isGenerating) && (
           <motion.div
@@ -1234,16 +1257,9 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.25 }}
-            className="relative px-3 sm:px-6 py-2.5 sm:py-4 shrink-0"
+            className="relative px-4 sm:px-8 py-3 shrink-0 z-20 hero-gradient-bg border-t border-slate-200/50"
           >
-            {/* Frosted blur backdrop div behind chat input dock */}
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-xl border-t border-slate-200/50 -z-10 pointer-events-none" />
-
             <div className="max-w-[760px] mx-auto space-y-2 relative">
-              {/* Soft blur glow div behind chat card */}
-              <div className="absolute -inset-0.5 rounded-[26px] bg-slate-200/40 backdrop-blur-md -z-10 pointer-events-none" />
-
-              {/* Rounded Input Container matching Hero layout */}
               <motion.div
                 layoutId="unified-chat-card"
                 transition={{ type: "spring", stiffness: 280, damping: 28 }}
@@ -1256,7 +1272,7 @@ export default function Home() {
                   onSubmit={() => handleSendMessage()}
                   loading={isGenerating}
                   onStop={stopGeneration}
-                  className="relative border border-[#e2e8f0] bg-white/90 backdrop-blur-md rounded-[24px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] focus-within:border-slate-400 focus-within:shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all p-3 sm:p-4 flex flex-col items-stretch"
+                  className="glass-input-card rounded-2xl p-3.5 sm:p-4 flex flex-col items-stretch"
                 >
                   <div className="relative w-full">
                     <ChatInputTextArea
@@ -1264,10 +1280,9 @@ export default function Home() {
                       rows={2}
                       placeholder=""
                       onKeyDown={handleInputKeyDown}
-                      className="w-full bg-transparent resize-none border-none outline-none text-sm sm:text-[15px] text-[#0f172a] leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
+                      className="w-full bg-transparent resize-none border-none outline-none text-sm sm:text-base text-slate-800 leading-relaxed relative z-10 p-0 shadow-none focus-visible:ring-0"
                     />
 
-                    {/* Animated Blur Text Placeholder Overlay (One-by-One Questions) */}
                     {!inputText && (
                       <div
                         onClick={applyPlaceholderText}
@@ -1280,7 +1295,7 @@ export default function Home() {
                             animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
                             exit={{ opacity: 0, filter: "blur(8px)", y: -4 }}
                             transition={{ duration: 0.45, ease: "easeInOut" }}
-                            className="text-sm sm:text-[15px] text-[#94a3b8] leading-relaxed flex flex-wrap items-center gap-x-1"
+                            className="text-xs sm:text-sm text-slate-400 leading-relaxed flex flex-wrap items-center gap-x-1"
                           >
                             {DEMO_QUESTIONS[placeholderQuestionIndex].split(" ").map((word, wIdx) => (
                               <motion.span
@@ -1297,7 +1312,7 @@ export default function Home() {
                                 {word}
                               </motion.span>
                             ))}
-                            <span className="inline-flex items-center text-[10px] font-mono font-medium text-[#64748b] bg-slate-100/90 border border-slate-200/90 rounded px-1.5 py-0.5 ml-1 self-center shadow-2xs">
+                            <span className="inline-flex items-center text-[10px] font-mono font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 ml-1 self-center">
                               Tab ⇥
                             </span>
                           </motion.div>
@@ -1306,18 +1321,19 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between w-full pt-1">
+                  <div className="flex items-center justify-between w-full pt-2.5 border-t border-slate-100 mt-2">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100 transition"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                         title="Attach file"
                       >
-                        <Plus className="w-4 h-4 stroke-[2]" />
+                        <PlusIcon className="w-3.5 h-3.5" />
                       </button>
 
-                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/80 text-[11px] font-medium text-[#334155]">
-                        <span>⚖️ Indian Statutory Law</span>
+                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] font-medium text-slate-600">
+                        <BalanceIcon className="w-3 h-3 text-blue-600" />
+                        <span>Indian Statutory Law</span>
                       </div>
                     </div>
 
@@ -1327,28 +1343,27 @@ export default function Home() {
                         onClick={toggleListening}
                         disabled={!recognitionSupported || isGenerating}
                         aria-pressed={isListening}
-                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 ${
                           isListening
-                            ? "bg-red-50 text-red-600"
-                            : "text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100"
+                            ? "bg-red-500 text-white"
+                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
                         }`}
                         title={isListening ? "Stop voice input" : "Start voice input"}
                       >
                         {isListening ? (
-                          <Square className="w-3.5 h-3.5 stroke-[2]" />
+                          <StopIcon className="w-3.5 h-3.5" />
                         ) : (
-                          <Mic className="w-4 h-4 stroke-[2]" />
+                          <MicrophoneIcon className="w-3.5 h-3.5" />
                         )}
                       </button>
 
-                      <ChatInputSubmit className="w-8 h-8 sm:w-9 sm:h-9 bg-[#0f172a] text-white hover:bg-slate-800 transition disabled:bg-[#f1f5f9] disabled:text-[#94a3b8] flex items-center justify-center p-0" />
+                      <ChatInputSubmit className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition disabled:bg-slate-100 disabled:text-slate-300 flex items-center justify-center p-0 shadow-2xs" />
                     </div>
                   </div>
                 </ChatInput>
               </motion.div>
 
-              {/* Disclaimer */}
-              <p className="text-center text-[11px] text-[#94a3b8] font-normal pt-1">
+              <p className="text-center text-[11px] text-slate-400 font-normal pt-1">
                 {LEGAL_DISCLAIMER}
               </p>
             </div>
@@ -1356,11 +1371,10 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* ─── INTERACTIVE STEPPER POPUP MODAL (WITH SKIP OPTION) ──────────── */}
+      {/* ─── INTERACTIVE STEPPER POPUP MODAL ─────────────────────────────── */}
       <AnimatePresence>
         {showGuide && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1369,31 +1383,28 @@ export default function Home() {
               className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
             />
 
-            {/* Modal Dialog Card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#e2e8f0] z-10 overflow-hidden my-auto"
+              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 z-10 overflow-hidden my-auto"
             >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[#f1f5f9] bg-white">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold">
-                    ⚖️
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xs">
+                    <BalanceIcon className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#0f172a] leading-none">
+                    <h3 className="text-sm font-semibold text-slate-900 leading-none">
                       IP-SAKTI Quick Guide
                     </h3>
-                    <p className="text-[11px] text-[#64748b] mt-0.5">
+                    <p className="text-[11px] text-slate-400 mt-0.5">
                       Citation-grounded statutory AI assistant
                     </p>
                   </div>
                 </div>
 
-                {/* Header Skip & Close actions */}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1401,22 +1412,21 @@ export default function Home() {
                       setShowGuide(false);
                       setGuideCompleted(true);
                     }}
-                    className="text-xs text-[#64748b] hover:text-[#0f172a] px-2.5 py-1 rounded-full border border-transparent hover:border-[#e2e8f0] hover:bg-slate-50 transition"
+                    className="text-xs text-slate-400 hover:text-slate-700 px-2.5 py-1 rounded-full border border-transparent hover:border-slate-200 hover:bg-slate-50 transition"
                   >
                     Skip
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowGuide(false)}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100 transition"
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                     title="Close"
                   >
-                    <X className="w-4 h-4" />
+                    <Cross2Icon className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Stepper Component inside Modal */}
               <div className="p-2 sm:p-4">
                 <Stepper
                   initialStep={1}
@@ -1434,41 +1444,47 @@ export default function Home() {
                   nextButtonText="Continue"
                   stepCircleContainerClassName="!border-none !shadow-none !max-w-none"
                 >
-                  {/* Step 1: Overview & Grounding */}
                   <Step>
-                    <div className="space-y-2.5">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
-                        ⚖️ Statutory AI
+                    <div className="space-y-3">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-semibold text-blue-700 uppercase tracking-widest">
+                        <BalanceIcon className="w-3 h-3" />
+                        Statutory AI
                       </div>
-                      <h2 className="text-base sm:text-lg font-bold text-[#0f172a] tracking-tight">
+                      <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
                         Search Indian Statutory Law
                       </h2>
-                      <p className="text-xs text-[#475569] leading-relaxed">
+                      <p className="text-xs text-slate-500 leading-relaxed">
                         IP-SAKTI provides citation-grounded statutory intelligence across Patents, Trade Marks, Copyright &amp; Biodiversity law. Answers are published only after citation and grounding checks against the configured corpus.
                       </p>
                       <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                        <div className="p-2.5 rounded-xl border border-[#e2e8f0] bg-slate-50/60">
-                          <span className="font-bold text-[#0f172a] block text-[11px]">📜 4 Official Acts</span>
-                          <span className="text-[10px] text-[#64748b]">Patents, Trade Marks, Copyright &amp; Biodiversity.</span>
+                        <div className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/60">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <BookmarkIcon className="w-3 h-3 text-blue-600" />
+                            <span className="font-semibold text-slate-800 text-[11px]">4 Official Acts</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">Patents, Trade Marks, Copyright &amp; Biodiversity.</span>
                         </div>
-                        <div className="p-2.5 rounded-xl border border-[#e2e8f0] bg-slate-50/60">
-                          <span className="font-bold text-[#0f172a] block text-[11px]">🛡️ Verified or Silent</span>
-                          <span className="text-[10px] text-[#64748b]">Requires statutory evidence or abstains safely.</span>
+                        <div className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/60">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <ShieldIcon className="w-3 h-3 text-blue-600" />
+                            <span className="font-semibold text-slate-800 text-[11px]">Verified or Silent</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">Requires statutory evidence or abstains safely.</span>
                         </div>
                       </div>
                     </div>
                   </Step>
 
-                  {/* Step 2: Citations & Quick Start */}
                   <Step>
-                    <div className="space-y-2.5">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[11px] font-semibold text-blue-700 uppercase tracking-wider">
-                        🔍 Auditable Evidence
+                    <div className="space-y-3">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-semibold text-blue-700 uppercase tracking-widest">
+                        <MagnifyingGlassIcon className="w-3.5 h-3.5" />
+                        Auditable Evidence
                       </div>
-                      <h2 className="text-base sm:text-lg font-bold text-[#0f172a] tracking-tight">
+                      <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
                         Inspect Citations &amp; Try A Query
                       </h2>
-                      <p className="text-xs text-[#475569] leading-relaxed">
+                      <p className="text-xs text-slate-500 leading-relaxed">
                         Every answer links directly to official rules and gazette text. Pick a query to start:
                       </p>
                       <div className="space-y-1.5 pt-0.5">
@@ -1482,11 +1498,11 @@ export default function Home() {
                               setGuideCompleted(true);
                               handleSendMessage(q);
                             }}
-                            className="w-full text-left p-2 rounded-xl border border-[#e2e8f0] bg-white hover:bg-slate-50 hover:border-slate-300 transition text-xs text-[#0f172a] flex items-center justify-between group shadow-2xs"
+                            className="w-full text-left p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/50 hover:border-blue-200 transition text-xs text-slate-800 flex items-center justify-between group"
                           >
                             <span className="font-medium truncate pr-2 text-[11px]">{q}</span>
-                            <span className="text-[10px] text-blue-600 font-semibold group-hover:translate-x-0.5 transition-transform shrink-0">
-                              Ask ➔
+                            <span className="text-[10px] text-blue-600 font-semibold group-hover:translate-x-0.5 transition-all shrink-0">
+                              Ask →
                             </span>
                           </button>
                         ))}
