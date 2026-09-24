@@ -824,10 +824,26 @@ export default function Home() {
 
                   {/* Main Floating Glass Input Card */}
                   <div className="text-left w-full relative">
+                    {/* Gemini-style Ethereal Blurry Animated Ambient Aura */}
+                    <div className="absolute -inset-3 sm:-inset-5 -z-10 flex items-center justify-center pointer-events-none">
+                      <motion.div
+                        animate={{
+                          opacity: [0.55, 0.9, 0.55],
+                          scale: [0.98, 1.03, 0.98],
+                        }}
+                        transition={{
+                          duration: 4.5,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                        className="w-full h-full rounded-[28px] sm:rounded-[38px] bg-gradient-to-r from-sky-400/40 via-teal-300/45 to-emerald-400/40 blur-2xl sm:blur-3xl filter"
+                      />
+                    </div>
+
                     <motion.div
                       layoutId="unified-chat-card"
                       transition={{ type: "spring", stiffness: 280, damping: 28 }}
-                      className="w-full"
+                      className="w-full relative z-10"
                     >
                       <ChatInput
                         variant="unstyled"
@@ -979,29 +995,12 @@ export default function Home() {
                       exit={{ opacity: 0, y: 12, transition: { duration: 0.2 } }}
                       className="pt-3 sm:pt-5 px-0 space-y-3 sm:space-y-3.5"
                     >
-                      {/* Most Popular Questions Pill with Blurry Animated Aura Effect */}
+                      {/* Most Popular Questions Pill */}
                       <div className="flex items-center justify-center">
-                        <div className="relative inline-flex items-center justify-center">
-                          {/* Pulsing Blurry Glow Backdrop */}
-                          <motion.div
-                            animate={{
-                              opacity: [0.45, 0.85, 0.45],
-                              scale: [0.97, 1.05, 0.97],
-                            }}
-                            transition={{
-                              duration: 3,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            }}
-                            className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-400/40 via-teal-300/40 to-emerald-400/40 blur-md pointer-events-none"
-                          />
-
-                          {/* Pill Container */}
-                          <div className="relative flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-emerald-200/60 shadow-2xs">
-                            <span className="text-[11px] sm:text-xs font-semibold text-slate-800 tracking-tight">
-                              Most popular questions right now
-                            </span>
-                          </div>
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-slate-200/80 shadow-2xs">
+                          <span className="text-[11px] sm:text-xs font-semibold text-slate-700 tracking-tight">
+                            Most popular questions right now
+                          </span>
                         </div>
                       </div>
 
