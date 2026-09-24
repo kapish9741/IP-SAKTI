@@ -824,20 +824,41 @@ export default function Home() {
 
                   {/* Main Floating Glass Input Card */}
                   <div className="text-left w-full relative">
-                    {/* Gemini-style Ethereal Blurry Animated Ambient Aura */}
-                    <div className="absolute -inset-3 sm:-inset-5 -z-10 flex items-center justify-center pointer-events-none">
-                      <motion.div
-                        animate={{
-                          opacity: [0.55, 0.9, 0.55],
-                          scale: [0.98, 1.03, 0.98],
-                        }}
-                        transition={{
-                          duration: 4.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                        className="w-full h-full rounded-[28px] sm:rounded-[38px] bg-gradient-to-r from-sky-400/40 via-teal-300/45 to-emerald-400/40 blur-2xl sm:blur-3xl filter"
-                      />
+                    {/* Gemini-style Smoothly Spinning Blurry Ambient Aura */}
+                    <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none overflow-visible">
+                      {/* Outer wide ambient revolving glow */}
+                      <div className="w-full h-full flex items-center justify-center [transform:scaleY(0.5)]">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 7,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                          className="w-[125%] min-w-[680px] aspect-square rounded-full blur-[44px] opacity-75"
+                          style={{
+                            background:
+                              "conic-gradient(from 0deg, #38bdf8 0deg, #34d399 65deg, #60a5fa 130deg, #2dd4bf 195deg, #818cf8 260deg, #34d399 315deg, #38bdf8 360deg)",
+                          }}
+                        />
+                      </div>
+
+                      {/* Inner tighter spinning halo perimeter */}
+                      <div className="w-full h-full flex items-center justify-center [transform:scaleY(0.42)]">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 7,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                          className="w-[108%] min-w-[620px] aspect-square rounded-full blur-[20px] opacity-65"
+                          style={{
+                            background:
+                              "conic-gradient(from 0deg, #38bdf8 0deg, #34d399 65deg, #60a5fa 130deg, #2dd4bf 195deg, #818cf8 260deg, #34d399 315deg, #38bdf8 360deg)",
+                          }}
+                        />
+                      </div>
                     </div>
 
                     <motion.div
