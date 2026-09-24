@@ -812,7 +812,7 @@ export default function Home() {
                     className="space-y-2 sm:space-y-3"
                   >
                     <h1 className="text-[26px] leading-[1.15] sm:text-4xl md:text-5xl font-normal text-slate-600 tracking-tight">
-                      Hi Kapish,{" "}<span className="font-bold text-[#0f172a]">Ready to Navigate</span>
+                      Hi Namaste,{" "}<span className="font-bold text-[#0f172a]">Ready to Navigate</span>
                     </h1>
                     <h2 className="text-[26px] leading-[1.15] sm:text-4xl md:text-5xl font-bold text-[#0f172a] tracking-tight">
                       Indian IP &amp; Statutory Law?
