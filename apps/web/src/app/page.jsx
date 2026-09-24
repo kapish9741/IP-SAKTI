@@ -292,7 +292,7 @@ export default function Home() {
             textareaRef.current.focus();
             try {
               textareaRef.current.setSelectionRange(activeQuestion.length, activeQuestion.length);
-            } catch (err) {}
+            } catch (err) { }
           }
         }, 0);
       }
@@ -474,11 +474,11 @@ export default function Home() {
             prev.map((message) =>
               message.id === aiMsgId
                 ? {
-                    ...message,
-                    status: "error",
-                    error:
-                      "Translation could not start this request. Please continue in English.",
-                  }
+                  ...message,
+                  status: "error",
+                  error:
+                    "Translation could not start this request. Please continue in English.",
+                }
                 : message,
             ),
           );
@@ -583,11 +583,11 @@ export default function Home() {
           prev.map((message) =>
             message.id === aiMsgId
               ? {
-                  ...message,
-                  status: "error",
-                  error:
-                    "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
-                }
+                ...message,
+                status: "error",
+                error:
+                  "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
+              }
               : message,
           ),
         );
@@ -601,11 +601,11 @@ export default function Home() {
           prev.map((message) =>
             message.id === aiMsgId
               ? {
-                  ...message,
-                  status: "error",
-                  error:
-                    "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
-                }
+                ...message,
+                status: "error",
+                error:
+                  "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
+              }
               : message,
           ),
         );
@@ -627,17 +627,19 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs text-[11px] sm:text-xs font-semibold text-slate-800 hover:bg-white transition truncate max-w-[170px] sm:max-w-none"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs text-[11px] sm:text-xs font-semibold text-slate-800 hover:bg-white transition truncate max-w-[200px] sm:max-w-none"
           >
-            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[8px] sm:text-[9px] font-bold shrink-0">
-              AI
-            </div>
-            <span className="truncate">IP-SAKTI 3.5 Pro</span>
+            <img
+              src="/logo.png"
+              alt="IP SAKTI Sahayak Logo"
+              className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-contain shrink-0"
+            />
+            <span className="truncate">IP SAKTI Sahayak</span>
             <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400 ml-0.5 shrink-0" />
           </button>
         </div>
 
-        
+
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <span
@@ -645,9 +647,8 @@ export default function Home() {
             title={health?.status === "ok" ? "RAG service ready" : "RAG service unavailable"}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                health?.status === "ok" ? "bg-emerald-500" : "bg-amber-400"
-              }`}
+              className={`h-1.5 w-1.5 rounded-full ${health?.status === "ok" ? "bg-emerald-500" : "bg-amber-400"
+                }`}
             />
             {health?.status === "ok" ? "RAG Ready" : "Connecting"}
           </span>
@@ -772,13 +773,12 @@ export default function Home() {
       {(voiceMessage || translationNotice || interimTranscript || isListening) && (
         <div className="px-3 pt-2 shrink-0">
           <div
-            className={`mx-auto max-w-[960px] rounded-xl border px-3 py-1.5 text-[11px] ${
-              voiceMessage || translationNotice
-                ? "border-amber-200 bg-amber-50/90 text-amber-800"
-                : isListening
-                  ? "border-emerald-200 bg-emerald-50/90 text-emerald-700"
-                  : "border-slate-200 bg-white/80 text-slate-500"
-            }`}
+            className={`mx-auto max-w-[960px] rounded-xl border px-3 py-1.5 text-[11px] ${voiceMessage || translationNotice
+              ? "border-amber-200 bg-amber-50/90 text-amber-800"
+              : isListening
+                ? "border-emerald-200 bg-emerald-50/90 text-emerald-700"
+                : "border-slate-200 bg-white/80 text-slate-500"
+              }`}
             aria-live="polite"
           >
             {translationNotice ||
@@ -812,13 +812,13 @@ export default function Home() {
                     className="space-y-2 sm:space-y-3"
                   >
                     <h1 className="text-[26px] leading-[1.15] sm:text-4xl md:text-5xl font-normal text-slate-600 tracking-tight">
-                      Hi Kapish,{" "}<span className="font-bold text-[#0f172a]">Ready to</span>
+                      Hi Kapish,{" "}<span className="font-bold text-[#0f172a]">Ready to Navigate</span>
                     </h1>
                     <h2 className="text-[26px] leading-[1.15] sm:text-4xl md:text-5xl font-bold text-[#0f172a] tracking-tight">
-                      Achieve Great Things?
+                      Indian IP &amp; Statutory Law?
                     </h2>
                     <p className="text-[12px] sm:text-sm text-slate-500 max-w-md mx-auto pt-1.5 font-normal px-1">
-                      What do you want to know? Statutory intelligence across Patents, Trade Marks, Copyright &amp; Biodiversity law.
+                      Statutory intelligence and citation-grounded guidance across Patents, Trade Marks, Copyright &amp; Biodiversity law.
                     </p>
                   </motion.div>
 
@@ -827,7 +827,7 @@ export default function Home() {
                     <motion.div
                       layoutId="unified-chat-card"
                       transition={{ type: "spring", stiffness: 280, damping: 28 }}
-                      className="w-full"
+                      className="w-full relative z-10"
                     >
                       <ChatInput
                         variant="unstyled"
@@ -851,8 +851,7 @@ export default function Home() {
                           {/* Animated Blur Text Placeholder Overlay */}
                           {!inputText && (
                             <div
-                              onClick={applyPlaceholderText}
-                              className="absolute inset-0 cursor-text z-0 flex items-start select-none overflow-hidden pr-2 sm:pr-4"
+                              className="pointer-events-none absolute inset-0 flex items-start select-none overflow-hidden pr-2 sm:pr-4"
                             >
                               <AnimatePresence mode="wait">
                                 <motion.div
@@ -889,36 +888,65 @@ export default function Home() {
                         </div>
 
                         {/* Bottom Toolbar inside Card */}
-                        <div className="flex items-center justify-between gap-1.5 pt-2.5 sm:pt-3 border-t border-slate-100/90 mt-2">
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <button
-                              type="button"
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] sm:text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-                              title="Attach File"
-                            >
-                              <PaperclipIcon className="w-3.5 h-3.5 text-slate-500" />
-                              <span className="hidden xs:inline sm:inline">Attach File</span>
-                            </button>
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-slate-100/90 mt-2">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            {/* Language Select Option */}
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] sm:text-xs text-slate-700 hover:bg-slate-100 transition shadow-2xs">
+                              <GlobeIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="text-slate-500 font-normal hidden sm:inline">Language:</span>
+                              <select
+                                value={selectedLanguageCode}
+                                onChange={(event) => {
+                                  recognitionRef.current?.abort();
+                                  window.speechSynthesis?.cancel();
+                                  setIsListening(false);
+                                  setIsSpeakingMessageId(null);
+                                  setSelectedLanguageCode(event.target.value);
+                                  setSelectedVoiceURI("");
+                                  setVoiceMessage("");
+                                  setTranslationNotice("");
+                                }}
+                                disabled={isGenerating}
+                                className="bg-transparent border-none outline-none font-medium text-slate-800 cursor-pointer text-[11px] sm:text-xs focus:ring-0 pr-1 py-0.5"
+                                aria-label="Select Language"
+                              >
+                                {LANGUAGES.map((language) => (
+                                  <option key={language.code} value={language.code} className="text-slate-800 bg-white">
+                                    {language.label} · {language.nativeLabel}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setSettingsBarOpen(!settingsBarOpen)}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] sm:text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-                              title="Reasoning"
-                            >
-                              <LightbulbIcon className="w-3.5 h-3.5 text-amber-500" />
-                              <span className="hidden xs:inline sm:inline">Reasoning</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => { setShowGuide(true); setGuideCompleted(false); }}
-                              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-                              title="Deep Research"
-                            >
-                              <SearchIcon className="w-3.5 h-3.5 text-emerald-500" />
-                              <span>Deep Research</span>
-                            </button>
+                            {/* Voice Select Option */}
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] sm:text-xs text-slate-700 hover:bg-slate-100 transition shadow-2xs">
+                              <SpeakerLoudIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="text-slate-500 font-normal hidden sm:inline">Voice:</span>
+                              <select
+                                value={selectedVoiceURI}
+                                onChange={(event) => setSelectedVoiceURI(event.target.value)}
+                                disabled={isGenerating || !speechSupported || matchingVoices.length === 0}
+                                className="bg-transparent border-none outline-none font-medium text-slate-800 cursor-pointer text-[11px] sm:text-xs focus:ring-0 max-w-[130px] sm:max-w-[170px] truncate pr-1 py-0.5 disabled:opacity-50"
+                                aria-label="Select Voice"
+                              >
+                                {matchingVoices.length === 0 ? (
+                                  <option value="" className="text-slate-800 bg-white">
+                                    Default Voice
+                                  </option>
+                                ) : (
+                                  <>
+                                    <option value="" className="text-slate-800 bg-white">
+                                      Default ({selectedLanguage.label})
+                                    </option>
+                                    {matchingVoices.map((voice) => (
+                                      <option key={voice.voiceURI} value={voice.voiceURI} className="text-slate-800 bg-white">
+                                        {voice.name}
+                                      </option>
+                                    ))}
+                                  </>
+                                )}
+                              </select>
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -927,11 +955,10 @@ export default function Home() {
                               onClick={toggleListening}
                               disabled={!recognitionSupported || isGenerating}
                               aria-pressed={isListening}
-                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 shadow-2xs ${
-                                isListening
-                                  ? "bg-red-500 text-white"
-                                  : "bg-emerald-600/90 hover:bg-emerald-600 text-white"
-                              }`}
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 shadow-2xs ${isListening
+                                ? "bg-red-500 text-white"
+                                : "bg-emerald-600/90 hover:bg-emerald-600 text-white"
+                                }`}
                               title={isListening ? "Stop voice input" : "Start voice input"}
                             >
                               {isListening ? (
@@ -950,8 +977,17 @@ export default function Home() {
                     {/* Legal Question Chips Below Card */}
                     <motion.div
                       exit={{ opacity: 0, y: 12, transition: { duration: 0.2 } }}
-                      className="pt-3 sm:pt-5 px-0"
+                      className="pt-3 sm:pt-5 px-0 space-y-3 sm:space-y-3.5"
                     >
+                      {/* Most Popular Questions Pill */}
+                      <div className="flex items-center justify-center">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-slate-200/80 shadow-2xs">
+                          <span className="text-[11px] sm:text-xs font-semibold text-slate-700 tracking-tight">
+                            Most popular questions right now
+                          </span>
+                        </div>
+                      </div>
+
                       {/* Mobile: full-width stacked list */}
                       <div className="flex flex-col gap-2 sm:hidden">
                         {SAMPLES.map((s) => (
@@ -984,11 +1020,6 @@ export default function Home() {
                         ))}
                       </div>
                     </motion.div>
-
-                    {/* Subtle Disclaimer */}
-                    <p className="text-center text-[10px] sm:text-[11px] text-slate-400 font-normal pt-3 sm:pt-5 px-2">
-                      {LEGAL_DISCLAIMER}
-                    </p>
                   </div>
 
                 </div>
@@ -1039,8 +1070,8 @@ export default function Home() {
             if (msg.status === "loading") {
               return (
                 <div key={msg.id} className="flex items-start gap-2.5 sm:gap-3 pt-2">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                    AI
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs overflow-hidden">
+                    <img src="/logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm">
                     <div className="flex items-center justify-between pb-3">
@@ -1095,13 +1126,12 @@ export default function Home() {
                                 <div className="w-3.5 h-3.5 rounded-full border border-slate-200 shrink-0" />
                               )}
                               <span
-                                className={`${
-                                  isDone
-                                    ? "text-slate-500"
-                                    : isCurrent
-                                      ? "text-slate-800 font-medium"
-                                      : "text-slate-300"
-                                }`}
+                                className={`${isDone
+                                  ? "text-slate-500"
+                                  : isCurrent
+                                    ? "text-slate-800 font-medium"
+                                    : "text-slate-300"
+                                  }`}
                               >
                                 {stepText}
                               </span>
@@ -1118,8 +1148,8 @@ export default function Home() {
             if (msg.status === "error") {
               return (
                 <div key={msg.id} className="flex items-start gap-2.5 sm:gap-3 pt-2">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
-                    AI
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                    <img src="/logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
                   </div>
                   <div
                     role="alert"
@@ -1139,8 +1169,8 @@ export default function Home() {
                 key={msg.id}
                 className="flex items-start gap-2.5 sm:gap-3 pt-2 scroll-mt-4"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-semibold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                  AI
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs overflow-hidden">
+                  <img src="/logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1 min-w-0 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4">
                   <div className="flex items-center justify-between gap-2">
@@ -1271,8 +1301,7 @@ export default function Home() {
 
                     {!inputText && (
                       <div
-                        onClick={applyPlaceholderText}
-                        className="absolute inset-0 cursor-text z-0 flex items-start select-none overflow-hidden pr-2 sm:pr-4"
+                        className="pointer-events-none absolute inset-0 flex items-start select-none overflow-hidden pr-2 sm:pr-4"
                       >
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -1307,19 +1336,60 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between w-full pt-2 sm:pt-2.5 border-t border-slate-100 mt-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-                        title="Attach file"
-                      >
-                        <PlusIcon className="w-3.5 h-3.5" />
-                      </button>
+                  <div className="flex flex-wrap items-center justify-between w-full pt-2 sm:pt-2.5 border-t border-slate-100 mt-2 gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <div className="flex items-center gap-1 px-2 py-0.5 sm:py-1 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] text-slate-700">
+                        <GlobeIcon className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <select
+                          value={selectedLanguageCode}
+                          onChange={(event) => {
+                            recognitionRef.current?.abort();
+                            window.speechSynthesis?.cancel();
+                            setIsListening(false);
+                            setIsSpeakingMessageId(null);
+                            setSelectedLanguageCode(event.target.value);
+                            setSelectedVoiceURI("");
+                            setVoiceMessage("");
+                            setTranslationNotice("");
+                          }}
+                          disabled={isGenerating}
+                          className="bg-transparent border-none outline-none font-medium text-slate-800 cursor-pointer text-[11px] focus:ring-0 pr-1 py-0"
+                          aria-label="Select Language"
+                        >
+                          {LANGUAGES.map((language) => (
+                            <option key={language.code} value={language.code} className="text-slate-800 bg-white">
+                              {language.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/80 border border-slate-200/60 text-[11px] font-medium text-slate-600">
-                        <BalanceIcon className="w-3 h-3 text-emerald-600" />
-                        <span>Indian Statutory Law</span>
+                      <div className="flex items-center gap-1 px-2 py-0.5 sm:py-1 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] text-slate-700">
+                        <SpeakerLoudIcon className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <select
+                          value={selectedVoiceURI}
+                          onChange={(event) => setSelectedVoiceURI(event.target.value)}
+                          disabled={isGenerating || !speechSupported || matchingVoices.length === 0}
+                          className="bg-transparent border-none outline-none font-medium text-slate-800 cursor-pointer text-[11px] focus:ring-0 max-w-[110px] sm:max-w-[140px] truncate pr-1 py-0 disabled:opacity-50"
+                          aria-label="Select Voice"
+                        >
+                          {matchingVoices.length === 0 ? (
+                            <option value="" className="text-slate-800 bg-white">
+                              Default Voice
+                            </option>
+                          ) : (
+                            <>
+                              <option value="" className="text-slate-800 bg-white">
+                                Default
+                              </option>
+                              {matchingVoices.map((voice) => (
+                                <option key={voice.voiceURI} value={voice.voiceURI} className="text-slate-800 bg-white">
+                                  {voice.name}
+                                </option>
+                              ))}
+                            </>
+                          )}
+                        </select>
                       </div>
                     </div>
 
@@ -1329,11 +1399,10 @@ export default function Home() {
                         onClick={toggleListening}
                         disabled={!recognitionSupported || isGenerating}
                         aria-pressed={isListening}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 ${
-                          isListening
-                            ? "bg-red-500 text-white"
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
-                        }`}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 ${isListening
+                          ? "bg-red-500 text-white"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
+                          }`}
                         title={isListening ? "Stop voice input" : "Start voice input"}
                       >
                         {isListening ? (
@@ -1348,10 +1417,6 @@ export default function Home() {
                   </div>
                 </ChatInput>
               </motion.div>
-
-              <p className="text-center text-[10px] sm:text-[11px] text-slate-400 font-normal pt-1 px-2">
-                {LEGAL_DISCLAIMER}
-              </p>
             </div>
           </motion.div>
         )}
