@@ -824,43 +824,6 @@ export default function Home() {
 
                   {/* Main Floating Glass Input Card */}
                   <div className="text-left w-full relative">
-                    {/* Gemini-style Smoothly Spinning Blurry Ambient Aura */}
-                    <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none overflow-visible">
-                      {/* Outer wide ambient revolving glow */}
-                      <div className="w-full h-full flex items-center justify-center [transform:scaleY(0.5)]">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 7,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                          className="w-[125%] min-w-[680px] aspect-square rounded-full blur-[44px] opacity-75"
-                          style={{
-                            background:
-                              "conic-gradient(from 0deg, #38bdf8 0deg, #34d399 65deg, #60a5fa 130deg, #2dd4bf 195deg, #818cf8 260deg, #34d399 315deg, #38bdf8 360deg)",
-                          }}
-                        />
-                      </div>
-
-                      {/* Inner tighter spinning halo perimeter */}
-                      <div className="w-full h-full flex items-center justify-center [transform:scaleY(0.42)]">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 7,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                          className="w-[108%] min-w-[620px] aspect-square rounded-full blur-[20px] opacity-65"
-                          style={{
-                            background:
-                              "conic-gradient(from 0deg, #38bdf8 0deg, #34d399 65deg, #60a5fa 130deg, #2dd4bf 195deg, #818cf8 260deg, #34d399 315deg, #38bdf8 360deg)",
-                          }}
-                        />
-                      </div>
-                    </div>
-
                     <motion.div
                       layoutId="unified-chat-card"
                       transition={{ type: "spring", stiffness: 280, damping: 28 }}
