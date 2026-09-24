@@ -37,17 +37,16 @@ export default function AnswerCard({ result, onSelectCitation }) {
   };
 
   return (
-    <section className="wireframe-box p-6 border-b border-wireframe space-y-4">
+    <section className="wireframe-box p-6 border-b border-wireframe space-y-4 max-w-[1040px] mx-auto w-full">
       <div className="flex items-center justify-between border-b border-wireframe/60 pb-2">
         <h2 className="text-sm font-mono uppercase tracking-wider text-prose font-semibold">
           ANSWER
         </h2>
         <span
-          className={`text-[11px] font-mono px-2 py-0.5 border uppercase tracking-wider ${
-            isAbstained
-              ? "bg-amber-950/40 text-amber-400 border-amber-800/60"
-              : "bg-emerald-950/40 text-emerald-400 border-emerald-800/60"
-          }`}
+          className={`text-[11px] font-mono px-2 py-0.5 border uppercase tracking-wider ${isAbstained
+            ? "bg-amber-950/40 text-amber-400 border-amber-800/60"
+            : "bg-emerald-950/40 text-emerald-400 border-emerald-800/60"
+            }`}
         >
           {isAbstained ? "ABSTAINED" : "ANSWERED"}
         </span>
@@ -63,13 +62,12 @@ export default function AnswerCard({ result, onSelectCitation }) {
         <div className="pt-2 flex items-center gap-2 font-mono text-xs text-subtext">
           <span className="uppercase text-muted">Confidence:</span>
           <span
-            className={`font-semibold uppercase ${
-              confidence === "HIGH"
-                ? "text-emerald-400"
-                : confidence === "LOW"
+            className={`font-semibold uppercase ${confidence === "HIGH"
+              ? "text-emerald-400"
+              : confidence === "LOW"
                 ? "text-amber-400"
                 : "text-blue-300"
-            }`}
+              }`}
           >
             {confidence.charAt(0) + confidence.slice(1).toLowerCase()}
           </span>

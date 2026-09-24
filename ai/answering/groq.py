@@ -98,6 +98,21 @@ TOP_P = 1.0
 #: that truncated Q027 was not the problem; the nine sentences were.
 DEFAULT_MAX_COMPLETION_TOKENS = 800
 
+#: GROQ_MAX_COMPLETION_TOKENS may lower the ceiling and is clamped rather than
+#: trusted, in both directions: a config file cannot raise the cost per request,
+#: and it cannot drop the budget below what a cited four-sentence answer plus
+#: this model's reasoning has actually been observed to need.
+#:
+#: The default is unchanged, and deliberately so. Two live runs are on record —
+#: 210 and 328 completion tokens, of which 174 and 243 were reasoning, both
+#: finishing on `stop` — so nothing measured has come close to 800. But a
+#: ceiling is not a charge: a successful request bills what it used, so lowering
+#: this cannot reduce the tokens a successful answer costs. What it can do is
+#: truncate a longer answer mid-sentence, which fails grounding and publishes
+#: nothing. The knob exists so a rate-limited venue can trade that risk
+#: deliberately; the default does not take the trade on anyone's behalf.
+MIN_MAX_COMPLETION_TOKENS = 384
+
 #: Substrings that must never appear in the scaffolding this module builds. The
 #: passage bodies are corpus text and are exempt — the same distinction Phase 6
 #: drew when its leakage audit scanned candidate headers rather than statutory
@@ -127,6 +142,12 @@ def load_env_file(path: str | None = None) -> None:
                 continue
             key, _, value = line.partition("=")
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+    if "SSL_CERT_FILE" not in os.environ:
+        try:
+            import certifi
+            os.environ["SSL_CERT_FILE"] = certifi.where()
+        except ImportError:
+            pass
 
 
 @dataclass(frozen=True)
@@ -155,8 +176,15 @@ class GroqConfig:
             timeout = DEFAULT_TIMEOUT_SECONDS
         if timeout <= 0:
             timeout = DEFAULT_TIMEOUT_SECONDS
+        try:
+            budget = int(os.environ.get("GROQ_MAX_COMPLETION_TOKENS",
+                                        DEFAULT_MAX_COMPLETION_TOKENS))
+        except ValueError:
+            budget = DEFAULT_MAX_COMPLETION_TOKENS
         return cls(model=os.environ.get("GROQ_MODEL") or DEFAULT_MODEL,
-                   timeout_seconds=min(timeout, MAX_TIMEOUT_SECONDS))
+                   timeout_seconds=min(timeout, MAX_TIMEOUT_SECONDS),
+                   max_completion_tokens=min(max(budget, MIN_MAX_COMPLETION_TOKENS),
+                                             DEFAULT_MAX_COMPLETION_TOKENS))
 
     def to_dict(self) -> dict[str, Any]:
         return {"model": self.model, "timeout_seconds": self.timeout_seconds,
@@ -248,7 +276,38 @@ def _urllib_transport(url: str, body: bytes, headers: Mapping[str, str],
     except urllib.error.HTTPError as exc:          # 4xx / 5xx with a body
         return exc.code, exc.read()
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        raise GroqError("transport_error", type(exc).__name__) from None
+        raise GroqError("transport_error", _transport_detail(exc, timeout)) from None
+
+
+def _transport_detail(exc: BaseException, timeout: float) -> str:
+    """Name what actually failed, not just the class that carried it.
+
+    `urllib` wraps a read timeout, a DNS failure, a refused connection and a TLS
+    error in the same `URLError`, so recording `type(exc).__name__` produced the
+    string "URLError" for all four. That is the same mistake the 403 handling
+    made before `_reason()` existed: a diagnostic that names the category and
+    not the cause forces a second live request to learn what the first was
+    already told — and on a deployed server there may be no second chance to
+    reproduce it.
+
+    So the wrapped `reason` is unwrapped, and a timeout is stated as one
+    together with the limit it hit, because "did Groq take longer than 15
+    seconds" and "could the host be reached at all" have entirely different
+    fixes. This reads no gate and changes no outcome: the failure is still
+    `transport_error`, still one request, still no retry. The caller scrubs the
+    credential from whatever comes back.
+    """
+    reason = getattr(exc, "reason", None)
+    if isinstance(reason, BaseException):
+        inner = reason
+    else:
+        inner = exc
+    if isinstance(inner, TimeoutError) or "timed out" in str(inner).lower():
+        return (f"the request exceeded the {timeout:g}s timeout "
+                f"({type(inner).__name__}); raise GROQ_TIMEOUT_SECONDS or "
+                f"retry when the provider is less loaded")
+    detail = str(reason if reason is not None else inner).strip()
+    return f"{type(inner).__name__}: {detail[:200]}" if detail else type(inner).__name__
 
 
 def _completion_meta(body: bytes) -> dict[str, Any]:

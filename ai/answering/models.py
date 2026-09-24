@@ -301,6 +301,10 @@ class Answer:
     answer: str
     citations: tuple[Citation, ...] = ()
     confidence: str = NONE
+    #: The two axes behind `confidence` and every factor that set it, so a
+    #: reader is told *why* it says what it says. See `ai/answering/confidence.py`.
+    #: Empty on an abstention, which has no confidence to explain.
+    confidence_report: Mapping[str, Any] = field(default_factory=dict)
     grounded: bool = False
     insufficient_evidence: bool = True
     insufficient_evidence_reasons: tuple[Failure, ...] = ()
@@ -323,6 +327,7 @@ class Answer:
             "answer": self.answer,
             "citations": [c.to_dict() for c in self.citations],
             "confidence": self.confidence,
+            "confidence_report": dict(self.confidence_report),
             "grounded": self.grounded,
             "insufficient_evidence": self.insufficient_evidence,
             "insufficient_evidence_reasons": [

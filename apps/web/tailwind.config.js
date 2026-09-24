@@ -8,6 +8,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        border: "#e2e8f0",
+        input: "#e2e8f0",
+        ring: "#0f172a",
+        background: "#ffffff",
+        foreground: "#0f172a",
+        primary: {
+          DEFAULT: "#0f172a",
+          foreground: "#ffffff",
+        },
+        secondary: {
+          DEFAULT: "#f1f5f9",
+          foreground: "#0f172a",
+        },
+        destructive: {
+          DEFAULT: "#ef4444",
+          foreground: "#ffffff",
+        },
+        accent: {
+          DEFAULT: "#f1f5f9",
+          foreground: "#0f172a",
+        },
         canvas: "#0b0d11",
         card: "#12151b",
         "card-hover": "#171b23",
@@ -22,6 +43,8 @@ module.exports = {
         "ambernotice-border": "#b45309",
       },
       fontFamily: {
+        sans: ["var(--font-poppins)", "Poppins", "sans-serif"],
+        poppins: ["var(--font-poppins)", "Poppins", "sans-serif"],
         mono: [
           "ui-monospace",
           "SFMono-Regular",
@@ -32,6 +55,9 @@ module.exports = {
           "Courier New",
           "monospace",
         ],
+      },
+      screens: {
+        xs: '480px',
       },
     },
   },

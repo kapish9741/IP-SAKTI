@@ -1,97 +1,92 @@
-# IP-SAKTI — Web Application & Frontend Architecture Reference (`web.md`)
+# IP-SAKTI — Modern Centered AI Assistant Web Interface Reference (`web.md`)
 
-> **Project Reference Document**  
-> Companion to `PROJECT.md`, `README.md`, and `IP-SAKTI Frontend and API Integration Brief.md`.  
-> Built for the SIH (Smart India Hackathon) prototype of **IP-SAKTI — Citation-Grounded Legal AI**.
+> **Comprehensive UI & Architecture Reference Document**  
+> Built for **IP-SAKTI — Citation-Grounded Legal AI** over Indian Intellectual Property & Biodiversity Law.  
+> Directly reflects the single-column centered conversational interface (no sidebar), exact extracted color tokens, evidence-first analysis pipeline, and verified statutory provenance inspection.
 
 ---
 
 ## 1. Executive Summary & Design Vision
 
-IP-SAKTI is an evidence-first, citation-grounded Intellectual Property legal assistant for Indian statutory law. Unlike generic LLM chat interfaces that hallucinate legal advice, IP-SAKTI adheres to **"Grounded or Silent"**: every claim sentence must tie directly to verified statutory evidence, or the system abstains.
+IP-SAKTI is an evidence-first, citation-grounded Intellectual Property legal assistant for Indian statutory law. Unlike generic LLM chat interfaces that hallucinate legal advice, IP-SAKTI adheres strictly to **"Grounded or Silent"**: every claim sentence must tie directly to verified statutory evidence, or the system safely abstains.
 
 The web application reflects this philosophy visually through:
-* **Structured, Boxed Wireframe Hierarchy**: As outlined in the reference design, the UI uses distinct modular containers (Header → Query Input → Answer Card → Sources & Evidence Viewer).
-* **Refined Neutral Color Theme**: A sleek, focused dark neutral palette (matte charcoal, graphite, subtle slate borders, and crisp off-white typography) that commands legal authority and eliminates distractions.
-* **First-Class Evidence Provenance**: Citations (`[1]`, `[2]`) are prominent interactive badges. Clicking or toggling `View Evidence ▼` reveals the underlying statutory chunk, locator, page, temporal status, and publisher evidence level.
+* **Clean Single-Column Workspace (No Sidebar)**: A focused, distraction-free conversational canvas where queries and answers are centered.
+* **Evidence-First Analysis Step Loader**: During generation, the UI transparently surfaces the internal RAG stages (`Query processing` → `Evidence retrieval` → `Reranking sources` → `Selecting evidence` → `Generating grounded answer` → `Validating citations`) so users see the legal validation pipeline working securely in real time.
+* **First-Class Provenance & Verification**: Citations (`[1]`, `[2]`) are interactive links directly tied to underlying statutory records. Each source displays publisher provenance levels (`A`–`D`), validation status (`VERIFIED`), and an expandable drawer to view verbatim statutory text and physical page numbers.
+* **Pristine Light Theme**: Pure white background (`#ffffff`), subtle borders (`#e2e8f0`), crisp Inter typography, and charcoal accents (`#0f172a`).
 
 ---
 
-## 2. Visual Layout & UI Structure (From User Wireframe)
+## 2. Visual Layout & UI Structure
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│                                                                  │
-│                            IP-SAKTI                              │
-│                Grounded Intellectual Property AI                 │
-│                                                                  │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Ask your IP legal question                                      │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ How is an application for trademark registration filed?    │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│                       [ Ask IP-SAKTI ]                           │
-│                                                                  │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ANSWER                                                          │
-│                                                                  │
-│  An application for the registration of a trademark must be made │
-│  in Form TM-A and signed by the applicant or his agent [1].      │
-│                                                                  │
-│  Confidence: Moderate                                            │
-│                                                                  │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  SOURCES                                                         │
-│                                                                  │
-│  [1] Trade Marks Rules, 2017                                     │
-│      Rule 23 · Page 59 · CURRENT · Level B                       │
-│      ▾ View Evidence                                             │
-│      ┌────────────────────────────────────────────────────────┐  │
-│      │ "An application for the registration of a trademark    │  │
-│      │  shall be made in Form TM-A and signed by the          │  │
-│      │  applicant or his agent."                              │  │
-│      └────────────────────────────────────────────────────────┘  │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ [🧁 GPT-5 ▾]                                                        [+ New Chat] [•••] [SG] │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                        │
+│                                                        ┌─────────────────────────────┐ │
+│                                                        │ hi                          │ │
+│                                                        └─────────────────────────────┘ │
+│                                                             ✎ Edit  ↻ Resend     [JD]  │
+│                                                                                        │
+│  ┌────┐ ┌───────────────────────────────────────────────────────────────────────────┐  │
+│  │ AI │ │ ••• IP-SAKTI is analyzing legal evidence...                      [⏸ Pause] │  │
+│  └────┘ │ ┌───────────────────────────────────────────────────────────────────────┐ │  │
+│         │ │ EVIDENCE-FIRST ANALYSIS                               Working securely│ │  │
+│         │ │ ✓ Query processing                                                    │ │  │
+│         │ │ ✓ Evidence retrieval                                                  │ │  │
+│         │ │ ✓ Reranking sources                                                   │ │  │
+│         │ │ ✓ Selecting evidence                                                  │ │  │
+│         │ │ ✓ Generating grounded answer                                          │ │  │
+│         │ │ ◌ Validating citations                                                │ │  │
+│         │ └───────────────────────────────────────────────────────────────────────┘ │  │
+│         └───────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                        │
+│  ┌────┐ ┌───────────────────────────────────────────────────────────────────────────┐  │
+│  │ AI │ │ 🛡️ ANSWER                                                CONFIDENCE: HIGH │  │
+│  └────┘ │ Based on the available test evidence, the request is eligible for review  │  │
+│         │ pursuant to official rules [1].                                           │  │
+│         │                                                                           │  │
+│         │ ⚠️ Source notice                                                           │  │
+│         │ Example mode: this result uses sample evidence only.                      │  │
+│         │                                                                           │  │
+│         │ 📄 SOURCES                                                                │  │
+│         │ ┌───────────────────────────────────────────────────────────────────────┐ │  │
+│         │ │ [1] Sample Legal Evidence                            View evidence ▾  │ │  │
+│         │ │     Example record · Section 1                                        │ │  │
+│         │ │     [VERIFIED]  [PROVENANCE A]                                        │ │  │
+│         │ └───────────────────────────────────────────────────────────────────────┘ │  │
+│         └───────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                        │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│             ┌────────────────────────────────────────────────────────────┐             │
+│             │ How can I help you today?                                  │             │
+│             │                                                            │             │
+│             │ [+]                                                [🎤] [➔]│             │
+│             └────────────────────────────────────────────────────────────┘             │
+│                       AI can make mistakes. Check important info.                      │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Design System & Neutral Color Theme
+## 3. Extracted Design Tokens & Styling
 
-The interface utilizes a tailored **neutral dark legal palette** designed for clarity and legibility during SIH live demonstrations.
-
-### 3.1 Color Tokens
-| Token | Hex | Usage |
+| Token / Element | Exact Hex / Class | Purpose |
 |---|---|---|
-| `--bg-app` | `#0f1115` | Deep matte charcoal application canvas |
-| `--bg-card` | `#16191f` | Section container / card surface |
-| `--bg-card-hover` | `#1c212a` | Card hover / active interactive state |
-| `--border-subtle` | `#2a2f3b` | Structural borders, wireframe box outlines |
-| `--border-focus` | `#4b5563` | Input focus outline and active accents |
-| `--text-primary` | `#f3f4f6` | High-contrast headings and legal prose |
-| `--text-secondary`| `#9ca3af` | Labels, locators, sub-headers, meta-info |
-| `--text-muted` | `#6b7280` | Disclaimers, footer notes, disabled states |
-| `--badge-citation`| `#243049` | Background for `[n]` citation markers |
-| `--badge-text` | `#93c5fd` | Soft accent blue for citation markers |
-| `--status-answer` | `#10b981` | Emerald badge for `ANSWERED` |
-| `--status-abstain`| `#f59e0b` | Amber badge for `ABSTAINED` |
-| `--status-error` | `#ef4444` | Red indicator for request validation failures |
-| `--caution-bg` | `#261e12` | Muted warm banner for STALE / conflict cautions |
-| `--caution-border`| `#b45309` | Caution border |
-
-### 3.2 Typography & Aesthetics
-* **Font Family**: Modern clean sans-serif (`Inter`, `system-ui`) for UI and legal prose, paired with crisp monospace (`JetBrains Mono`, `ui-monospace`) for citation markers, locators, and evidence chunks.
-* **Layout Geometry**: Square to subtle 6px-rounded box contours reflecting technical and legal precision.
-* **Micro-interactions**:
-  * Smooth 150ms hover transitions on action buttons and collapsible headers.
-  * Instant highlight link between in-text citation marker `[1]` and corresponding card in `SOURCES`.
-  * Accordion transition for `View Evidence ▼`.
+| **Canvas Background** | `#ffffff` | Pure white backdrop for the whole application |
+| **Top Navigation** | `h-14 bg-white` | Clean top bar with model dropdown, `+ New Chat`, `•••`, and `SG` |
+| **Primary Charcoal** | `#0f172a` | Charcoal accents: user profile badge, AI avatar, active send button, user bubble |
+| **Text Primary** | `#0f172a` | Section titles, user messages, answer headings |
+| **Text Secondary** | `#334155` | Source markers, status text |
+| **Text Subtitle** | `#64748b` | Locators, icon colors, analysis step labels |
+| **Text Muted** | `#94a3b8` | Placeholders, timestamps, disclaimer |
+| **Borders** | `#e2e8f0` | Subtle 1px borders on pills, input cards, and evidence boxes |
+| **Input Card** | `rounded-[24px] border-[#e2e8f0] shadow-[0_2px_8px_rgba(0,0,0,0.03)]` | Centered floating prompt container |
+| **Notice Banner** | `#fffbeb` (border `#fef3c7`, text `#92400e`) | Amber banner for caveats or staleness notifications |
+| **Verified Badge** | `#ecfdf5` (border `#a7f3d0`, text `#047857`) | Mint/emerald badge for verified statutory citations |
+| **Provenance Badge** | `#f1f5f9` (text `#475569`) | Soft gray badge for evidence provenance tier |
 
 ---
 
@@ -99,200 +94,95 @@ The interface utilizes a tailored **neutral dark legal palette** designed for cl
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│                   Web Frontend (UI)                    │
-│   Question Input · Answer Display · Evidence Accordion │
+│             Next.js Web Frontend (apps/web)            │
+│  Port 3001 · Single-Column Centered · No Sidebar       │
 └──────────────────────────┬─────────────────────────────┘
                            │ POST /api/ask { question }
                            ▼
 ┌────────────────────────────────────────────────────────┐
-│               Flask API Service (Thin Layer)           │
-│   routes/ask.py · Input Validation · CORS · /health    │
+│           Express API Gateway (apps/server)            │
+│  Port 5001 · Request Validation · CORS · Resilience    │
 └──────────────────────────┬─────────────────────────────┘
-                           │ normalized query
+                           │ POST /api/ask { question }
                            ▼
 ┌────────────────────────────────────────────────────────┐
-│            IP-SAKTI Pipeline Orchestrator              │
-│   Router → Candidate Retrieval → Reranking             │
-│   → Evidence Policy → Answer Generation                │
-│   → Citation Validation → Grounding Gate               │
+│             Python Core Engine (app.server)            │
+│  Port 8000 · 3,073 Chunks · BGE-M3 Dense + BM25 Boost │
+│  Feature Reranker · Groq LLM · Grounding Gate          │
 └──────────────────────────┬─────────────────────────────┘
-                           │ Answer Object (models.Answer)
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│          API Response Adapter (Normalizer)             │
-│   Transforms raw internal Answer → Clean JSON Contract │
-└──────────────────────────┬─────────────────────────────┘
-                           │ Normalized JSON Response
+                           │ Grounded Answer + Citations
                            ▼
 ┌────────────────────────────────────────────────────────┐
 │             Frontend Visual State Render               │
-│   [ANSWERED] or [ABSTAINED] or [ERROR]                 │
+│  Answer Card · Confidence Badge · Expandable Sources   │
 └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 5. API Contracts & Normalized Schemas
+## 5. Chat Lifecycle & Clean State
 
-### 5.1 Primary Endpoint: `POST /api/ask`
-* **Request Body**:
-  ```json
-  {
-    "question": "How is an application for trademark registration filed?"
-  }
-  ```
+* **Initial State**: Always starts fresh (`0 messages`) displaying the `New Chat` hero, metadata (`Updated 1 second ago · 0 messages`), quick suggestion tags (`Certified`, `Personalized`, `Experienced`, `Helpful`), and dashed container (`"No messages yet. Say hello to start."`).
+* **No Old Mock History**: All previous placeholder messages and legacy sidebar chat records are removed.
+* **Instant Reset**:
+  * Clicking `+ New Chat` in the top bar instantly clears any active messages and resets the view to the empty state.
+  * Clicking the `•••` action menu provides a `Clear conversation` action to purge current chat messages at any time.
 
-* **Validation Rules**:
-  * Reject non-strings, blank queries, or inputs exceeding 1,000 characters.
-  * Return `400 Bad Request` with `{ "success": false, "status": "invalid_request", "message": "Please provide a valid legal question." }`.
+### Evidence-First Analysis Synchronization (Single-Cycle)
+* **No Endless Loop**: The 6 RAG pipeline stages (`Query processing` → `Evidence retrieval` → `Reranking sources` → `Selecting evidence` → `Generating grounded answer` → `Validating citations`) advance sequentially through timed realistic phases.
+* **Single Spin Per Step**: Each step spins exactly once during its active window. Once completed, it locks to a green checkmark (`✓`).
+* **Clean Completion**: The final step (`Validating citations`) holds active until the backend response resolves. When data arrives, all 6 steps are checked (`✓`), followed by a smooth transition directly into the completed statutory Answer Card.
 
-### 5.2 Success Response — `status: "answered"`
-```json
-{
-  "success": true,
-  "status": "answered",
-  "question": "How is an application for trademark registration filed?",
-  "answer": {
-    "text": "An application for the registration of a trademark must be made in Form TM-A and signed by the applicant or his agent [1].",
-    "confidence": "MODERATE"
-  },
-  "citations": [
-    {
-      "id": 1,
-      "marker": "[1]",
-      "document": "Trade Marks Rules, 2017",
-      "locator": "Rule 23",
-      "page": 59,
-      "source_status": "CURRENT",
-      "provenance_level": "B",
-      "evidence_text": "An application for the registration of a trademark shall be made in Form TM-A and signed by the applicant or his agent."
-    }
-  ],
-  "cautions": [],
-  "meta": {
-    "answer_status": "PUBLISHED",
-    "provider": "extractive_mock",
-    "fingerprint": "a4b1c8f902e3"
-  }
-}
-```
+### View Anchoring & Responsive Visibility (Laptop & Mobile)
+* **Turn-Anchored Viewport**: When a user submits a question or an AI answer finishes, the viewport automatically scrolls and anchors to the **top of the active turn** (`block: "start"` with `scroll-mt-4`), ensuring the user's prompt and the AI Answer heading/prose remain **prominently visible on screen**.
+* **Remaining Content Flows Below**: Extensive source drawers, verified badges, and statutory excerpts flow naturally underneath, accessible via smooth scrolling without obscuring or pushing the primary answer text off screen.
+* **Full Mobile & Laptop Responsiveness**:
+  * Fluid padding (`px-3 sm:px-8 md:px-12`) prevents mobile clipping.
+  * Flex children enforce `min-w-0` and `break-words` to eliminate horizontal overflow.
+  * Bottom floating input dock adapts seamlessly across narrow mobile viewports and large desktop screens.
 
-### 5.3 Safe Abstention Response — `status: "abstained"`
-```json
-{
-  "success": true,
-  "status": "abstained",
-  "question": "What is the penalty for unauthorized lunar mining under Indian patent law?",
-  "answer": {
-    "text": "I couldn't produce a sufficiently supported answer from the available legal evidence.",
-    "confidence": null
-  },
-  "citations": [],
-  "cautions": [
-    "The available evidence was insufficient to publish a grounded answer."
-  ],
-  "meta": {
-    "answer_status": "ABSTAINED",
-    "abstention_reasons": [
-      "no_relevant_evidence: no passage shared content terms with query"
-    ]
-  }
-}
-```
+### Independent Source Evidence State
+* **Isolated `SourceItem` Component**: Each statutory evidence source card encapsulates its own independent boolean expansion state (`useState(false)`).
+* **Zero Cross-Card or Cross-Turn Interference**: Expanding evidence on Source [1] toggles strictly that single card. Subsequent sources in the same message or in future chat turns will never inherit or mirror the unhidden state.
+* **Controlled Scroll Containers**: Expanded excerpts are constrained within `max-h-60 overflow-y-auto`, ensuring voluminous schedules or multi-section provisions do not displace the rest of the interface.
 
-### 5.4 Caution Response (Stale Law / Divergent Versions)
-When the evidence policy admits stale law or identifies conflicts:
-```json
-{
-  "cautions": [
-    "⚠ Source Notice: The cited source (Drugs and Cosmetics Rules, 1945) is marked STALE. Verify against current gazette notifications.",
-    "Confidence reduced to LOW due to archival evidence vintage."
-  ]
-}
-```
+### Interactive Onboarding Stepper Modal (React Bits Integration with Skip Option)
+* **Modal Popup Dialog**:
+  * Rendered inside an animated `<AnimatePresence>` overlay with a soft backdrop (`bg-slate-900/40 backdrop-blur-xs`).
+  * Features spring scale/fade animations (`opacity: 0 -> 1`, `scale: 0.96 -> 1`, `y: 12 -> 0`).
+  * Can be dismissed via outside click, top-right `X` icon button, header `Skip` button, or the Stepper footer's `Skip intro` button.
+* **Skip Capabilities**:
+  * `onSkip` prop and `showSkipButton={true}` integrated into `<Stepper />`.
+  * Users can immediately skip the introduction at any step and jump straight into the chat workspace.
+* **Step-by-Step Educational Narrative**:
+  * **Step 1 (Statutory Grounding)**: Highlights the specialized statutory corpus (Patents Act 1970, Trade Marks Rules 2017, Copyright Act 1957, Biodiversity Act 2002) and the strict "Grounded or Silent" guarantee.
+  * **Step 2 (Real-Time Pipeline)**: Explains the multi-stage pipeline: hybrid dense BGE-M3 + lexical BM25 retrieval across 3,073 chunks, feature reranking, and citation validation.
+  * **Step 3 (Inspect Citations)**: Demonstrates interactive citations `[1]`, `[2]`, mint `VERIFIED` badges, and expandable source drawers revealing verbatim statutory excerpts.
+  * **Step 4 (Try A Statutory Question)**: Provides one-click example legal queries from the rehearsed demo suite that close the guide and execute immediately.
+* **Navigation & Accessibility**: Features a persistent `Guide` button in the top navigation bar to reopen the popup modal at any time.
 
----
 
-## 6. Frontend Core States & User Journey
+### Animated Blur Text Placeholder (Rotating Legal Queries)
+* **Rehearsed Statutory Questions**:
+  1. *"How must an application for registration of a trade mark be signed?"*
+  2. *"Is the mere discovery of a new form of a known substance patentable in India?"*
+  3. *"What is the duration of the registration of a trade mark and when must it be renewed?"*
+  4. *"What is the term of copyright in a literary work published in the lifetime of the author?"*
+  5. *"Who may apply for the registration of a geographical indication?"*
+* **Word-by-Word Blur Animation**:
+  * Driven by `motion/react` and `AnimatePresence (mode="wait")`.
+  * Successive questions rotate smoothly every 4.5 seconds when the input is idle.
+  * Each question arrives with a word-by-word staggered blur-in transition (`filter: blur(6px) -> blur(0px)`, `opacity: 0 -> 1`), creating an organic, premium typing feel.
+  * Clicking the animated placeholder focuses the underlying native textarea instantly, allowing seamless user typing without lag.
 
-### State 1: Idle
-* Display branding, the clean boxed query input, and quick-try sample question chips:
-  * *"How is an application for trademark registration filed?"* (TM Rules 2017, Rule 23)
-  * *"What is excluded from patentability under Section 3(p)?"* (Patents Act 1970, Section 3)
-  * *"What approvals are required from the NBA for biological resource export?"* (BD Act 2002)
+### Perplexity-Style Centered Hero Input Dock & Position Transition
+* **Centered Hero Mode (Zero Messages State)**:
+  * In the empty/landing state (`messages.length === 0`), the search dock is centered prominently in the hero section (`min-h-[70vh] flex flex-col items-center justify-center`).
+  * Displays the clean tagline: *"What do you want to know?"* and *"Indian statutory intelligence across Patents, Trade Marks, Copyright & Biodiversity law."*
+  * The input card features an integrated bottom toolbar with a file attach (`+`) button, statutory badge (`⚖️ Indian Statutory Law`), voice input (`Mic`), and send arrow (`Navigation`).
+  * Quick-starter suggestion chips (`Certified`, `Personalized`, `Experienced`, `Helpful`) and the `Onboarding Guide` trigger are neatly centered beneath the input card.
+* **Transition to Bottom Floating Dock (Active Conversation)**:
+  * As soon as a query is submitted or a suggestion chip is clicked, the centered hero disappears and the search input smoothly transitions to the **fixed bottom floating dock** (`messages.length > 0`).
+  * During active conversations, users continue typing from the bottom floating dock while the conversation history, timeline, and citations flow in the scrollable canvas above.
+  * Clicking **New Chat** or **Clear conversation** immediately resets the interface and returns the search box to the centered hero position.
 
-### State 2: Loading & Progress
-* Button displays loading indicator: `Analyzing legal evidence...`
-* Subtle animated pulse on the search box.
-* Subtext indicates: *"Checking statutory corpus, verifying citations, and validating grounding..."*
-
-### State 3: Answered
-* Render `ANSWER` block with verified prose.
-* In-text `[1]`, `[2]` citation markers are highlighted interactive tags.
-* Render `Confidence: High | Moderate | Low`.
-* Render `SOURCES` list with document title, locator, page, and `View Evidence ▼` collapsible drawer showing the raw excerpt.
-* If cautions exist, render the amber `⚠ Notice` banner above sources.
-
-### State 4: Abstained (Valid Safety State)
-* Prominently display:
-  > *"I couldn't produce a sufficiently supported answer from the available legal evidence."*
-* Render a transparent explanation block: **"Why did IP-SAKTI abstain?"**
-  * Explains that no statutory chunk in the corpus passed citation validation or grounding threshold.
-  * This is highlighted as an anti-hallucination legal safety feature, not an error.
-
-### State 5: System Disclaimer
-* Persistent single-line footer disclaimer:
-  > *"IP-SAKTI is an information and research tool grounded in published statutory texts. It does not provide legal advice."*
-
----
-
-## 7. Project Implementation File Map
-
-```text
-IP-SAKTI/
-├── web.md                                      # This reference document
-├── IP-SAKTI Frontend and API Integration Brief.md # Original integration brief
-│
-├── backend/                                    # Flask API application
-│   ├── app.py                                  # Flask entry point & CORS
-│   ├── routes/
-│   │   ├── ask.py                              # POST /api/ask & GET /health
-│   │   └── debug.py                            # Optional dev inspection endpoint
-│   ├── services/
-│   │   └── pipeline_service.py                 # Thin wrapper calling ai/answering & ai/retrieval
-│   └── schemas/
-│       └── normalizer.py                       # models.Answer -> public normalized JSON adapter
-│
-└── frontend/                                   # Vite + React (or Vanilla Web Component) UI
-    ├── index.html
-    ├── src/
-    │   ├── App.jsx                             # Main frame container
-    │   ├── index.css                           # Neutral dark design system
-    │   ├── components/
-    │   │   ├── Header.jsx                      # IP-SAKTI title & subtitle
-    │   │   ├── QuestionInput.jsx               # Query input & sample chips
-    │   │   ├── AnswerCard.jsx                  # Answer prose & confidence
-    │   │   ├── CautionBanner.jsx               # Stale / provenance cautions
-    │   │   ├── SourcesList.jsx                 # Citations & Evidence viewer
-    │   │   ├── AbstentionCard.jsx              # "Why abstained" explanation
-    │   │   └── Disclaimer.jsx                  # Static system disclaimer
-    │   └── services/
-    │       └── api.js                          # Fetch wrapper for /api/ask
-```
-
----
-
-## 8. Verification & Demonstration Checklist (SIH Demo)
-
-1. **Test 1: Standard Grounded Answer**
-   * Query: *"How is an application for trademark registration filed?"*
-   * Result: Answer generated, `[1]` citation rendered, `View Evidence ▼` expands Rule 23 of Trade Marks Rules 2017.
-2. **Test 2: Multi-Domain Grounded Answer**
-   * Query: *"What are the exclusions under Section 3(p) of the Patents Act?"*
-   * Result: Grounded citation to Patents Act 1970, Section 3.
-3. **Test 3: Provable Safe Abstention**
-   * Query: Unrelated question or hallucination trap (e.g. *"What is the copyright term for martian rover photos under Indian law?"*).
-   * Result: Immediate abstention, `insufficient_evidence: true`, reason explained.
-4. **Test 4: Stale Evidence Caution**
-   * Query: Question on Drugs & Cosmetics Rules 1945.
-   * Result: Answer provided, caution badge indicating STALE status, confidence lowered to `LOW`.

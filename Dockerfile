@@ -27,6 +27,9 @@ COPY app/ ./app/
 # corpus — 38 MB of processed legal texts (chunks + structured docs)
 COPY data/processed/ ./data/processed/
 COPY data/metadata/ ./data/metadata/
+# seed cache — validated answers from real pipeline runs, shipped so the demo
+# questions survive Render's ephemeral filesystem across restarts and redeploys
+COPY data/demo_cache/ ./data/demo_cache/
 
 # ── 3. Expose & Run ──────────────────────────────────────────────────────────
 # Render injects $PORT automatically. Shell form is required to expand it.

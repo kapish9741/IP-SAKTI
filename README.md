@@ -75,6 +75,58 @@ directory. See `data/raw/README.md`.
 `GROQ_TIMEOUT_SECONDS`. Only `ai/answering/groq.py` reads it. No other file in
 the project opens a network connection during answering.
 
+### Multilingual voice demo
+
+The Next.js demo adds browser speech input/output and a server-only Google Cloud
+Translation adapter around the existing English RAG call. It does not modify
+the RAG result: only the explanatory answer text is translated for display;
+citations, statute names, legal identifiers, source text, URLs, confidence,
+jurisdiction and the disclaimer remain as returned.
+
+Set Application Default Credentials in the shell that starts Next.js. Keep the
+JSON outside this repository:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+```
+
+For the full local interface, run the existing Python service and the web
+workspace in separate terminals:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+npm install
+
+.venv/bin/python -m app.server --provider extractive --no-dense
+npm run dev
+```
+
+Open **http://localhost:3001**. The Python demo/API remains available at
+**http://127.0.0.1:8000**. Chrome or Edge is recommended for browser speech
+recognition. If Google Translation credentials or the API are unavailable, the
+interface stays usable in English and shows a non-technical status message.
+The answer heading and playback button show the language actually displayed.
+Speech playback automatically prefers a locale-matching, female-associated
+voice when the browser provides one; the **Voice persona** menu lets the user
+choose any other installed voice for that language.
+
+For a deployed Next.js app, the local JSON file does not travel with the code.
+Configure these values as encrypted/sensitive, server-only environment
+variables in the hosting dashboard, then redeploy:
+
+```bash
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_CLIENT_EMAIL=translator@your-project.iam.gserviceaccount.com
+GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+Copy the three values yourself from the service-account JSON without adding the
+file to the repository. Do not use a `NEXT_PUBLIC_` prefix. Locally,
+`GOOGLE_APPLICATION_CREDENTIALS` remains the recommended option; if the three
+deployment variables are absent, the adapter falls back to Application Default
+Credentials.
+
 ---
 
 ## 3. Repository layout
@@ -233,4 +285,4 @@ will fail a test or invalidate a recorded result.
 * **No claim of legal accuracy. No claim of production readiness.** Citation
   validity and grounding are structural properties, not statements about whether
   an answer is right.
-* Answers are not legal advice.
+* answers are not legal advice.

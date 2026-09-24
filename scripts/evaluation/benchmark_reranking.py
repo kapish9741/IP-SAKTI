@@ -99,8 +99,13 @@ def build_reranker(name: str, *, bm25: BM25Retriever, aliases, args) -> Reranker
     from ai.reranking.cross_encoder import CrossEncoderReranker
 
     def features() -> FeatureReranker:
+        kwargs = {}
+        if args.heading_bonus is not None:
+            kwargs["heading_bonus"] = args.heading_bonus
+        if args.structural_penalty is not None:
+            kwargs["structural_penalty"] = args.structural_penalty
         return FeatureReranker(idf=bm25.idf, aliases=aliases,
-                               normalization=args.normalization)
+                               normalization=args.normalization, **kwargs)
 
     def cross_encoder() -> CrossEncoderReranker:
         return CrossEncoderReranker(args.cross_encoder,
@@ -362,6 +367,8 @@ def summarise(reranker: Reranker, generator: CandidateGenerator,
             "batch_size": args.batch_size,
             "max_length": args.max_length,
             "authority_lambda": args.authority_lambda,
+            "heading_bonus": args.heading_bonus,
+            "structural_penalty": args.structural_penalty,
             "text_budget": args.text_budget,
         },
     }
@@ -400,6 +407,11 @@ def main(argv: list[str] | None = None) -> int:
                              "default (Phase 6 section 7), rank percentile is "
                              "kept as the reported sensitivity check")
     parser.add_argument("--authority-lambda", type=float, default=0.05)
+    parser.add_argument("--heading-bonus", type=float, default=None,
+                        help="override FeatureReranker.heading_bonus; "
+                             "0.0 disables the heading feature entirely")
+    parser.add_argument("--structural-penalty", type=float, default=None,
+                        help="override FeatureReranker.structural_penalty")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--max-length", type=int, default=512)
     parser.add_argument("--text-budget", type=int, default=None,

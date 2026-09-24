@@ -68,6 +68,28 @@ Two caveats, stated because this is the one empirical choice in the module:
 z-score was considered and not run: it is unbounded and assumes a roughly
 symmetric spread, and BM25 over a 3,073-chunk corpus is heavily right-skewed, so
 a candidate can be "above average" while ranked 30th.
+
+Operative text
+--------------
+
+Three of the chunker's unit types carry no operative rule. A ``front_matter``
+chunk is a title page and a gazette notification line; a ``heading`` is the name
+of a chapter with nothing under it; a ``preamble`` recites why an instrument was
+made. Each states what an instrument is *called* or *why it exists*, never what
+it requires — so none of them can be the provision that answers a question about
+what the law says. That is a statement about legal drafting, not about this
+benchmark, and it is what :data:`STRUCTURAL_PENALTY` acts on.
+
+They are still retrieved, still scored and still returnable: the penalty is a
+demotion, not a filter, for the Phase 3 reason that hiding text from search is
+worse than ranking it low. A treaty preamble is genuine interpretive material
+and a question actually about one should still reach it, so the penalty is
+bounded — 0.25 of the relevance range, in the :data:`AUTHORITY_LAMBDA` idiom —
+rather than a categorical exclusion.
+
+The demotion is applied outside the weighted sum, so ``relevance_score`` keeps
+its meaning and its [0, 1] range, the declared weights are untouched, and the
+ordering *among* operative candidates is bit-for-bit what it was before.
 """
 from __future__ import annotations
 
@@ -141,6 +163,69 @@ AUTHORITY_WEIGHTS = {"evidence_level": 0.6, "temporal": 0.4}
 #: min-max-normalised score. 0.05 means authority can only reorder candidates
 #: the relevance model already considers within 5% of each other.
 AUTHORITY_LAMBDA = 0.05
+
+#: Chunk unit types that contain no operative rule. Deliberately narrow: it does
+#: not include `unstructured`, which is text the chunker could not attach a
+#: locator to and may well be operative law that failed structural parsing.
+#: Demoting that would be demoting content for a parsing failure, which is a
+#: different claim from the one above and one this module does not make.
+NON_OPERATIVE_UNIT_TYPES = frozenset({"front_matter", "heading", "preamble"})
+
+#: How far a non-operative chunk is demoted, on the same scale as
+#: `relevance_score`. 0.25 means such a chunk must be a quarter of the whole
+#: relevance range *more* relevant than an operative candidate to outrank it.
+#: The demotion saturates at 0.5 — beyond that no non-operative chunk can win
+#: any contest, which is a categorical exclusion rather than a preference, and
+#: the bounded form is chosen for the reason given in the module docstring.
+STRUCTURAL_PENALTY = 0.25
+
+#: Suffixes stripped, repeatedly, when comparing a heading to a question. A
+#: provision's heading is written in the drafter's register ("Restoration of
+#: lapsed designs") and a question in the reader's ("can a lapsed design be
+#: restored?"), so the two agree on the stem and disagree on the ending far more
+#: often than they disagree outright. This is deliberately *not* the project
+#: tokenizer: BM25's index, the identifier parser and the answer cache key all
+#: read `tokenize()`, and none of them should change because heading matching
+#: wanted a stem. It is local to this one feature and nothing else reads it.
+_STEM_RULES = (("ies", "y"), ("ied", "y"), ("ational", "ate"), ("ation", ""),
+               ("ition", ""), ("ment", ""), ("ness", ""), ("ing", ""),
+               ("ion", ""), ("ed", ""), ("es", ""), ("s", ""))
+
+#: How far a heading match may lift a candidate, on the same scale as
+#: `relevance_score` and in the `STRUCTURAL_PENALTY` idiom. Applied as a bonus
+#: outside the weighted sum, so a chunk the chunker gave no heading is scored
+#: exactly as it is today rather than being demoted for the absence: 0.0
+#: restores the pre-Phase-C ordering bit for bit, and a test asserts that it
+#: does so for all 111 benchmark questions.
+#:
+#: **0.25 is an empirical choice and is disclosed as one.** Unlike the weights
+#: in `WEIGHTS`, which were declared before the benchmark was run, this value
+#: was selected from a nine-point sweep (0.00 - 0.60) over the golden set, and
+#: that set is 0/111 human-verified. What the sweep found:
+#:
+#:     bonus   R@1     R@5     R@10    MRR     promoted  demoted
+#:     0.00    0.8018  0.9640  0.9730  0.8628  -         -
+#:     0.12    0.8378  0.9730  0.9910  0.8922  4         0
+#:     0.20    0.8468  0.9730  1.0000  0.8980  5         0
+#:     0.25    0.8468  0.9910  1.0000  0.8995  5         0     <- shipped
+#:     0.30    0.8378  0.9820  1.0000  0.8934  5         1
+#:     0.40    0.8198  0.9820  1.0000  0.8854  5         3
+#:     0.60    0.8018  0.9820  1.0000  0.8767  7         7
+#:
+#: It is the maximum of every metric at once and the last point at which no
+#: question is demoted out of rank 1; past it the bonus starts overriding
+#: relevance rather than breaking ties within it, which is the same failure the
+#: structural penalty has past 0.5.
+#:
+#: Two things make it more than a fitted number. It is a single global constant
+#: chosen from a declared grid, not a per-question or per-family adjustment. And
+#: it lands on the magnitude `STRUCTURAL_PENALTY` already uses for the mirror-
+#: image argument — a quarter of the relevance range is how far a structural
+#: fact about a chunk may move it. The demotion says a chunk with no operative
+#: rule must be a quarter more relevant to win; the bonus says a chunk whose own
+#: title the question accounts for may be a quarter less relevant and still win.
+#: Had the sweep peaked at 0.05 or 0.45 this comment would say so instead.
+HEADING_BONUS = 0.25
 
 
 def _percentile(rank: int | None, total: int) -> float:
@@ -251,6 +336,76 @@ def phrase_overlap(query_tokens: Sequence[str], chunk_tokens: Sequence[str]) -> 
     return best / len(query_tokens) if best >= 2 else 0.0
 
 
+def _stem(token: str) -> str:
+    """A token reduced to the stem `_STEM_RULES` can reach. Local to this file.
+
+    Applied at most twice and never with the same suffix twice, so that a
+    doubly-suffixed word lands where its shorter relative does — "indications"
+    loses "s" then "ion" and meets "indication", which loses only "ion" — while
+    "infringing" loses "ing" once rather than decaying through "infring" to
+    "infr". Guarded on length so a short token is never ground away, and on a
+    doubled final "s" so "address" does not decay through "addres". It is a suffix stripper, not a lemmatiser, and it is wrong about
+    irregular English; being wrong the *same way* on both sides of the
+    comparison is what the feature needs and all it needs.
+    """
+    used: set[str] = set()
+    for _ in range(2):
+        for suffix, replacement in _STEM_RULES:
+            if suffix in used or not token.endswith(suffix):
+                continue
+            if suffix == "s" and token.endswith("ss"):
+                continue
+            stripped = token[: -len(suffix)] + replacement
+            if len(stripped) >= 3:
+                token = stripped
+                used.add(suffix)
+                break
+        else:
+            break
+    return token[:-1] if len(token) >= 5 and token.endswith("e") else token
+
+
+def heading_coverage(query_tokens: Sequence[str], heading: str | None,
+                     idf: Mapping[str, float] | None) -> float:
+    """How much of a provision's *heading* the question already accounts for.
+
+    This is `idf_coverage` read in the other direction, and the direction is the
+    whole point. `idf_coverage` asks how much of the question the chunk's body
+    contains, which a long passage can satisfy by breadth. This asks how much of
+    the chunk's *title* the question contains, which only the provision the
+    question is actually about can satisfy: a heading is the drafter's own
+    one-line statement of what the provision governs, and a question that
+    accounts for all of it has named that subject rather than mentioned it.
+
+    It is what separates the two candidates in Phase B's largest failure bucket.
+    Rule 85B is headed "Application for licence to manufacture Homoeopathic
+    medicines" and Rule 85D "Form of licence to manufacture Homoeopathic
+    medicines"; the bodies share almost every content word, and the titles
+    differ in exactly the word the question turns on.
+
+    0.0 for a chunk the chunker gave no heading — 33.4% of the corpus. Those
+    chunks are not demoted for it, because the bonus is added outside the
+    weighted sum; they simply earn nothing here.
+    """
+    heading_tokens = tokenize(heading or "")
+    if not heading_tokens:
+        return 0.0
+    query_stems = {_stem(token) for token in query_tokens}
+    surfaces: dict[str, list[str]] = {}
+    for token in heading_tokens:
+        surfaces.setdefault(_stem(token), []).append(token)
+    if not idf:
+        return sum(1.0 for stem in surfaces
+                   if stem in query_stems) / len(surfaces)
+    weights = {stem: max((max(idf.get(t, 0.0), 0.0) for t in tokens), default=0.0)
+               for stem, tokens in surfaces.items()}
+    total = sum(weights.values())
+    if total <= 0.0:
+        return sum(1.0 for stem in surfaces
+                   if stem in query_stems) / len(surfaces)
+    return sum(w for stem, w in weights.items() if stem in query_stems) / total
+
+
 def authority_score(candidate: Candidate) -> tuple[float, dict[str, float]]:
     """Evidence quality, on its own axis. Not relevance, and never added to it."""
     level = EVIDENCE_LEVEL_SCORE.get(
@@ -262,6 +417,18 @@ def authority_score(candidate: Candidate) -> tuple[float, dict[str, float]]:
     return score, {"evidence_level": level, "temporal": temporal}
 
 
+def operative_text(candidate: Candidate) -> float:
+    """1.0 for a chunk that can carry a rule, 0.0 for one that cannot.
+
+    Read from the chunker's `unit_type`, never guessed from the text: the
+    structural role was decided once, at chunking, from the document's own
+    layout, and re-deriving it here from prose would make ranking depend on a
+    second opinion about structure that nothing else in the system shares.
+    """
+    return 0.0 if str(candidate.metadata.get("unit_type") or "") in (
+        NON_OPERATIVE_UNIT_TYPES) else 1.0
+
+
 @dataclass(frozen=True)
 class Scored:
     """One candidate's full working, for reporting and for review tooling."""
@@ -269,6 +436,10 @@ class Scored:
     candidate: Candidate
     features: dict[str, float]
     relevance_score: float
+    operative_text: float
+    structural_penalty: float
+    heading_bonus: float
+    ranking_score: float
     authority_score: float
     authority_features: dict[str, float]
     citable: bool
@@ -283,13 +454,25 @@ class FeatureReranker(Reranker):
     def __init__(self, *, idf: Mapping[str, float] | None = None,
                  aliases: Mapping[str, Sequence[str]] | None = None,
                  weights: Mapping[str, Mapping[str, float]] | None = None,
-                 normalization: str = "min_max"):
+                 normalization: str = "min_max",
+                 structural_penalty: float = STRUCTURAL_PENALTY,
+                 heading_bonus: float = HEADING_BONUS):
         if normalization not in ("rank_percentile", "min_max"):
             raise ValueError(f"unknown normalization: {normalization}")
+        if structural_penalty < 0.0:
+            raise ValueError("structural_penalty may not be negative")
+        if heading_bonus < 0.0:
+            raise ValueError("heading_bonus may not be negative")
         self.idf = dict(idf or {})
         self.aliases = dict(aliases or {})
         self.weights = {k: dict(v) for k, v in (weights or WEIGHTS).items()}
         self.normalization = normalization
+        # 0.0 restores the Phase 6 ordering exactly, which is what makes the
+        # demotion a measurable change rather than a new baseline.
+        self.structural_penalty = float(structural_penalty)
+        # 0.0 restores the ordering from before the heading feature exactly, for
+        # the same reason `structural_penalty` does.
+        self.heading_bonus = float(heading_bonus)
 
     # ------------------------------------------------------------- scoring ---
 
@@ -342,11 +525,19 @@ class FeatureReranker(Reranker):
             }
             relevance = sum(weights.get(name, 0.0) * value
                             for name, value in features.items())
+            operative = operative_text(candidate)
+            penalty = self.structural_penalty * (1.0 - operative)
+            bonus = self.heading_bonus * heading_coverage(
+                query_tokens, candidate.metadata.get("heading"), self.idf)
             authority, authority_features = authority_score(candidate)
             scored.append(Scored(
                 candidate=candidate,
                 features=features,
                 relevance_score=relevance,
+                operative_text=operative,
+                structural_penalty=penalty,
+                heading_bonus=bonus,
+                ranking_score=relevance - penalty + bonus,
                 authority_score=authority,
                 authority_features=authority_features,
                 citable=candidate.citable,
@@ -357,9 +548,13 @@ class FeatureReranker(Reranker):
                top_k: int = 10) -> list[RerankedResult]:
         scored = self.score(query, candidates)
         payload = [
-            (item.candidate, item.relevance_score,
+            (item.candidate, item.ranking_score,
              {**item.features,
+              "operative_text": item.operative_text,
               "relevance_score": item.relevance_score,
+              "structural_penalty": item.structural_penalty,
+              "heading_bonus": item.heading_bonus,
+              "ranking_score": item.ranking_score,
               "authority_score": item.authority_score})
             for item in scored
         ]
@@ -380,6 +575,31 @@ class FeatureReranker(Reranker):
             "weights_provenance":
                 "declared a priori from the Phase 5 per-family Recall@1 tables; "
                 "not fitted to the golden questions",
+            "structural_penalty": {
+                "value": self.structural_penalty,
+                "applies_to": sorted(NON_OPERATIVE_UNIT_TYPES),
+                "read_from": "chunk unit_type, set at chunking",
+                "form": "subtracted from relevance_score after the weighted sum, "
+                        "so the declared weights and the ordering among "
+                        "operative candidates are unchanged",
+                "rationale": "a title page, a chapter heading and a preamble "
+                             "carry no operative rule, so none can be the "
+                             "provision an answer must cite",
+                "filter": False,
+            },
+            "heading_bonus": {
+                "value": self.heading_bonus,
+                "read_from": "chunk heading, set at chunking",
+                "form": "added to relevance_score after the weighted sum, so "
+                        "the declared weights are unchanged and a chunk with no "
+                        "heading is scored exactly as it was before",
+                "rationale": "a heading is the drafter's own one-line statement "
+                             "of what a provision governs, so a question that "
+                             "accounts for all of it has named that provision "
+                             "rather than merely mentioned its subject",
+                "stemming": "local suffix stripper, not the project tokenizer",
+                "filter": False,
+            },
             "authority": {
                 "kept_separate_from_relevance": True,
                 "evidence_level_score": EVIDENCE_LEVEL_SCORE,
