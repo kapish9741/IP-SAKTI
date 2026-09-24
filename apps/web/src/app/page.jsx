@@ -774,10 +774,10 @@ export default function Home() {
         <div className="px-3 pt-2 shrink-0">
           <div
             className={`mx-auto max-w-[960px] rounded-xl border px-3 py-1.5 text-[11px] ${voiceMessage || translationNotice
-                ? "border-amber-200 bg-amber-50/90 text-amber-800"
-                : isListening
-                  ? "border-emerald-200 bg-emerald-50/90 text-emerald-700"
-                  : "border-slate-200 bg-white/80 text-slate-500"
+              ? "border-amber-200 bg-amber-50/90 text-amber-800"
+              : isListening
+                ? "border-emerald-200 bg-emerald-50/90 text-emerald-700"
+                : "border-slate-200 bg-white/80 text-slate-500"
               }`}
             aria-live="polite"
           >
@@ -956,8 +956,8 @@ export default function Home() {
                               disabled={!recognitionSupported || isGenerating}
                               aria-pressed={isListening}
                               className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 shadow-2xs ${isListening
-                                  ? "bg-red-500 text-white"
-                                  : "bg-emerald-600/90 hover:bg-emerald-600 text-white"
+                                ? "bg-red-500 text-white"
+                                : "bg-emerald-600/90 hover:bg-emerald-600 text-white"
                                 }`}
                               title={isListening ? "Stop voice input" : "Start voice input"}
                             >
@@ -977,8 +977,34 @@ export default function Home() {
                     {/* Legal Question Chips Below Card */}
                     <motion.div
                       exit={{ opacity: 0, y: 12, transition: { duration: 0.2 } }}
-                      className="pt-3 sm:pt-5 px-0"
+                      className="pt-3 sm:pt-5 px-0 space-y-3 sm:space-y-3.5"
                     >
+                      {/* Most Popular Questions Pill with Blurry Animated Aura Effect */}
+                      <div className="flex items-center justify-center">
+                        <div className="relative inline-flex items-center justify-center">
+                          {/* Pulsing Blurry Glow Backdrop */}
+                          <motion.div
+                            animate={{
+                              opacity: [0.45, 0.85, 0.45],
+                              scale: [0.97, 1.05, 0.97],
+                            }}
+                            transition={{
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                            className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-400/40 via-teal-300/40 to-emerald-400/40 blur-md pointer-events-none"
+                          />
+
+                          {/* Pill Container */}
+                          <div className="relative flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-emerald-200/60 shadow-2xs">
+                            <span className="text-[11px] sm:text-xs font-semibold text-slate-800 tracking-tight">
+                              Most popular questions right now
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Mobile: full-width stacked list */}
                       <div className="flex flex-col gap-2 sm:hidden">
                         {SAMPLES.map((s) => (
@@ -1118,10 +1144,10 @@ export default function Home() {
                               )}
                               <span
                                 className={`${isDone
-                                    ? "text-slate-500"
-                                    : isCurrent
-                                      ? "text-slate-800 font-medium"
-                                      : "text-slate-300"
+                                  ? "text-slate-500"
+                                  : isCurrent
+                                    ? "text-slate-800 font-medium"
+                                    : "text-slate-300"
                                   }`}
                               >
                                 {stepText}
@@ -1391,8 +1417,8 @@ export default function Home() {
                         disabled={!recognitionSupported || isGenerating}
                         aria-pressed={isListening}
                         className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shrink-0 disabled:opacity-40 ${isListening
-                            ? "bg-red-500 text-white"
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
+                          ? "bg-red-500 text-white"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent"
                           }`}
                         title={isListening ? "Stop voice input" : "Start voice input"}
                       >
