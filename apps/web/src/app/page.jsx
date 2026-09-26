@@ -630,7 +630,7 @@ export default function Home() {
             className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs text-[11px] sm:text-xs font-semibold text-slate-800 hover:bg-white transition truncate max-w-[200px] sm:max-w-none"
           >
             <img
-              src="/logo.png"
+              src="/ipsakti_logo.png"
               alt="IP SAKTI Sahayak Logo"
               className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-contain shrink-0"
             />
@@ -1071,7 +1071,7 @@ export default function Home() {
               return (
                 <div key={msg.id} className="flex items-start gap-2.5 sm:gap-3 pt-2">
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs overflow-hidden">
-                    <img src="/logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
+                    <img src="/ipsakti_logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm">
                     <div className="flex items-center justify-between pb-3">
@@ -1149,7 +1149,7 @@ export default function Home() {
               return (
                 <div key={msg.id} className="flex items-start gap-2.5 sm:gap-3 pt-2">
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-                    <img src="/logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
+                    <img src="/ipsakti_logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
                   </div>
                   <div
                     role="alert"
@@ -1170,7 +1170,7 @@ export default function Home() {
                 className="flex items-start gap-2.5 sm:gap-3 pt-2 scroll-mt-4"
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs overflow-hidden">
-                  <img src="/logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
+                  <img src="/ipsakti_logo.png" alt="IP SAKTI Sahayak" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1 min-w-0 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm space-y-3.5 sm:space-y-4">
                   <div className="flex items-center justify-between gap-2">
