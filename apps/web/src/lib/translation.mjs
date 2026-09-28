@@ -183,6 +183,80 @@ export function splitProtectedSegments(text, protectedTerms = []) {
   return segments;
 }
 
+async function translateViaGtx(text, from, to) {
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(from)}&tl=${encodeURIComponent(to)}&dt=t&q=${encodeURIComponent(text)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`GTX translation returned status ${res.status}`);
+  const data = await res.json();
+  if (Array.isArray(data?.[0])) {
+    const result = data[0].map((item) => item?.[0] || "").join("");
+    if (result) return result;
+  }
+  throw new Error("Invalid GTX response format");
+}
+
+async function translateViaGroq(text, from, to, apiKey) {
+  const languageNames = {
+    en: "English",
+    hi: "Hindi",
+    sa: "Sanskrit",
+    mr: "Marathi",
+    ta: "Tamil",
+    te: "Telugu",
+    bn: "Bengali",
+    gu: "Gujarati",
+    kn: "Kannada",
+    pa: "Punjabi",
+  };
+  const fromName = languageNames[from] || from;
+  const toName = languageNames[to] || to;
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-120b",
+      messages: [
+        {
+          role: "system",
+          content: `You are a professional legal and technical translator. Translate the given text from ${fromName} to ${toName}. Return ONLY the direct translation without explanation, notes, or quotation marks.`,
+        },
+        { role: "user", content: text },
+      ],
+      temperature: 0.1,
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq translation returned status ${res.status}`);
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error("Empty response from Groq translation");
+  return content;
+}
+
+async function fallbackTranslatePart(text, from, to, env) {
+  try {
+    return await translateViaGtx(text, from, to);
+  } catch (gtxErr) {
+    const groqKey = env?.GROQ_API_KEY || process.env.GROQ_API_KEY;
+    if (groqKey) {
+      try {
+        return await translateViaGroq(text, from, to, groqKey);
+      } catch (groqErr) {
+        throw new Error(
+          `Fallback translation failed (GTX: ${gtxErr?.message}; Groq: ${groqErr?.message})`,
+        );
+      }
+    }
+    throw gtxErr;
+  }
+}
+
+let googleClientCooldownUntil = 0;
+const GOOGLE_CLIENT_COOLDOWN_MS = 5 * 60 * 1000;
+
 export class GoogleCloudTranslationProvider {
   constructor({ client, env } = {}) {
     this.customClient = client;
@@ -220,15 +294,38 @@ export class GoogleCloudTranslationProvider {
       };
     });
     const translatableText = translatableParts.map((part) => part.text);
+
+    let translatedText;
     const client = this.getClient();
-    const [translated] = await client.translate(translatableText, {
-      from: sourceLanguage,
-      to: targetLanguage,
-      format: "text",
-    });
-    const translatedText = Array.isArray(translated) ? translated : [translated];
-    if (translatedText.length !== translatableIndexes.length) {
-      throw new Error("Translation provider returned an incomplete response.");
+    const shouldSkipGoogle =
+      !this.customClient && Date.now() < googleClientCooldownUntil;
+
+    if (!shouldSkipGoogle) {
+      try {
+        const [translated] = await client.translate(translatableText, {
+          from: sourceLanguage,
+          to: targetLanguage,
+          format: "text",
+        });
+        translatedText = Array.isArray(translated) ? translated : [translated];
+        if (translatedText.length !== translatableIndexes.length) {
+          throw new Error("Translation provider returned an incomplete response.");
+        }
+      } catch (primaryErr) {
+        if (this.customClient) {
+          throw primaryErr;
+        }
+        googleClientCooldownUntil = Date.now() + GOOGLE_CLIENT_COOLDOWN_MS;
+      }
+    }
+
+    if (!translatedText) {
+      const currentEnv = this.env || process.env;
+      translatedText = await Promise.all(
+        translatableText.map((part) =>
+          fallbackTranslatePart(part, sourceLanguage, targetLanguage, currentEnv),
+        ),
+      );
     }
 
     translatableIndexes.forEach((segmentIndex, translatedIndex) => {
