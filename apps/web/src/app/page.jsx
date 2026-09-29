@@ -46,20 +46,20 @@ import { BackgroundGradientAnimation } from "../components/ui/background-gradien
 import { getUIText } from "../lib/i18n";
 import { LANGUAGES, languageByCode } from "../lib/languages.mjs";
 import { collectProtectedTerms } from "../lib/translation-client.mjs";
+import { DEMO_QUESTION_TEXTS } from "../lib/demo-questions.mjs";
+import {
+  queryTranslationFailed,
+  resolveQueryLanguage,
+} from "../lib/query-language.mjs";
+import { describeResult } from "../lib/result-status.mjs";
 import {
   selectPreferredVoice,
   voicesForLocale,
 } from "../lib/voice-selection.mjs";
 
-// Rehearsed demo legal questions for the animated blur placeholder and onboarding
-const DEMO_QUESTIONS = [
-  "How must an application for registration of a trade mark be signed?",
-  "Is the mere discovery of a new form of a known substance patentable in India?",
-  "What is the duration of the registration of a trade mark and when must it be renewed?",
-  "What is the term of copyright in a literary work published in the lifetime of the author?",
-  "Who may apply for the registration of a geographical indication?",
-];
-const SAMPLES = DEMO_QUESTIONS;
+// One curated list feeds the tutorial, the landing chips and the rotating
+// placeholder. See lib/demo-questions.mjs for why each question is demo-safe.
+const DEMO_QUESTIONS = DEMO_QUESTION_TEXTS;
 
 // API endpoints
 const PRIMARY_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
@@ -151,15 +151,27 @@ const ANALYSIS_STEPS = [
 ];
 
 // Isolated source evidence item with dynamic document title translation and excerpt translation
-function SourceItem({ src, index, uiText, selectedLanguageCode, translationCache }) {
+function SourceItem({ src, index, msgId, uiText, selectedLanguageCode, translationCache }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayText, setDisplayText] = useState(src.text || "");
   const [isTranslatingText, setIsTranslatingText] = useState(false);
   const [docNameTranslated, setDocNameTranslated] = useState("");
   const marker = src.marker || index + 1;
+  const rawLocator = src.locator_text || src.citation || "";
   const formattedLocator = uiText?.formatLocator
-    ? uiText.formatLocator(src.locator_text)
-    : src.locator_text;
+    ? uiText.formatLocator(rawLocator)
+    : rawLocator;
+  const pages = Array.isArray(src.physical_pages) ? src.physical_pages : [];
+  const pageLabel = pages.length
+    ? pages.length > 1
+      ? `pp. ${pages[0]}–${pages[pages.length - 1]}`
+      : `p. ${pages[0]}`
+    : "";
+  const isStale = src.temporal_status && src.temporal_status !== "CURRENT";
+  // Detected by ai/text_integrity.py and never repaired: damaged text must not
+  // be presented as quoted legal wording.
+  const isDamaged = src.text_integrity?.status === "EXTRACTION_DAMAGED";
+  const excerptText = src.excerpt?.text || "";
 
   const rawDocName = src.originalDocumentName || src.document_name || src.document_id || "";
 
@@ -255,26 +267,69 @@ function SourceItem({ src, index, uiText, selectedLanguageCode, translationCache
   }, [isExpanded, selectedLanguageCode, src.text, src.originalText, translationCache]);
 
   return (
-    <div className="border border-[#e8edf3] rounded-2xl p-3 sm:p-4 bg-white/80 backdrop-blur-sm transition hover:border-slate-300">
+    <div
+      id={`src-${msgId}-${marker}`}
+      className={`border rounded-2xl p-3 sm:p-4 backdrop-blur-sm transition scroll-mt-4 ${src.cited
+        ? "border-emerald-200/80 bg-white/90"
+        : "border-[#e8edf3] bg-white/70"
+        }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2 sm:gap-2.5 min-w-0">
-          <span className="text-[11px] sm:text-xs font-bold text-[#334155] mt-0.5 shrink-0">
+          <span
+            className={`mt-0.5 shrink-0 inline-flex items-center justify-center min-w-[28px] h-[22px] px-1.5 rounded-md text-[11px] sm:text-xs font-bold ${src.cited
+              ? "bg-emerald-600 text-white"
+              : "bg-slate-100 text-slate-500 border border-slate-200"
+              }`}
+          >
             [{marker}]
           </span>
           <div className="space-y-1 min-w-0">
-            <h4 className="text-xs font-semibold text-[#0f172a] leading-tight break-words">
+            <h4 className="text-xs sm:text-[13px] font-semibold text-[#0f172a] leading-tight break-words">
               {resolvedDocName}
             </h4>
-            <p className="text-[10px] sm:text-[11px] text-[#64748b] break-words">
-              {formattedLocator || "Example record · Section 1"}
+            <p className="text-[11px] sm:text-xs text-[#0f172a] break-words">
+              <span className="font-semibold text-emerald-800">
+                {formattedLocator || (uiText?.locatorUnavailable || "Locator unavailable")}
+              </span>
+              {src.heading && <span className="text-[#475569]"> — {src.heading}</span>}
+              {pageLabel && <span className="text-[#94a3b8]"> · {pageLabel}</span>}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] uppercase tracking-wide">
-                {uiText?.verified || "Verified"}
+              <span
+                className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${src.cited
+                  ? "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]"
+                  : "bg-[#f8fafc] text-[#64748b] border-[#e2e8f0]"
+                  }`}
+              >
+                {src.cited
+                  ? (uiText?.citedInAnswer || "Cited in answer")
+                  : (uiText?.retrievedNotCited || "Retrieved · not cited")}
               </span>
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] uppercase tracking-wide">
-                {uiText?.level || "Level"} {src.source_evidence_level || "A"}
-              </span>
+              {src.temporal_status && (
+                <span
+                  className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${isStale
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]"
+                    }`}
+                  title={isStale ? "This instrument may have been amended since this copy." : undefined}
+                >
+                  {isStale ? (uiText?.stale || "Stale") : (uiText?.current || "Current")}
+                </span>
+              )}
+              {src.source_evidence_level && (
+                <span
+                  className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] uppercase tracking-wide"
+                  title="Provenance level of the source copy (A = strongest)"
+                >
+                  {uiText?.provenance || "Provenance"} {src.source_evidence_level}
+                </span>
+              )}
+              {isDamaged && (
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">
+                  {uiText?.textDamaged || "Text damaged"}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -283,7 +338,7 @@ function SourceItem({ src, index, uiText, selectedLanguageCode, translationCache
           onClick={() => setIsExpanded((prev) => !prev)}
           className="flex items-center gap-1 text-[11px] font-medium text-[#64748b] hover:text-[#0f172a] shrink-0 pt-0.5 transition"
         >
-          <span>{isExpanded ? (uiText?.hide || "Hide") : (uiText?.view || "View")}</span>
+          <span>{isExpanded ? (uiText?.hide || "Hide") : (uiText?.viewFullPassage || "Full passage")}</span>
           {isExpanded ? (
             <ChevronUpIcon className="w-3.5 h-3.5" />
           ) : (
@@ -292,8 +347,40 @@ function SourceItem({ src, index, uiText, selectedLanguageCode, translationCache
         </button>
       </div>
 
+      {isDamaged ? (
+        <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
+          The source text of this passage did not extract cleanly from the PDF, so it is
+          not shown as quoted legal wording. Check the original document
+          {pageLabel ? ` (${pageLabel})` : ""}.
+          {src.official_source_url && (
+            <>
+              {" "}
+              <a
+                href={src.official_source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold underline"
+              >
+                Open official source
+              </a>
+            </>
+          )}
+        </div>
+      ) : (
+        excerptText && (
+          <blockquote className="mt-2.5 border-l-2 border-emerald-300 pl-3 text-[11px] sm:text-xs leading-relaxed text-slate-700 line-clamp-3 break-words">
+            {excerptText}
+          </blockquote>
+        )
+      )}
+
       {isExpanded && (
-        <div className="mt-3 pt-3 border-t border-[#f1f5f9] text-xs text-gray-700 bg-gray-50/80 p-3 rounded-xl font-mono leading-relaxed max-h-60 overflow-y-auto">
+        <div className="mt-3 pt-3 border-t border-[#f1f5f9] text-xs text-gray-700 bg-gray-50/80 p-3 rounded-xl leading-relaxed max-h-60 overflow-y-auto">
+          {isDamaged && (
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+              Raw extracted text — may be garbled, not authoritative
+            </p>
+          )}
           {isTranslatingText ? (
             <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 shrink-0" />
@@ -302,6 +389,63 @@ function SourceItem({ src, index, uiText, selectedLanguageCode, translationCache
           ) : (
             <p className="whitespace-pre-wrap break-words">{displayText}</p>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sources for one answer. Cited passages come first, numbered exactly as the
+// answer's [n] markers; retrieved-but-uncited passages are folded away so they
+// are never mistaken for the answer's authority.
+function SourcesList({ msg, uiText, selectedLanguageCode, translationCache }) {
+  const [showOthers, setShowOthers] = useState(false);
+  const evidence = msg.evidence || [];
+  const cited = evidence.filter((src) => src.cited);
+  const others = evidence.filter((src) => !src.cited);
+
+  const renderItem = (src, sIdx) => (
+    <SourceItem
+      key={src.chunk_id || `${msg.id}-src-${sIdx}`}
+      src={src}
+      index={evidence.indexOf(src)}
+      msgId={msg.id}
+      uiText={uiText}
+      selectedLanguageCode={selectedLanguageCode}
+      translationCache={translationCache}
+    />
+  );
+
+  return (
+    <div className="pt-2 border-t border-slate-100 space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5 text-slate-400">
+        <FileTextIcon className="w-3.5 h-3.5" />
+        <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase">
+          {uiText.sources || "Sources"}
+        </span>
+        <span className="text-[10px] text-slate-400">
+          · {cited.length > 0
+            ? `${cited.length} cited in answer`
+            : `${others.length} retrieved, none cited`}
+        </span>
+      </div>
+
+      {cited.length > 0 && <div className="space-y-2">{cited.map(renderItem)}</div>}
+
+      {others.length > 0 && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setShowOthers((prev) => !prev)}
+            className="flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
+          >
+            {showOthers ? <ChevronUpIcon className="w-3.5 h-3.5" /> : <ChevronDownIcon className="w-3.5 h-3.5" />}
+            <span>
+              {showOthers ? "Hide" : "Show"} {others.length} other retrieved{" "}
+              {others.length === 1 ? "passage" : "passages"} (not cited)
+            </span>
+          </button>
+          {showOthers && <div className="space-y-2">{others.map(renderItem)}</div>}
         </div>
       )}
     </div>
@@ -458,9 +602,28 @@ function AssistantMessageText({ msg, selectedLanguageCode, translationCache }) {
     };
   }, [msg.answer, raw, msg.displayLanguageCode, selectedLanguageCode, translationCache]);
 
+  // Each [n] is drawn like the source card's [n] badge and jumps to it.
+  const parts = String(displayText || "").split(/(\[\d+\])/g);
   return (
     <p className="text-xs sm:text-[15px] leading-relaxed text-slate-800 font-normal break-words">
-      {displayText}
+      {parts.map((part, i) => {
+        const match = /^\[(\d+)\]$/.exec(part);
+        if (!match) return <React.Fragment key={i}>{part}</React.Fragment>;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() =>
+              document
+                .getElementById(`src-${msg.id}-${match[1]}`)
+                ?.scrollIntoView({ behavior: "smooth", block: "center" })
+            }
+            className="mx-0.5 inline-flex items-center rounded-md bg-emerald-600 px-1 text-[10px] sm:text-[11px] font-bold leading-4 text-white align-baseline hover:bg-emerald-700"
+          >
+            [{match[1]}]
+          </button>
+        );
+      })}
     </p>
   );
 }
@@ -512,7 +675,7 @@ export default function Home() {
     availableVoices,
     selectedLanguage.speechLocale,
   );
-  const activeQuestions = uiText.demoQuestions || DEMO_QUESTIONS;
+  const activeQuestions = DEMO_QUESTIONS;
 
   // Requirement 1: 1 second delay for Guide popup on startup
   useEffect(() => {
@@ -1282,14 +1445,28 @@ export default function Home() {
       let rawData = null;
       let englishQuery = q;
 
-      if (requestLanguage.code !== "en") {
+      // Translate from the language the query is written in, not only the
+      // dropdown's: Hindi typed under an English dropdown must still reach the
+      // English-only retriever as English. The answer language stays the
+      // dropdown's (`requestLanguage`).
+      const queryLanguageCode = resolveQueryLanguage(q, requestLanguage.code);
+      if (queryLanguageCode !== "en") {
         try {
           englishQuery = await translateText({
             text: q,
-            sourceLanguage: requestLanguage.code,
+            sourceLanguage: queryLanguageCode,
             targetLanguage: "en",
             cache: translationCacheRef.current,
           });
+          if (queryTranslationFailed(q, englishQuery)) {
+            throw new Error(TRANSLATION_FALLBACK);
+          }
+          if (queryLanguageCode !== requestLanguage.code) {
+            const typed = languageByCode(queryLanguageCode).label;
+            setTranslationNotice(
+              `Your ${typed} question was translated for search. Answers follow the selected language (${requestLanguage.label}); choose ${typed} in the language menu to read answers in ${typed}.`,
+            );
+          }
         } catch (translationError) {
           clearStepTimers();
           setTranslationNotice(
@@ -1351,28 +1528,25 @@ export default function Home() {
 
       if (rawData) {
         const answerObj = rawData.answer || {};
-        const isAbstained = rawData.status === "ABSTAINED";
-        const originalAnswerText =
-          answerObj.answer ||
-          (isAbstained
-            ? "I couldn't produce a sufficiently supported answer from the available legal evidence."
-            : "No answer was published.");
+        // SOCIAL, NEEDS_CLARIFICATION, UNAVAILABLE and ABSTAINED each have
+        // their own text; only ANSWERED carries confidence and citations.
+        const view = describeResult(rawData);
+        const isAnswered = view.kind === "answered";
+        const originalAnswerText = view.text || "No answer was published.";
         let answerText = originalAnswerText;
         let displayLanguageCode = "en";
 
-        const confidenceVal = answerObj.confidence || (isAbstained ? "NONE" : "HIGH");
+        const confidenceVal = isAnswered ? answerObj.confidence || null : null;
 
         let cautionItem = null;
-        if (answerObj.cautions && answerObj.cautions.length > 0) {
+        if (isAnswered && answerObj.cautions && answerObj.cautions.length > 0) {
           cautionItem = {
             title: "Source notice",
             detail: answerObj.cautions[0],
           };
-        } else if (isAbstained && answerObj.insufficient_evidence_reasons?.length > 0) {
-          cautionItem = {
-            title: "Source notice",
-            detail: answerObj.insufficient_evidence_reasons[0].detail || answerObj.insufficient_evidence_reasons[0].code,
-          };
+        }
+        if (view.sources === "none") {
+          rawData.evidence = [];
         }
 
         const originalCautionDetail = cautionItem?.detail || null;
@@ -1438,6 +1612,8 @@ export default function Home() {
           id: aiMsgId,
           role: "assistant",
           status: "completed",
+          kind: view.kind,
+          clarificationOptions: view.options || [],
           confidence: confidenceVal,
           originalAnswer: originalAnswerText,
           originalCautionDetail,
@@ -2004,6 +2180,19 @@ export default function Home() {
                       translationCache={translationCacheRef}
                     />
 
+                    {msg.kind === "clarification" && msg.clarificationOptions?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {msg.clarificationOptions.map((option) => (
+                          <span
+                            key={option}
+                            className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] sm:text-[11px] text-slate-600"
+                          >
+                            {option}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5 sm:pt-3">
                       <div className="flex flex-wrap gap-1.5 text-[9px] sm:text-[10px] font-medium text-slate-500">
                         {msg.jurisdiction !== undefined &&
@@ -2012,11 +2201,13 @@ export default function Home() {
                               {String(msg.jurisdiction)}
                             </span>
                           )}
-                        <span className="rounded-full border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-0.5 sm:py-1 text-emerald-700">
-                          {typeof uiText.citationsValidated === "function"
-                            ? uiText.citationsValidated(msg.citations?.length || 0)
-                            : `${msg.citations?.length || 0} citations validated`}
-                        </span>
+                        {(!msg.kind || msg.kind === "answered") && (
+                          <span className="rounded-full border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-0.5 sm:py-1 text-emerald-700">
+                            {typeof uiText.citationsValidated === "function"
+                              ? uiText.citationsValidated(msg.citations?.length || 0)
+                              : `${msg.citations?.length || 0} citations validated`}
+                          </span>
+                        )}
                       </div>
                       <button
                         type="button"
@@ -2037,27 +2228,12 @@ export default function Home() {
                     </div>
 
                     {msg.evidence && msg.evidence.length > 0 && (
-                      <div className="pt-2 border-t border-slate-100 space-y-2">
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <FileTextIcon className="w-3.5 h-3.5" />
-                          <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase">
-                            {uiText.sources || "Sources"}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          {msg.evidence.map((src, sIdx) => (
-                            <SourceItem
-                              key={src.chunk_id || `${msg.id}-src-${sIdx}`}
-                              src={src}
-                              index={sIdx}
-                              uiText={uiText}
-                              selectedLanguageCode={selectedLanguageCode}
-                              translationCache={translationCacheRef}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                      <SourcesList
+                        msg={msg}
+                        uiText={uiText}
+                        selectedLanguageCode={selectedLanguageCode}
+                        translationCache={translationCacheRef}
+                      />
                     )}
 
                     <p className="border-t border-slate-100 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] leading-relaxed text-slate-400">

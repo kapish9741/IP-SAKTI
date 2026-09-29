@@ -138,7 +138,8 @@ def test_the_config_states_what_it_guarantees():
 CAPABILITY_INPUTS = ["help", "Help", "help me", "i need help", "can you help",
                      "how can you help", "how can you help me",
                      "what can you do", "what do you do", "what can i ask",
-                     "who are you", "what are you", "how does this work"]
+                     "who are you", "what are you", "how does this work",
+                     "How does it work?", "how do i use this", "how to use this"]
 
 
 @pytest.mark.parametrize("query", CAPABILITY_INPUTS)
@@ -160,6 +161,8 @@ def test_the_capability_reply_says_what_the_corpus_is_and_how_answers_are_made()
     assert "citations" in reply
     # It must offer a next step rather than only describing itself.
     assert "Ask me" in reply
+    # Short enough to read at a glance: it is a reply to "help", not a manual.
+    assert len(reply) <= 320
 
 
 def test_the_greeting_reply_hands_the_turn_back_to_a_legal_question():

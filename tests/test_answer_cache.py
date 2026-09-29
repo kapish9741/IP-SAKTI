@@ -712,15 +712,17 @@ def test_page_load_does_not_ask_a_question():
     matters: an auto-ask on mount spent a completion on every page load and
     every refresh, before anyone had clicked anything."""
     source = _page_source()
-    mount = source[source.index("useEffect(() => {"):]
+    # The mount effect is the one that runs the health check; the UI rewrite
+    # moved it below the component's other effects.
+    mount = source[source.index("useEffect(() => {\n    fetchHealth();"):]
     mount = mount[:mount.index("}, []);")]
     assert "fetchHealth()" in mount
-    assert "handleAsk" not in mount
+    assert "handleSendMessage" not in mount and "handleAsk" not in mount
 
 
 def test_sample_chips_still_submit_on_an_explicit_click():
     source = _page_source()
-    chips = source[source.index("{SAMPLES.map("):]
+    chips = source[source.index("{activeQuestions.slice(0, 4).map("):]
     chips = chips[:chips.index("</button>")]
     assert "onClick" in chips
-    assert "setQuestion(s)" in chips and "handleAsk(s)" in chips
+    assert "setInputText(s)" in chips and "handleSendMessage(s)" in chips

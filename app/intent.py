@@ -72,17 +72,11 @@ REPLIES: dict[str, str] = {
     GREETING: "Hello! I'm IP-SAKTI, a statutory-law assistant. Ask me a "
               "question about the legal instruments in my corpus and I'll "
               "retrieve the relevant provisions with citations.",
-    CAPABILITY: "I answer questions about Indian intellectual-property and "
-                "related regulatory law — patents, trade marks, copyright, "
-                "designs, geographical indications, plant varieties, "
-                "biodiversity and benefit-sharing, and drugs and cosmetics — "
-                "from a fixed corpus of 22 published legal instruments. Every "
-                "answer is generated only from passages retrieved from those "
-                "texts and is shown with its citations, so you can check each "
-                "claim against the source. Where the corpus does not support "
-                "an answer, I say so instead of guessing. Ask me something "
-                "like \"What is the term of a patent in India?\" or \"How do I "
-                "oppose a trade mark application?\"",
+    CAPABILITY: "I answer questions from a fixed corpus of 22 Indian IP and "
+                "regulatory-law instruments, and show the source citations for "
+                "every answer. If the corpus doesn't support an answer, I say "
+                "so. Ask me something like \"What is the term of a patent in "
+                "India?\"",
     SMALL_TALK: "I'm doing well, thank you. What IP question can I help you with?",
     THANKS: "You're welcome.",
     ACKNOWLEDGEMENT: "Happy to help. Ask me another question whenever you're ready.",
@@ -130,7 +124,8 @@ _register(
     "what can you do for me", "what can i ask", "what can i ask you",
     "what can you help with", "what can you help me with",
     "who are you", "what are you", "who r u", "who are u",
-    "how do you work", "how does this work", "what is ip sakti",
+    "how do you work", "how does this work", "how does it work",
+    "how do i use this", "how to use this", "what is ip sakti",
     "what is ip shakti", "tell me what you can do", "your capabilities",
 )
 
