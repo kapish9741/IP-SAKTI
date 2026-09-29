@@ -1,6 +1,10 @@
+import "../env.js";
 import { normalizeAnswered, normalizeAbstained, normalizeError, normalizeInvalidRequest } from "./adapter.js";
 
-const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || "http://127.0.0.1:8000";
+export function getPythonServerUrl() {
+  const url = process.env.PYTHON_SERVER_URL || "https://ip-sakti-o2fn.onrender.com";
+  return url.replace(/\/+$/, "");
+}
 
 /**
  * There is deliberately no offline answer fixture here.
@@ -24,8 +28,9 @@ const PYTHON_SERVER_URL = process.env.PYTHON_SERVER_URL || "http://127.0.0.1:800
  * Fetch health from Python app.server
  */
 export async function getHealth() {
+  const pythonUrl = getPythonServerUrl();
   try {
-    const res = await fetch(`${PYTHON_SERVER_URL}/api/health`, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${pythonUrl}/api/health`, { signal: AbortSignal.timeout(10000) });
     if (res.ok) {
       const data = await res.json();
       return { statusCode: 200, data };
@@ -66,9 +71,10 @@ export async function askQuestion(question, { clarified = false } = {}) {
     return { statusCode: 400, data: normalizeInvalidRequest("Question exceeds maximum length of 1,000 characters.") };
   }
 
-  // 2. Call Python app.server on port 8000
+  // 2. Call Python app.server
+  const pythonUrl = getPythonServerUrl();
   try {
-    const res = await fetch(`${PYTHON_SERVER_URL}/api/ask`, {
+    const res = await fetch(`${pythonUrl}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // `clarified` is the entire loop guard for the one clarifying question
@@ -76,7 +82,7 @@ export async function askQuestion(question, { clarified = false } = {}) {
       // it, so a user who answered the clarification was asked it again — the
       // loop the flag exists to prevent, reintroduced by the hop through here.
       body: JSON.stringify({ question: trimmed, clarified: clarified === true }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(60000),
     });
 
     if (res.ok) {
@@ -84,7 +90,7 @@ export async function askQuestion(question, { clarified = false } = {}) {
       return { statusCode: 200, data: rawPythonResult };
     }
   } catch (err) {
-    console.warn(`[pipelineService] Python server at ${PYTHON_SERVER_URL} unreachable; reporting UNAVAILABLE`);
+    console.warn(`[pipelineService] Python server at ${pythonUrl} unreachable; reporting UNAVAILABLE`);
   }
 
   // 3. The backend could not be reached. Say so.
@@ -97,7 +103,7 @@ export async function askQuestion(question, { clarified = false } = {}) {
         code: "transport_error",
         message:
           "The retrieval and answering backend could not be reached, so no answer was generated. Nothing unverified is shown.",
-        detail: `no response from ${PYTHON_SERVER_URL}`,
+        detail: `no response from ${pythonUrl}`,
       },
       answer: null,
       evidence: [],

@@ -618,6 +618,333 @@ export const UI_TRANSLATIONS = {
   },
 };
 
+export const EXTRA_TRANSLATIONS = {
+  en: {
+    answer: "Answer",
+    sources: "Sources",
+    citationsValidated: (c) => `${c} ${c === 1 ? "citation" : "citations"} validated`,
+    verified: "Verified",
+    level: "Level",
+    view: "View",
+    hide: "Hide",
+    edit: "Edit",
+    resend: "Resend",
+    stop: "Stop",
+    evidenceAnalysis: "Evidence Analysis",
+    secure: "Secure",
+    evidenceVerified: "Evidence verified · Finalizing answer...",
+    analyzingEvidence: "Analyzing legal evidence...",
+    analysisSteps: [
+      "Query processing",
+      "Evidence retrieval",
+      "Reranking sources",
+      "Selecting evidence",
+      "Generating grounded answer",
+    ],
+    confidenceLevels: { HIGH: "HIGH", MODERATE: "MODERATE", LOW: "LOW", NONE: "NONE" },
+    formatLocator: (loc) => loc || "",
+  },
+  hi: {
+    answer: "उत्तर",
+    sources: "स्रोत",
+    citationsValidated: (c) => `${c} उद्धरण सत्यापित`,
+    verified: "सत्यापित",
+    level: "स्तर",
+    view: "देखें",
+    hide: "छुपाएं",
+    edit: "संपादित करें",
+    resend: "पुनः भेजें",
+    stop: "रोकें",
+    evidenceAnalysis: "साक्ष्य विश्लेषण",
+    secure: "सुरक्षित",
+    evidenceVerified: "साक्ष्य सत्यापित · उत्तर तैयार किया जा रहा है...",
+    analyzingEvidence: "कानूनी साक्ष्यों का विश्लेषण जारी...",
+    analysisSteps: [
+      "प्रश्न प्रसंस्करण",
+      "साक्ष्य निष्कर्षण",
+      "स्रोतों की पुनर्रैंकिंग",
+      "साक्ष्य चयन",
+      "तथ्यात्मक उत्तर निर्माण",
+    ],
+    confidenceLevels: { HIGH: "उच्च", MODERATE: "मध्यम", LOW: "निम्न", NONE: "कोई नहीं" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "धारा")
+        .replace(/\bRule\b/gi, "नियम")
+        .replace(/\bSchedule\b/gi, "अनुसूची")
+        .replace(/\bClause\b/gi, "खंड")
+        .replace(/\bChapter\b/gi, "अध्याय")
+        .replace(/\bItem\b/gi, "मद");
+    },
+  },
+  sa: {
+    answer: "उत्तरम्",
+    sources: "स्रोतांसि",
+    citationsValidated: (c) => `${c} उद्धरणानि सत्यापितानि`,
+    verified: "सत्यापितम्",
+    level: "स्तरः",
+    view: "पश्यतु",
+    hide: "गूढयतु",
+    edit: "सम्पादयतु",
+    resend: "पुनः प्रेषयतु",
+    confidenceLevels: { HIGH: "उच्चम्", MODERATE: "मध्यमम्", LOW: "निम्नम्", NONE: "किमपि न" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "धारा")
+        .replace(/\bRule\b/gi, "नियमः")
+        .replace(/\bSchedule\b/gi, "अनुसूची");
+    },
+  },
+  mr: {
+    answer: "उत्तर",
+    sources: "स्रोत",
+    citationsValidated: (c) => `${c} संदर्भ प्रमाणित`,
+    verified: "प्रमाणित",
+    level: "पातळी",
+    view: "पहा",
+    hide: "लपवा",
+    edit: "संपादित करा",
+    resend: "पुन्हा पाठवा",
+    confidenceLevels: { HIGH: "उच्च", MODERATE: "मध्यम", LOW: "कमी", NONE: "काहीही नाही" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "कलम")
+        .replace(/\bRule\b/gi, "नियम")
+        .replace(/\bSchedule\b/gi, "अनुसूची");
+    },
+  },
+  ta: {
+    answer: "பதில்",
+    sources: "மூலங்கள்",
+    citationsValidated: (c) => `${c} மேற்கோள்கள் சரிபார்க்கப்பட்டன`,
+    verified: "சரிபார்க்கப்பட்டது",
+    level: "நிலை",
+    view: "பார்",
+    hide: "மறை",
+    edit: "திருத்து",
+    resend: "மீண்டும் அனுப்பு",
+    confidenceLevels: { HIGH: "உயர்", MODERATE: "நடுத்தர", LOW: "குறைந்த", NONE: "எதுவுமில்லை" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "பிரிவு")
+        .replace(/\bRule\b/gi, "விதி")
+        .replace(/\bSchedule\b/gi, "அட்டவணை");
+    },
+  },
+  te: {
+    answer: "సమాధానం",
+    sources: "మూలాలు",
+    citationsValidated: (c) => `${c} ఆధారాలు ధృవీకరించబడ్డాయి`,
+    verified: "ధృవీకరించబడింది",
+    level: "స్థాయి",
+    view: "చూడండి",
+    hide: "దాచండి",
+    edit: "సవరించు",
+    resend: "మళ్ళీ పంపు",
+    confidenceLevels: { HIGH: "అధిక", MODERATE: "మధ్యస్థ", LOW: "తక్కువ", NONE: "ఏదీ లేదు" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "విభాగం")
+        .replace(/\bRule\b/gi, "నియమం")
+        .replace(/\bSchedule\b/gi, "షెడ్యూల్");
+    },
+  },
+  bn: {
+    answer: "উত্তর",
+    sources: "উৎস",
+    citationsValidated: (c) => `${c}টি উদ্ধৃতি যাচাইকৃত`,
+    verified: "যাচাইকৃত",
+    level: "স্তর",
+    view: "দেখুন",
+    hide: "লুকান",
+    edit: "সম্পাদনা",
+    resend: "পুনরায় পাঠান",
+    confidenceLevels: { HIGH: "উচ্চ", MODERATE: "মাঝারি", LOW: "নিম্ন", NONE: "কিছুই নেই" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "ধারা")
+        .replace(/\bRule\b/gi, "নিয়ম")
+        .replace(/\bSchedule\b/gi, "তফসিল");
+    },
+  },
+  gu: {
+    answer: "જવાબ",
+    sources: "સ્ત્રોતો",
+    citationsValidated: (c) => `${c} સંદર્ભો પ્રમાણિત`,
+    verified: "પ્રમાણિત",
+    level: "સ્તર",
+    view: "જુઓ",
+    hide: "છુપાવો",
+    edit: "સંપાદિત કરો",
+    resend: "ફરીથી મોકલો",
+    confidenceLevels: { HIGH: "ઉચ્ચ", MODERATE: "મધ્યમ", LOW: "નીચું", NONE: "કંઈ નહીં" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "કલમ")
+        .replace(/\bRule\b/gi, "નિયમ")
+        .replace(/\bSchedule\b/gi, "અનુસૂચિ");
+    },
+  },
+  kn: {
+    answer: "ಉತ್ತರ",
+    sources: "ಮೂಲಗಳು",
+    citationsValidated: (c) => `${c} ಉಲ್ಲೇಖಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿದೆ`,
+    verified: "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+    level: "ಹಂತ",
+    view: "ನೋಡಿ",
+    hide: "ಮರೆಮಾಡಿ",
+    edit: "ತಿದ್ದು",
+    resend: "ಮತ್ತೆ ಕಳುಹಿಸಿ",
+    confidenceLevels: { HIGH: "ಉನ್ನತ", MODERATE: "ಮಧ್ಯಮ", LOW: "ಕಡಿಮೆ", NONE: "ಯಾವುದೂ ಇಲ್ಲ" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "ವಿಭಾಗ")
+        .replace(/\bRule\b/gi, "ನಿಯಮ")
+        .replace(/\bSchedule\b/gi, "ಅನುಸೂಚಿ");
+    },
+  },
+  pa: {
+    answer: "ਜਵਾਬ",
+    sources: "ਸਰੋਤ",
+    citationsValidated: (c) => `${c} ਹਵਾਲੇ ਪ੍ਰਮਾਣਿਤ`,
+    verified: "ਪ੍ਰਮਾਣਿਤ",
+    level: "ਪੱਧਰ",
+    view: "ਦੇਖੋ",
+    hide: "ਲੁਕਾਓ",
+    edit: "ਸੋਧੋ",
+    resend: "ਦੁਬਾਰਾ ਭੇਜੋ",
+    confidenceLevels: { HIGH: "ਉੱਚ", MODERATE: "ਦਰਮਿਆਨਾ", LOW: "ਘੱਟ", NONE: "ਕੋਈ ਨਹੀਂ" },
+    formatLocator: (loc) => {
+      if (!loc) return "";
+      return loc
+        .replace(/\bSection\b/gi, "ਧਾਰਾ")
+        .replace(/\bRule\b/gi, "ਨਿਯਮ")
+        .replace(/\bSchedule\b/gi, "ਅਨੁਸੂਚੀ");
+    },
+  },
+};
+
+export const STATUTORY_DOCUMENT_NAMES = {
+  hi: {
+    "Patents Act, 1970": "पेटेंट अधिनियम, 1970",
+    "The Patents Act, 1970": "पेटेंट अधिनियम, 1970",
+    "Patent Rules, 2003": "पेटेंट नियम, 2003",
+    "The Patent Rules, 2003": "पेटेंट नियम, 2003",
+    "Drugs and Cosmetics Rules, 1945": "औषधि एवं प्रसाधन सामग्री नियम, 1945",
+    "The Drugs and Cosmetics Rules, 1945": "औषधि एवं प्रसाधन सामग्री नियम, 1945",
+    "Drugs and Cosmetics Act, 1940": "औषधि एवं प्रसाधन सामग्री अधिनियम, 1940",
+    "Copyright Act, 1957": "कॉपीराइट अधिनियम, 1957",
+    "The Copyright Act, 1957": "कॉपीराइट अधिनियम, 1957",
+    "Copyright Rules, 2013": "कॉपीराइट नियम, 2013",
+    "Trade Marks Act, 1999": "व्यापार चिह्न अधिनियम, 1999",
+    "The Trade Marks Act, 1999": "व्यापार चिह्न अधिनियम, 1999",
+    "Trade Marks Rules, 2017": "व्यापार चिह्न नियम, 2017",
+    "Biological Diversity Act, 2002": "जैविक विविधता अधिनियम, 2002",
+    "The Biological Diversity Act, 2002": "जैविक विविधता अधिनियम, 2002",
+    "Biological Diversity Rules, 2004": "जैविक विविधता नियम, 2004",
+    "Geographical Indications of Goods (Registration and Protection) Act, 1999": "वस्तुओं के भौगोलिक उपदर्शन अधिनियम, 1999",
+    "Protection of Plant Varieties and Farmers' Rights Act, 2001": "पौधा किस्म और कृषक अधिकार संरक्षण अधिनियम, 2001",
+    "Designs Act, 2000": "डिजाइन अधिनियम, 2000",
+    "TRIPS": "ट्रिप्स समझौता (TRIPS)",
+  },
+  mr: {
+    "Patents Act, 1970": "पेटंट कायदा, १९७०",
+    "The Patents Act, 1970": "पेटंट कायदा, १९७०",
+    "Patent Rules, 2003": "पेटंट नियम, २००३",
+    "Drugs and Cosmetics Rules, 1945": "औषधे आणि सौंदर्यप्रसाधने नियम, १९४५",
+    "The Drugs and Cosmetics Rules, 1945": "औषधे आणि सौंदर्यप्रसाधने नियम, १९४५",
+    "Drugs and Cosmetics Act, 1940": "औषधे आणि सौंदर्यप्रसाधने कायदा, १९४०",
+    "Copyright Act, 1957": "कॉपीराइट कायदा, १९५७",
+    "Trade Marks Act, 1999": "ट्रेड मार्क्स कायदा, १९९९",
+    "Biological Diversity Act, 2002": "जैविक विविधता कायदा, २००२",
+    "TRIPS": "ट्रिप्स (TRIPS)",
+  },
+  sa: {
+    "Patents Act, 1970": "पेटेण्ट-अधिनियमः, १९७०",
+    "The Patents Act, 1970": "पेटेण्ट-अधिनियमः, १९७०",
+    "Drugs and Cosmetics Rules, 1945": "औषध-प्रसाधन-नियमाः, १९४५",
+    "Copyright Act, 1957": "प्रकाशनवाधिकार-अधिनियमः, १९५७",
+    "Trade Marks Act, 1999": "व्यापारचिह्न-अधिनियमः, १९९९",
+    "Biological Diversity Act, 2002": "जैविकविविधता-अधिनियमः, २००२",
+    "TRIPS": "ट्रिप्स (TRIPS)",
+  },
+  ta: {
+    "Patents Act, 1970": "காப்புரிமைச் சட்டம், 1970",
+    "The Patents Act, 1970": "காப்புரிமைச் சட்டம், 1970",
+    "Drugs and Cosmetics Rules, 1945": "மருந்துகள் மற்றும் அழகுசாதனப் பொருட்கள் விதிகள், 1945",
+    "Copyright Act, 1957": "பதிப்புரிமைச் சட்டம், 1957",
+    "Trade Marks Act, 1999": "வணிக முத்திரைகள் சட்டம், 1999",
+    "Biological Diversity Act, 2002": "உயிரியல் பன்முகத்தன்மை சட்டம், 2002",
+    "TRIPS": "டிரிப்ஸ் (TRIPS)",
+  },
+  te: {
+    "Patents Act, 1970": "పేటెంట్ల చట్టం, 1970",
+    "The Patents Act, 1970": "పేటెంట్ల చట్టం, 1970",
+    "Drugs and Cosmetics Rules, 1945": "మందులు మరియు సౌందర్య సాధనాల నిబంధనలు, 1945",
+    "Copyright Act, 1957": "కాపీరైట్ చట్టం, 1957",
+    "Trade Marks Act, 1999": "ట్రేడ్ మార్క్స్ చట్టం, 1999",
+    "Biological Diversity Act, 2002": "జీవ వైవిధ్య చట్టం, 2002",
+    "TRIPS": "ట్రిప్స్ (TRIPS)",
+  },
+  bn: {
+    "Patents Act, 1970": "পেটেন্ট আইন, ১৯৭০",
+    "The Patents Act, 1970": "পেটেন্ট আইন, ১৯৭০",
+    "Drugs and Cosmetics Rules, 1945": "ওষুধ ও প্রসাধন সামগ্রী বিধি, ১৯৪৫",
+    "Copyright Act, 1957": "কপিরাইট আইন, ১৯৫৭",
+    "Trade Marks Act, 1999": "ট্রেড মার্কস আইন, ১৯৯৯",
+    "Biological Diversity Act, 2002": "জৈব বৈচিত্র্য আইন, ২০০২",
+    "TRIPS": "ট্রিপস (TRIPS)",
+  },
+  gu: {
+    "Patents Act, 1970": "પેટન્ટ કાયદો, ૧૯૭૦",
+    "The Patents Act, 1970": "પેટન્ટ કાયદો, ૧૯૭૦",
+    "Drugs and Cosmetics Rules, 1945": "દવાઓ અને સૌંદર્ય પ્રસાધનો નિયમો, ૧૯૪૫",
+    "Copyright Act, 1957": "કોપીરાઈટ કાયદો, ૧૯૫૭",
+    "Trade Marks Act, 1999": "ટ્રેડ માર્ક્સ કાયદો, ૧૯૯૯",
+    "Biological Diversity Act, 2002": "જૈવિક વિવિધતા કાયદો, ૨૦૦૨",
+    "TRIPS": "ટ્રિપ્સ (TRIPS)",
+  },
+  kn: {
+    "Patents Act, 1970": "ಪೇಟೆಂಟ್ ಕಾಯ್ದೆ, 1970",
+    "The Patents Act, 1970": "ಪೇಟೆಂಟ್ ಕಾಯ್ದೆ, 1970",
+    "Drugs and Cosmetics Rules, 1945": "ಔಷಧಿಗಳು ಮತ್ತು ಸೌಂದರ್ಯವರ್ಧಕ ನಿಯಮಗಳು, 1945",
+    "Copyright Act, 1957": "ಹಕ್ಕುಸ್ವಾಮ್ಯ ಕಾಯ್ದೆ, 1957",
+    "Trade Marks Act, 1999": "ಟ್ರೇಡ್ ಮಾರ್ಕ್ಸ್ ಕಾಯ್ದೆ, 1999",
+    "Biological Diversity Act, 2002": "ಜೈವಿಕ ವೈವಿಧ್ಯತೆ ಕಾಯ್ದೆ, 2002",
+    "TRIPS": "ಟ್ರಿಪ್ಸ್ (TRIPS)",
+  },
+  pa: {
+    "Patents Act, 1970": "ਪੇਟੈਂਟ ਐਕਟ, 1970",
+    "The Patents Act, 1970": "ਪੇਟੈਂਟ ਐਕਟ, 1970",
+    "Drugs and Cosmetics Rules, 1945": "ਡਰੱਗਜ਼ ਅਤੇ ਕਾਸਮੈਟਿਕਸ ਨਿਯਮ, 1945",
+    "Copyright Act, 1957": "ਕਾਪੀਰਾਈਟ ਐਕਟ, 1957",
+    "Trade Marks Act, 1999": "ਟ੍ਰੇਡ ਮਾਰਕਸ ਐਕਟ, 1999",
+    "Biological Diversity Act, 2002": "ਜੈਵਿਕ ਵਿਭਿੰਨਤਾ ਐਕਟ, 2002",
+    "TRIPS": "ਟ੍ਰਿਪਸ (TRIPS)",
+  },
+};
+
+export function formatDocumentName(name, langCode = "en") {
+  if (!name || langCode === "en") return name;
+  const langMap = STATUTORY_DOCUMENT_NAMES[langCode];
+  if (!langMap) return name;
+  return langMap[name] || langMap[name.replace(/^The\s+/i, "")] || name;
+}
+
 export function getUIText(langCode = "en") {
-  return UI_TRANSLATIONS[langCode] || UI_TRANSLATIONS.en;
+  const base = UI_TRANSLATIONS[langCode] || UI_TRANSLATIONS.en;
+  const extra = EXTRA_TRANSLATIONS[langCode] || EXTRA_TRANSLATIONS.en;
+  return {
+    ...base,
+    ...extra,
+    formatDocumentName: (name) => formatDocumentName(name, langCode),
+  };
 }

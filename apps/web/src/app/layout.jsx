@@ -15,7 +15,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -27,7 +27,10 @@ export default function RootLayout({ children }) {
         />
         <link rel="icon" href="/ipsakti_logo.png" />
       </head>
-      <body className={`${poppins.className} font-sans bg-white text-[#0f172a] antialiased selection:bg-blue-100 selection:text-blue-900`}>
+      <body
+        suppressHydrationWarning
+        className={`${poppins.className} font-sans bg-white text-[#0f172a] antialiased selection:bg-blue-100 selection:text-blue-900`}
+      >
         {children}
       </body>
     </html>

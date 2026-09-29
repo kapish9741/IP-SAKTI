@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   PlusIcon,
   ChevronDownIcon,
@@ -73,24 +73,73 @@ async function translateText({
   text,
   sourceLanguage,
   targetLanguage,
-  protectedTerms = [],
+  cache = null,
 }) {
-  const response = await fetch("/api/translate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text,
-      sourceLanguage,
-      targetLanguage,
-      protectedTerms,
-    }),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || typeof data.translatedText !== "string") {
-    throw new Error(data.message || TRANSLATION_FALLBACK);
-  }
-  return data.translatedText;
+  if (!text || sourceLanguage === targetLanguage) return text;
+  const [translated] = await translateBatch(
+    [text],
+    targetLanguage,
+    sourceLanguage,
+    cache,
+  );
+  return translated || text;
 }
+
+/**
+ * Translate an array of texts in a SINGLE HTTP call.
+ * Returns the translated array in the same order. Nulls/empty strings pass through unchanged.
+ * Uses a per-session in-memory cache to avoid re-translating the same text.
+ */
+async function translateBatch(texts, targetLang, sourceLang = "en", cache = null) {
+  if (!Array.isArray(texts) || texts.length === 0) return texts;
+  if (targetLang === sourceLang) return texts;
+
+  // Check which need to be fetched (not in cache)
+  const results = [...texts];
+  const fetchIndexes = [];
+  const fetchTexts = [];
+
+  texts.forEach((text, i) => {
+    if (!text || typeof text !== "string" || !text.trim()) return; // blank → keep
+    if (cache) {
+      const key = `${sourceLang}->${targetLang}::${text.trim()}`;
+      if (cache.has(key)) {
+        results[i] = cache.get(key);
+        return;
+      }
+    }
+    fetchIndexes.push(i);
+    fetchTexts.push(text);
+  });
+
+  if (fetchTexts.length === 0) return results;
+
+  try {
+    const response = await fetch("/api/translate-batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texts: fetchTexts, sourceLanguage: sourceLang, targetLanguage: targetLang }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok && Array.isArray(data.translatedTexts)) {
+      data.translatedTexts.forEach((translated, idx) => {
+        const originalIdx = fetchIndexes[idx];
+        if (translated) {
+          results[originalIdx] = translated;
+          if (cache && translated.trim() !== texts[originalIdx].trim()) {
+            const key = `${sourceLang}->${targetLang}::${texts[originalIdx].trim()}`;
+            cache.set(key, translated);
+          }
+        }
+      });
+    }
+  } catch {
+    // Graceful fallback: keep originals
+  }
+
+  return results;
+}
+
 
 const ANALYSIS_STEPS = [
   "Query processing",
@@ -101,10 +150,109 @@ const ANALYSIS_STEPS = [
   "Validating citations",
 ];
 
-// Isolated source evidence item with its own independent expansion state
-function SourceItem({ src, index }) {
+// Isolated source evidence item with dynamic document title translation and excerpt translation
+function SourceItem({ src, index, uiText, selectedLanguageCode, translationCache }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [displayText, setDisplayText] = useState(src.text || "");
+  const [isTranslatingText, setIsTranslatingText] = useState(false);
+  const [docNameTranslated, setDocNameTranslated] = useState("");
   const marker = src.marker || index + 1;
+  const formattedLocator = uiText?.formatLocator
+    ? uiText.formatLocator(src.locator_text)
+    : src.locator_text;
+
+  const rawDocName = src.originalDocumentName || src.document_name || src.document_id || "";
+
+  // 1. Resolve document title synchronously if formatDocumentName has it or if src has it
+  const resolvedDocName = useMemo(() => {
+    if (!selectedLanguageCode || selectedLanguageCode === "en") return rawDocName;
+    if (docNameTranslated) return docNameTranslated;
+    if (uiText?.formatDocumentName) {
+      const formatted = uiText.formatDocumentName(rawDocName);
+      if (formatted && formatted !== rawDocName) return formatted;
+    }
+    if (src.document_name && src.document_name !== rawDocName) {
+      return src.document_name;
+    }
+    return rawDocName;
+  }, [selectedLanguageCode, rawDocName, docNameTranslated, uiText, src.document_name]);
+
+  // Translate document title dynamically if non-English
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedLanguageCode || selectedLanguageCode === "en") {
+      setDocNameTranslated("");
+      return;
+    }
+    if (!rawDocName.trim()) return;
+
+    if (uiText?.formatDocumentName) {
+      const formatted = uiText.formatDocumentName(rawDocName);
+      if (formatted && formatted !== rawDocName) {
+        setDocNameTranslated(formatted);
+        return;
+      }
+    }
+
+    const cacheKey = `en->${selectedLanguageCode}::${rawDocName.trim()}`;
+    const cache = translationCache?.current;
+    if (cache && cache.has(cacheKey)) {
+      setDocNameTranslated(cache.get(cacheKey));
+      return;
+    }
+
+    translateBatch([rawDocName], selectedLanguageCode, "en", cache).then(([translated]) => {
+      if (!cancelled && translated && translated !== rawDocName) {
+        setDocNameTranslated(translated);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLanguageCode, rawDocName, uiText, translationCache]);
+
+  // On expansion or when language changes, translate excerpt if non-English
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!isExpanded) return;
+
+    if (!selectedLanguageCode || selectedLanguageCode === "en") {
+      setDisplayText(src.originalText || src.text || "");
+      setIsTranslatingText(false);
+      return;
+    }
+
+    const rawText = src.originalText || src.text || "";
+    if (!rawText.trim()) return;
+
+    const cacheKey = `en->${selectedLanguageCode}::${rawText.trim()}`;
+    const cache = translationCache?.current;
+    if (cache && cache.has(cacheKey)) {
+      setDisplayText(cache.get(cacheKey));
+      setIsTranslatingText(false);
+      return;
+    }
+
+    setIsTranslatingText(true);
+    translateBatch([rawText], selectedLanguageCode, "en", cache)
+      .then(([translated]) => {
+        if (!cancelled && translated) {
+          setDisplayText(translated);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) {
+          setIsTranslatingText(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isExpanded, selectedLanguageCode, src.text, src.originalText, translationCache]);
 
   return (
     <div className="border border-[#e8edf3] rounded-2xl p-3 sm:p-4 bg-white/80 backdrop-blur-sm transition hover:border-slate-300">
@@ -115,17 +263,17 @@ function SourceItem({ src, index }) {
           </span>
           <div className="space-y-1 min-w-0">
             <h4 className="text-xs font-semibold text-[#0f172a] leading-tight break-words">
-              {src.document_name || src.document_id}
+              {resolvedDocName}
             </h4>
             <p className="text-[10px] sm:text-[11px] text-[#64748b] break-words">
-              {src.locator_text || "Example record · Section 1"}
+              {formattedLocator || "Example record · Section 1"}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] uppercase tracking-wide">
-                Verified
+                {uiText?.verified || "Verified"}
               </span>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] uppercase tracking-wide">
-                Level {src.source_evidence_level || "A"}
+                {uiText?.level || "Level"} {src.source_evidence_level || "A"}
               </span>
             </div>
           </div>
@@ -135,7 +283,7 @@ function SourceItem({ src, index }) {
           onClick={() => setIsExpanded((prev) => !prev)}
           className="flex items-center gap-1 text-[11px] font-medium text-[#64748b] hover:text-[#0f172a] shrink-0 pt-0.5 transition"
         >
-          <span>{isExpanded ? "Hide" : "View"}</span>
+          <span>{isExpanded ? (uiText?.hide || "Hide") : (uiText?.view || "View")}</span>
           {isExpanded ? (
             <ChevronUpIcon className="w-3.5 h-3.5" />
           ) : (
@@ -146,10 +294,174 @@ function SourceItem({ src, index }) {
 
       {isExpanded && (
         <div className="mt-3 pt-3 border-t border-[#f1f5f9] text-xs text-gray-700 bg-gray-50/80 p-3 rounded-xl font-mono leading-relaxed max-h-60 overflow-y-auto">
-          <p className="whitespace-pre-wrap break-words">{src.text}</p>
+          {isTranslatingText ? (
+            <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 shrink-0" />
+              <span>{uiText?.analyzingEvidence || "Translating source..."}</span>
+            </div>
+          ) : (
+            <p className="whitespace-pre-wrap break-words">{displayText}</p>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+// Skeleton loader for assistant messages during language translation
+function AssistantMessageSkeleton() {
+  return (
+    <div className="flex items-start gap-2.5 sm:gap-3 pt-2 scroll-mt-4 animate-pulse">
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200/80 shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0 max-w-[1080px] bg-white/95 border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-sm space-y-4">
+        {/* Top Badge & Confidence Skeleton */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="h-4 w-32 bg-slate-200/80 rounded-full" />
+          <div className="h-4 w-16 bg-slate-200/80 rounded-full" />
+        </div>
+
+        {/* Answer Text Lines Skeleton */}
+        <div className="space-y-2.5 py-1">
+          <div className="h-3.5 bg-slate-200/80 rounded-full w-full" />
+          <div className="h-3.5 bg-slate-200/80 rounded-full w-[94%]" />
+          <div className="h-3.5 bg-slate-200/80 rounded-full w-[88%]" />
+          <div className="h-3.5 bg-slate-200/80 rounded-full w-[65%]" />
+        </div>
+
+        {/* Meta toolbar skeleton */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+          <div className="h-6 w-36 bg-slate-200/80 rounded-full" />
+          <div className="h-6 w-24 bg-slate-200/80 rounded-full" />
+        </div>
+
+        {/* Sources Skeleton */}
+        <div className="pt-2 border-t border-slate-100 space-y-2">
+          <div className="h-3 w-20 bg-slate-200/80 rounded-full" />
+          <div className="space-y-2">
+            <div className="h-16 bg-slate-100/80 border border-slate-200/60 rounded-2xl" />
+            <div className="h-16 bg-slate-100/80 border border-slate-200/60 rounded-2xl" />
+          </div>
+        </div>
+
+        {/* Disclaimer Skeleton */}
+        <div className="h-3 bg-slate-200/60 rounded-full w-3/4 pt-1" />
+      </div>
+    </div>
+  );
+}
+
+// Dedicated reactive component for user question with automatic language translation
+function UserMessageItem({
+  msg,
+  isLatestUser,
+  latestTurnRef,
+  uiText,
+  selectedLanguageCode,
+  translationCache,
+  setInputText,
+  handleSendMessage,
+}) {
+  const raw = msg.originalContent || msg.content || "";
+  const [displayContent, setDisplayContent] = useState(msg.content || raw);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedLanguageCode || selectedLanguageCode === "en") {
+      setDisplayContent(raw);
+      return;
+    }
+    if (msg.content && msg.content !== raw) {
+      setDisplayContent(msg.content);
+      return;
+    }
+    const cacheKey = `en->${selectedLanguageCode}::${raw.trim()}`;
+    const cache = translationCache?.current;
+    if (cache && cache.has(cacheKey)) {
+      setDisplayContent(cache.get(cacheKey));
+      return;
+    }
+
+    translateBatch([raw], selectedLanguageCode, "en", cache).then(([translated]) => {
+      if (!cancelled && translated && translated !== raw) {
+        setDisplayContent(translated);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [msg.content, raw, selectedLanguageCode, translationCache]);
+
+  return (
+    <div
+      ref={isLatestUser ? latestTurnRef : null}
+      className="flex items-start justify-end gap-2 sm:gap-3 group pt-1 scroll-mt-4"
+    >
+      <div className="flex flex-col items-end max-w-[90%] sm:max-w-lg">
+        <div className="bg-white text-slate-800 border border-slate-200/80 rounded-2xl sm:rounded-3xl px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm font-normal break-words leading-relaxed">
+          {displayContent}
+        </div>
+        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
+          <button
+            onClick={() => setInputText(displayContent || msg.content)}
+            className="flex items-center gap-1 hover:text-slate-600 transition"
+          >
+            <Pencil1Icon className="w-3 h-3" />
+            <span>{uiText?.edit || "Edit"}</span>
+          </button>
+          <button
+            onClick={() => handleSendMessage(msg.originalContent || msg.content)}
+            className="flex items-center gap-1 hover:text-slate-600 transition"
+          >
+            <ReloadIcon className="w-3 h-3" />
+            <span>{uiText?.resend || "Resend"}</span>
+          </button>
+        </div>
+      </div>
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-600 text-white font-semibold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+        S
+      </div>
+    </div>
+  );
+}
+
+// Dedicated reactive component for assistant answer text with automatic language translation
+function AssistantMessageText({ msg, selectedLanguageCode, translationCache }) {
+  const raw = msg.originalAnswer || msg.answer || "";
+  const [displayText, setDisplayText] = useState(msg.answer || raw);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedLanguageCode || selectedLanguageCode === "en") {
+      setDisplayText(raw);
+      return;
+    }
+    if (msg.displayLanguageCode === selectedLanguageCode && msg.answer && msg.answer !== raw) {
+      setDisplayText(msg.answer);
+      return;
+    }
+    const cacheKey = `en->${selectedLanguageCode}::${raw.trim()}`;
+    const cache = translationCache?.current;
+    if (cache && cache.has(cacheKey)) {
+      setDisplayText(cache.get(cacheKey));
+      return;
+    }
+
+    translateBatch([raw], selectedLanguageCode, "en", cache).then(([translated]) => {
+      if (!cancelled && translated && translated !== raw) {
+        setDisplayText(translated);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [msg.answer, raw, msg.displayLanguageCode, selectedLanguageCode, translationCache]);
+
+  return (
+    <p className="text-xs sm:text-[15px] leading-relaxed text-slate-800 font-normal break-words">
+      {displayText}
+    </p>
   );
 }
 
@@ -162,14 +474,7 @@ export default function Home() {
     }
   }, []);
   const [activeNavItem, setActiveNavItem] = useState("chat");
-  const [chatSessions, setChatSessions] = useState([
-    {
-      id: "session-init-1",
-      title: "Patentability of New Forms",
-      messages: [],
-      timestamp: Date.now() - 3600000,
-    },
-  ]);
+  const [chatSessions, setChatSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
 
   // Active chat messages
@@ -190,6 +495,7 @@ export default function Home() {
   const [isSpeakingMessageId, setIsSpeakingMessageId] = useState(null);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [voiceMessage, setVoiceMessage] = useState("");
+  const [isTranslating, setIsTranslating] = useState(false);
   const [translationNotice, setTranslationNotice] = useState("");
   const [health, setHealth] = useState(null);
 
@@ -198,6 +504,7 @@ export default function Home() {
   const latestTurnRef = useRef(null);
   const textareaRef = useRef(null);
   const recognitionRef = useRef(null);
+  const translationCacheRef = useRef(new Map());
 
   const uiText = getUIText(selectedLanguageCode);
   const selectedLanguage = languageByCode(selectedLanguageCode);
@@ -215,14 +522,15 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Persist chat sessions in localStorage
+  // Persist chat sessions in localStorage (cleaning up any legacy dummy sessions)
   useEffect(() => {
     try {
       const saved = localStorage.getItem("ipsakti_chat_sessions");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setChatSessions(parsed);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter((s) => s.id !== "session-init-1");
+          setChatSessions(cleaned);
         }
       }
     } catch { }
@@ -230,11 +538,277 @@ export default function Home() {
 
   useEffect(() => {
     try {
-      if (chatSessions && chatSessions.length > 0) {
-        localStorage.setItem("ipsakti_chat_sessions", JSON.stringify(chatSessions));
-      }
+      localStorage.setItem("ipsakti_chat_sessions", JSON.stringify(chatSessions));
     } catch { }
   }, [chatSessions]);
+
+  // Requirement 1: Dynamically translate active messages and recent chat titles when language changes with Skeleton Loader
+  useEffect(() => {
+    let cancelled = false;
+
+    async function handleLanguageSwitch() {
+      // 1. If English, instantaneously restore original texts with no skeleton delay
+      if (selectedLanguageCode === "en") {
+        setIsTranslating(false);
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.role === "user") {
+              return {
+                ...m,
+                content: m.originalContent || m.content,
+              };
+            }
+            if (m.role === "assistant") {
+              return {
+                ...m,
+                answer: m.originalAnswer || m.answer,
+                caution: m.caution
+                  ? { ...m.caution, detail: m.originalCautionDetail || m.caution.detail }
+                  : m.caution,
+                disclaimer: m.originalDisclaimer || m.disclaimer,
+                displayLanguageCode: "en",
+                evidence: (m.evidence || []).map((src) => ({
+                  ...src,
+                  document_name: src.originalDocumentName || src.document_name,
+                })),
+              };
+            }
+            return m;
+          }),
+        );
+        setChatSessions((prev) =>
+          prev.map((s) => ({
+            ...s,
+            title: s.originalTitle || s.title,
+            messages: (s.messages || []).map((m) => {
+              if (m.role === "user") {
+                return {
+                  ...m,
+                  content: m.originalContent || m.content,
+                };
+              }
+              if (m.role === "assistant") {
+                return {
+                  ...m,
+                  answer: m.originalAnswer || m.answer,
+                  caution: m.caution
+                    ? { ...m.caution, detail: m.originalCautionDetail || m.caution.detail }
+                    : m.caution,
+                  disclaimer: m.originalDisclaimer || m.disclaimer,
+                  displayLanguageCode: "en",
+                  evidence: (m.evidence || []).map((src) => ({
+                    ...src,
+                    document_name: src.originalDocumentName || src.document_name,
+                  })),
+                };
+              }
+              return m;
+            }),
+          })),
+        );
+        return;
+      }
+
+      // 2. If non-English, show skeleton loader until all texts are fully translated
+      const hasContentToTranslate =
+        messages.some((m) => m.role === "assistant" || m.role === "user") ||
+        chatSessions.some((s) => s.title);
+
+      if (hasContentToTranslate) {
+        setIsTranslating(true);
+      }
+
+      try {
+        const cache = translationCacheRef.current;
+        const lang = selectedLanguageCode;
+
+        // ── STEP 1: Collect all unique texts to translate in ONE batch ─────
+        const jobs = [];
+
+        // Active messages
+        messages.forEach((m, mi) => {
+          if (m.role === "user") {
+            const baseContent = m.originalContent || m.content;
+            if (baseContent) jobs.push({ type: "userMsg", mi, text: baseContent });
+            return;
+          }
+          if (m.role !== "assistant") return;
+          const baseAnswer = m.originalAnswer || m.answer;
+          const baseCaution = m.originalCautionDetail || m.caution?.detail;
+          const baseDisclaimer = m.originalDisclaimer || m.disclaimer;
+          if (baseAnswer) jobs.push({ type: "msg", mi, field: "answer", text: baseAnswer });
+          if (baseCaution) jobs.push({ type: "msg", mi, field: "caution", text: baseCaution });
+          if (baseDisclaimer) jobs.push({ type: "msg", mi, field: "disclaimer", text: baseDisclaimer });
+          (m.evidence || []).forEach((src, sIdx) => {
+            const baseDocName = src.originalDocumentName || src.document_name;
+            if (baseDocName) jobs.push({ type: "evidenceDoc", mi, sIdx, text: baseDocName });
+          });
+        });
+
+        // Session titles + session message fields
+        chatSessions.forEach((s, si) => {
+          const baseTitle = s.originalTitle || s.title;
+          if (baseTitle) jobs.push({ type: "session", si, field: "title", text: baseTitle });
+          (s.messages || []).forEach((m, mi) => {
+            if (m.role === "user") {
+              const baseContent = m.originalContent || m.content;
+              if (baseContent) jobs.push({ type: "sessionUserMsg", si, mi, text: baseContent });
+              return;
+            }
+            if (m.role !== "assistant") return;
+            const baseAnswer = m.originalAnswer || m.answer;
+            const baseCaution = m.originalCautionDetail || m.caution?.detail;
+            const baseDisclaimer = m.originalDisclaimer || m.disclaimer;
+            if (baseAnswer) jobs.push({ type: "sessionMsg", si, mi, field: "answer", text: baseAnswer });
+            if (baseCaution) jobs.push({ type: "sessionMsg", si, mi, field: "caution", text: baseCaution });
+            if (baseDisclaimer) jobs.push({ type: "sessionMsg", si, mi, field: "disclaimer", text: baseDisclaimer });
+            (m.evidence || []).forEach((src, sIdx) => {
+              const baseDocName = src.originalDocumentName || src.document_name;
+              if (baseDocName) jobs.push({ type: "sessionEvidenceDoc", si, mi, sIdx, text: baseDocName });
+            });
+          });
+        });
+
+        if (jobs.length === 0) return;
+
+        // ── STEP 2: Single batch call for all texts ────────────────────────
+        const allTexts = jobs.map((j) => j.text);
+        const allTranslated = await translateBatch(allTexts, lang, "en", cache);
+
+        if (cancelled) return;
+
+        // ── STEP 3: Apply results ─────────────────────────────────────────
+        const msgUpdates = {};
+        const userMsgUpdates = {};
+        const evidenceDocUpdates = {};
+        const sessionTitleUpdates = {};
+        const sessionMsgUpdates = {};
+        const sessionUserMsgUpdates = {};
+        const sessionEvidenceDocUpdates = {};
+
+        jobs.forEach((job, jIdx) => {
+          const translated = allTranslated[jIdx] || job.text;
+          if (job.type === "msg") {
+            if (!msgUpdates[job.mi]) msgUpdates[job.mi] = {};
+            msgUpdates[job.mi][job.field] = translated;
+            msgUpdates[job.mi][`orig_${job.field}`] = job.text;
+          } else if (job.type === "userMsg") {
+            userMsgUpdates[job.mi] = { content: translated, origContent: job.text };
+          } else if (job.type === "evidenceDoc") {
+            evidenceDocUpdates[`${job.mi}-${job.sIdx}`] = { translated, original: job.text };
+          } else if (job.type === "session") {
+            sessionTitleUpdates[job.si] = { translated, original: job.text };
+          } else if (job.type === "sessionMsg") {
+            const key = `${job.si}-${job.mi}`;
+            if (!sessionMsgUpdates[key]) sessionMsgUpdates[key] = {};
+            sessionMsgUpdates[key][job.field] = translated;
+            sessionMsgUpdates[key][`orig_${job.field}`] = job.text;
+          } else if (job.type === "sessionUserMsg") {
+            sessionUserMsgUpdates[`${job.si}-${job.mi}`] = { content: translated, origContent: job.text };
+          } else if (job.type === "sessionEvidenceDoc") {
+            sessionEvidenceDocUpdates[`${job.si}-${job.mi}-${job.sIdx}`] = { translated, original: job.text };
+          }
+        });
+
+        const updatedMessages = messages.map((m, mi) => {
+          if (m.role === "user") {
+            const userUpd = userMsgUpdates[mi];
+            if (!userUpd) return m;
+            return {
+              ...m,
+              originalContent: userUpd.origContent ?? (m.originalContent || m.content),
+              content: userUpd.content || m.content,
+            };
+          }
+          if (m.role !== "assistant") return m;
+          const upd = msgUpdates[mi] || {};
+          const updatedEvidence = (m.evidence || []).map((src, sIdx) => {
+            const docUpd = evidenceDocUpdates[`${mi}-${sIdx}`];
+            return {
+              ...src,
+              originalDocumentName: docUpd?.original ?? (src.originalDocumentName || src.document_name),
+              document_name: docUpd?.translated || src.document_name,
+            };
+          });
+          return {
+            ...m,
+            originalAnswer: upd.orig_answer ?? (m.originalAnswer || m.answer),
+            originalCautionDetail: upd.orig_caution ?? (m.originalCautionDetail || m.caution?.detail),
+            originalDisclaimer: upd.orig_disclaimer ?? (m.originalDisclaimer || m.disclaimer),
+            answer: upd.answer || m.answer,
+            caution: m.caution
+              ? { ...m.caution, detail: upd.caution || m.caution.detail }
+              : m.caution,
+            disclaimer: upd.disclaimer || m.disclaimer,
+            displayLanguageCode: lang,
+            evidence: updatedEvidence,
+          };
+        });
+
+        const updatedSessions = chatSessions.map((s, si) => {
+          const titleUpd = sessionTitleUpdates[si];
+          const updMsgs = (s.messages || []).map((m, mi) => {
+            if (m.role === "user") {
+              const userUpd = sessionUserMsgUpdates[`${si}-${mi}`];
+              if (!userUpd) return m;
+              return {
+                ...m,
+                originalContent: userUpd.origContent ?? (m.originalContent || m.content),
+                content: userUpd.content || m.content,
+              };
+            }
+            if (m.role !== "assistant") return m;
+            const key = `${si}-${mi}`;
+            const upd = sessionMsgUpdates[key] || {};
+            const updatedEvidence = (m.evidence || []).map((src, sIdx) => {
+              const docUpd = sessionEvidenceDocUpdates[`${si}-${mi}-${sIdx}`];
+              return {
+                ...src,
+                originalDocumentName: docUpd?.original ?? (src.originalDocumentName || src.document_name),
+                document_name: docUpd?.translated || src.document_name,
+              };
+            });
+            return {
+              ...m,
+              originalAnswer: upd.orig_answer ?? (m.originalAnswer || m.answer),
+              originalCautionDetail: upd.orig_caution ?? (m.originalCautionDetail || m.caution?.detail),
+              originalDisclaimer: upd.orig_disclaimer ?? (m.originalDisclaimer || m.disclaimer),
+              answer: upd.answer || m.answer,
+              caution: m.caution
+                ? { ...m.caution, detail: upd.caution || m.caution.detail }
+                : m.caution,
+              disclaimer: upd.disclaimer || m.disclaimer,
+              displayLanguageCode: lang,
+              evidence: updatedEvidence,
+            };
+          });
+          return {
+            ...s,
+            originalTitle: titleUpd?.original ?? (s.originalTitle || s.title),
+            title: titleUpd?.translated || s.title,
+            messages: updMsgs,
+          };
+        });
+
+        if (!cancelled) {
+          setMessages(updatedMessages);
+          setChatSessions(updatedSessions);
+        }
+      } catch {
+        // Fallback: keep current texts
+      } finally {
+        if (!cancelled) {
+          setIsTranslating(false);
+        }
+      }
+    }
+
+    handleLanguageSwitch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLanguageCode]);
 
   useEffect(() => {
     fetchHealth();
@@ -406,14 +980,137 @@ export default function Home() {
     setVoiceMessage("");
   };
 
-  const handleSelectSession = (sessionId) => {
+  const handleSelectSession = async (sessionId) => {
     const session = chatSessions.find((s) => s.id === sessionId);
     if (!session) return;
     setActiveSessionId(sessionId);
-    setMessages(session.messages || []);
+    const sessionMsgs = session.messages || [];
     setInputText("");
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       setSidebarOpen(false);
+    }
+
+    if (selectedLanguageCode === "en") {
+      setMessages(
+        sessionMsgs.map((m) => {
+          if (m.role === "user") {
+            return {
+              ...m,
+              content: m.originalContent || m.content,
+            };
+          }
+          if (m.role === "assistant") {
+            return {
+              ...m,
+              answer: m.originalAnswer || m.answer,
+              caution: m.caution
+                ? { ...m.caution, detail: m.originalCautionDetail || m.caution.detail }
+                : m.caution,
+              disclaimer: m.originalDisclaimer || m.disclaimer,
+              displayLanguageCode: "en",
+              evidence: (m.evidence || []).map((src) => ({
+                ...src,
+                document_name: src.originalDocumentName || src.document_name,
+              })),
+            };
+          }
+          return m;
+        }),
+      );
+      return;
+    }
+
+    const needsTranslation = sessionMsgs.some(
+      (m) =>
+        (m.role === "assistant" && m.displayLanguageCode !== selectedLanguageCode) ||
+        (m.role === "user" && m.originalContent),
+    );
+
+    if (needsTranslation) {
+      setIsTranslating(true);
+      setMessages(sessionMsgs);
+      try {
+        const cache = translationCacheRef.current;
+        const lang = selectedLanguageCode;
+
+        const jobs = [];
+        sessionMsgs.forEach((m, mi) => {
+          if (m.role === "user") {
+            const baseContent = m.originalContent || m.content;
+            if (baseContent) jobs.push({ type: "user", mi, text: baseContent });
+            return;
+          }
+          if (m.role !== "assistant") return;
+          const baseAns = m.originalAnswer || m.answer;
+          const baseC = m.originalCautionDetail || m.caution?.detail;
+          const baseD = m.originalDisclaimer || m.disclaimer;
+          if (baseAns) jobs.push({ type: "assistant", mi, field: "answer", text: baseAns });
+          if (baseC) jobs.push({ type: "assistant", mi, field: "caution", text: baseC });
+          if (baseD) jobs.push({ type: "assistant", mi, field: "disclaimer", text: baseD });
+          (m.evidence || []).forEach((src, sIdx) => {
+            const baseDocName = src.originalDocumentName || src.document_name;
+            if (baseDocName) jobs.push({ type: "evidenceDoc", mi, sIdx, text: baseDocName });
+          });
+        });
+
+        const allTexts = jobs.map((j) => j.text);
+        const allTranslated = await translateBatch(allTexts, lang, "en", cache);
+
+        const updates = {};
+        const userUpdates = {};
+        const docUpdates = {};
+
+        jobs.forEach((job, idx) => {
+          const translated = allTranslated[idx] || job.text;
+          if (job.type === "assistant") {
+            if (!updates[job.mi]) updates[job.mi] = {};
+            updates[job.mi][job.field] = translated;
+            updates[job.mi][`orig_${job.field}`] = job.text;
+          } else if (job.type === "user") {
+            userUpdates[job.mi] = { content: translated, origContent: job.text };
+          } else if (job.type === "evidenceDoc") {
+            docUpdates[`${job.mi}-${job.sIdx}`] = { translated, original: job.text };
+          }
+        });
+
+        const translatedMsgs = sessionMsgs.map((m, mi) => {
+          if (m.role === "user") {
+            const uUpd = userUpdates[mi];
+            if (!uUpd) return m;
+            return {
+              ...m,
+              originalContent: uUpd.origContent ?? (m.originalContent || m.content),
+              content: uUpd.content || m.content,
+            };
+          }
+          if (m.role !== "assistant") return m;
+          const upd = updates[mi] || {};
+          const updatedEvidence = (m.evidence || []).map((src, sIdx) => {
+            const dUpd = docUpdates[`${mi}-${sIdx}`];
+            return {
+              ...src,
+              originalDocumentName: dUpd?.original ?? (src.originalDocumentName || src.document_name),
+              document_name: dUpd?.translated || src.document_name,
+            };
+          });
+          return {
+            ...m,
+            originalAnswer: upd.orig_answer ?? (m.originalAnswer || m.answer),
+            originalCautionDetail: upd.orig_caution ?? (m.originalCautionDetail || m.caution?.detail),
+            originalDisclaimer: upd.orig_disclaimer ?? (m.originalDisclaimer || m.disclaimer),
+            answer: upd.answer || m.answer,
+            caution: m.caution ? { ...m.caution, detail: upd.caution || m.caution.detail } : m.caution,
+            disclaimer: upd.disclaimer || m.disclaimer,
+            displayLanguageCode: lang,
+            evidence: updatedEvidence,
+          };
+        });
+        setMessages(translatedMsgs);
+      } finally {
+        setIsTranslating(false);
+      }
+    } else {
+      setMessages(sessionMsgs);
     }
   };
 
@@ -493,6 +1190,7 @@ export default function Home() {
       const newSession = {
         id: currentSessionId,
         title: q.slice(0, 32).trim() + (q.length > 32 ? "..." : ""),
+        originalTitle: q.slice(0, 32).trim() + (q.length > 32 ? "..." : ""),
         messages: [],
         timestamp: Date.now(),
       };
@@ -502,14 +1200,27 @@ export default function Home() {
       fetch("/api/chat-title", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({
+          question: q,
+          language: selectedLanguage.label,
+          languageCode: selectedLanguageCode,
+        }),
       })
         .then((res) => res.json())
         .then((data) => {
           if (data?.title) {
             setChatSessions((prev) =>
               prev.map((s) =>
-                s.id === currentSessionId ? { ...s, title: data.title } : s,
+                s.id === currentSessionId
+                  ? {
+                      ...s,
+                      title: data.title,
+                      originalTitle:
+                        selectedLanguageCode === "en"
+                          ? data.title
+                          : s.originalTitle || data.title,
+                    }
+                  : s,
               ),
             );
           }
@@ -527,6 +1238,7 @@ export default function Home() {
       id: userMsgId,
       role: "user",
       content: q,
+      originalContent: q,
     };
 
     const aiPlaceholder = {
@@ -540,7 +1252,7 @@ export default function Home() {
     setChatSessions((prev) =>
       prev.map((s) =>
         s.id === currentSessionId
-          ? { ...s, messages: [...(s.messages || []), userMessage] }
+          ? { ...s, messages: [...(s.messages || []), userMessage, aiPlaceholder] }
           : s,
       ),
     );
@@ -576,6 +1288,7 @@ export default function Home() {
             text: q,
             sourceLanguage: requestLanguage.code,
             targetLanguage: "en",
+            cache: translationCacheRef.current,
           });
         } catch (translationError) {
           clearStepTimers();
@@ -598,29 +1311,37 @@ export default function Home() {
         }
       }
 
+      let serverErrorMessage = null;
       try {
+        const queryToSend = (englishQuery || q).trim();
         const response = await fetch(`${PRIMARY_API_URL}/api/ask`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: englishQuery }),
+          body: JSON.stringify({ question: queryToSend }),
           signal: abortControllerRef.current.signal,
         });
         if (response.ok) {
           rawData = await response.json();
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          serverErrorMessage = errData.message || `RAG service returned status ${response.status}`;
         }
-      } catch (err) {
+      } catch {
         try {
           const responseFb = await fetch(`${FALLBACK_API_URL}/api/ask`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question: englishQuery }),
+            body: JSON.stringify({ question: (englishQuery || q).trim() }),
             signal: abortControllerRef.current.signal,
           });
           if (responseFb.ok) {
             rawData = await responseFb.json();
+          } else {
+            const errDataFb = await responseFb.json().catch(() => ({}));
+            serverErrorMessage = errDataFb.message || `Fallback API returned status ${responseFb.status}`;
           }
-        } catch (innerErr) {
-          console.warn("API call failed", innerErr);
+        } catch {
+          // Fallback also failed
         }
       }
 
@@ -639,26 +1360,6 @@ export default function Home() {
         let answerText = originalAnswerText;
         let displayLanguageCode = "en";
 
-        if (
-          (rawData.status === "ANSWERED" || rawData.status === "ABSTAINED") &&
-          requestLanguage.code !== "en" &&
-          originalAnswerText
-        ) {
-          try {
-            answerText = await translateText({
-              text: originalAnswerText,
-              sourceLanguage: "en",
-              targetLanguage: requestLanguage.code,
-              protectedTerms: collectProtectedTerms(rawData),
-            });
-            displayLanguageCode = requestLanguage.code;
-          } catch (translationError) {
-            setTranslationNotice(
-              translationError.message || TRANSLATION_FALLBACK,
-            );
-          }
-        }
-
         const confidenceVal = answerObj.confidence || (isAbstained ? "NONE" : "HIGH");
 
         let cautionItem = null;
@@ -674,15 +1375,77 @@ export default function Home() {
           };
         }
 
+        const originalCautionDetail = cautionItem?.detail || null;
+        const originalDisclaimer = rawData.disclaimer || null;
+        let translatedDisclaimer = rawData.disclaimer || null;
+
+        // Normalize evidence to store originalDocumentName and originalText
+        if (Array.isArray(rawData.evidence)) {
+          rawData.evidence = rawData.evidence.map((src) => ({
+            ...src,
+            originalDocumentName: src.originalDocumentName || src.document_name,
+            originalText: src.originalText || src.text,
+          }));
+        }
+
+        let finalUserContent = q;
+
+        if (requestLanguage.code !== "en") {
+          try {
+            // Translate answer, caution, disclaimer, user question, and evidence doc names in ONE batch call
+            const docNameTexts = (rawData.evidence || []).map((src) => src.originalDocumentName || src.document_name || "");
+            const textsToTranslate = [
+              originalAnswerText || "",
+              cautionItem?.detail || "",
+              rawData.disclaimer || "",
+              q,
+              ...docNameTexts,
+            ];
+            const translated = await translateBatch(
+              textsToTranslate,
+              requestLanguage.code,
+              "en",
+              translationCacheRef.current,
+            );
+            if (translated[0] && originalAnswerText && translated[0].trim() !== originalAnswerText.trim()) {
+              answerText = translated[0];
+              displayLanguageCode = requestLanguage.code;
+            }
+            if (translated[1] && cautionItem?.detail) {
+              cautionItem.detail = translated[1];
+            }
+            if (translated[2] && rawData.disclaimer) {
+              translatedDisclaimer = translated[2];
+            }
+            if (translated[3] && translated[3].trim() !== q.trim()) {
+              finalUserContent = translated[3];
+            }
+            if (Array.isArray(rawData.evidence)) {
+              rawData.evidence = rawData.evidence.map((src, idx) => ({
+                ...src,
+                originalDocumentName: src.originalDocumentName || src.document_name,
+                document_name: translated[4 + idx] || src.document_name,
+              }));
+            }
+          } catch (translationError) {
+            setTranslationNotice(
+              translationError.message || TRANSLATION_FALLBACK,
+            );
+          }
+        }
+
         const completedAiMessage = {
           id: aiMsgId,
           role: "assistant",
           status: "completed",
           confidence: confidenceVal,
+          originalAnswer: originalAnswerText,
+          originalCautionDetail,
+          originalDisclaimer,
           answer: answerText,
           displayLanguageCode,
           jurisdiction: rawData.jurisdiction ?? answerObj.jurisdiction,
-          disclaimer: rawData.disclaimer,
+          disclaimer: translatedDisclaimer,
           citations: answerObj.citations || [],
           caution: cautionItem,
           evidence: rawData.evidence || [],
@@ -690,19 +1453,34 @@ export default function Home() {
         };
 
         setMessages((prev) =>
-          prev.map((m) => (m.id === aiMsgId ? completedAiMessage : m)),
+          prev.map((m) => {
+            if (m.id === userMsgId && finalUserContent !== q) {
+              return { ...m, content: finalUserContent, originalContent: q };
+            }
+            if (m.id === aiMsgId) {
+              return completedAiMessage;
+            }
+            return m;
+          }),
         );
         setChatSessions((prev) =>
-          prev.map((s) =>
-            s.id === currentSessionId
-              ? {
-                ...s,
-                messages: (s.messages || []).map((m) =>
-                  m.id === aiMsgId ? completedAiMessage : m,
-                ),
+          prev.map((s) => {
+            if (s.id !== currentSessionId) return s;
+            const currentMsgs = (s.messages || []).map((m) => {
+              if (m.id === userMsgId && finalUserContent !== q) {
+                return { ...m, content: finalUserContent, originalContent: q };
               }
-              : s,
-          ),
+              if (m.id === aiMsgId) {
+                return completedAiMessage;
+              }
+              return m;
+            });
+            const hasAiMsg = currentMsgs.some((m) => m.id === aiMsgId);
+            return {
+              ...s,
+              messages: hasAiMsg ? currentMsgs : [...currentMsgs, completedAiMessage],
+            };
+          }),
         );
       } else {
         const errorMsg = {
@@ -710,22 +1488,24 @@ export default function Home() {
           role: "assistant",
           status: "error",
           error:
+            serverErrorMessage ||
             "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
         };
         setMessages((prev) =>
           prev.map((message) => (message.id === aiMsgId ? errorMsg : message)),
         );
         setChatSessions((prev) =>
-          prev.map((s) =>
-            s.id === currentSessionId
-              ? {
-                ...s,
-                messages: (s.messages || []).map((m) =>
-                  m.id === aiMsgId ? errorMsg : m,
-                ),
-              }
-              : s,
-          ),
+          prev.map((s) => {
+            if (s.id !== currentSessionId) return s;
+            const currentMsgs = s.messages || [];
+            const hasAiMsg = currentMsgs.some((m) => m.id === aiMsgId);
+            return {
+              ...s,
+              messages: hasAiMsg
+                ? currentMsgs.map((m) => (m.id === aiMsgId ? errorMsg : m))
+                : [...currentMsgs, errorMsg],
+            };
+          }),
         );
       }
     } catch (err) {
@@ -748,22 +1528,25 @@ export default function Home() {
           role: "assistant",
           status: "error",
           error:
-            "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
+            err?.message
+              ? `IP-SAKTI encountered an issue: ${err.message}`
+              : "IP-SAKTI could not complete that request. Check that the RAG service is running and try again.",
         };
         setMessages((prev) =>
           prev.map((message) => (message.id === aiMsgId ? errorMsg : message)),
         );
         setChatSessions((prev) =>
-          prev.map((s) =>
-            s.id === currentSessionId
-              ? {
-                ...s,
-                messages: (s.messages || []).map((m) =>
-                  m.id === aiMsgId ? errorMsg : m,
-                ),
-              }
-              : s,
-          ),
+          prev.map((s) => {
+            if (s.id !== currentSessionId) return s;
+            const currentMsgs = s.messages || [];
+            const hasAiMsg = currentMsgs.some((m) => m.id === aiMsgId);
+            return {
+              ...s,
+              messages: hasAiMsg
+                ? currentMsgs.map((m) => (m.id === aiMsgId ? errorMsg : m))
+                : [...currentMsgs, errorMsg],
+            };
+          }),
         );
       }
     } finally {
@@ -777,7 +1560,7 @@ export default function Home() {
   return (
     <div className="flex h-screen h-[100dvh] w-screen overflow-hidden text-[#0f172a] relative bg-[#f8faf9]">
       {/* ─── SHADCN.IO ANIMATED GREEN GRADIENT BACKGROUND (BRIGHT LOBES) ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-30">
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-15">
         <BackgroundGradientAnimation
           gradientBackgroundStart="rgb(255, 255, 255)"
           gradientBackgroundEnd="rgb(240, 253, 245)"
@@ -814,6 +1597,7 @@ export default function Home() {
         onSelectSession={handleSelectSession}
         onNewChat={handleStartNewChat}
         onDeleteSession={handleDeleteSession}
+        isTranslating={isTranslating}
       />
 
       {/* ─── MAIN CHAT WORKSPACE ────────────────────────────────────────── */}
@@ -959,10 +1743,12 @@ export default function Home() {
                           {/* Bottom Toolbar inside Card */}
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-slate-100/90 mt-2">
                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                              {/* Language Select Option */}
-                              <div className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] sm:text-xs text-slate-700 hover:bg-slate-100 transition shadow-2xs">
+                              {/* Language Select Option (Glassmorphism Pill) */}
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/40 backdrop-blur-[9px] border border-white/60 text-[11px] sm:text-xs text-slate-700 hover:bg-white/60 transition shadow-2xs">
                                 <GlobeIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span className="text-slate-500 font-normal hidden sm:inline">Language:</span>
+                                <span className="text-slate-500 font-normal hidden sm:inline">
+                                  {uiText.language || "Language"}:
+                                </span>
                                 <select
                                   value={selectedLanguageCode}
                                   onChange={(event) => {
@@ -984,36 +1770,6 @@ export default function Home() {
                                       {language.label} · {language.nativeLabel}
                                     </option>
                                   ))}
-                                </select>
-                              </div>
-
-                              {/* Voice Select Option */}
-                              <div className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] sm:text-xs text-slate-700 hover:bg-slate-100 transition shadow-2xs">
-                                <SpeakerLoudIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span className="text-slate-500 font-normal hidden sm:inline">Voice:</span>
-                                <select
-                                  value={selectedVoiceURI}
-                                  onChange={(event) => setSelectedVoiceURI(event.target.value)}
-                                  disabled={isGenerating || !speechSupported || matchingVoices.length === 0}
-                                  className="bg-transparent border-none outline-none font-medium text-slate-800 cursor-pointer text-[11px] sm:text-xs focus:ring-0 max-w-[130px] sm:max-w-[170px] truncate pr-1 py-0.5 disabled:opacity-50"
-                                  aria-label="Select Voice"
-                                >
-                                  {matchingVoices.length === 0 ? (
-                                    <option value="" className="text-slate-800 bg-white">
-                                      Default Voice
-                                    </option>
-                                  ) : (
-                                    <>
-                                      <option value="" className="text-slate-800 bg-white">
-                                        Default ({selectedLanguage.label})
-                                      </option>
-                                      {matchingVoices.map((voice) => (
-                                        <option key={voice.voiceURI} value={voice.voiceURI} className="text-slate-800 bg-white">
-                                          {voice.name}
-                                        </option>
-                                      ))}
-                                    </>
-                                  )}
                                 </select>
                               </div>
                             </div>
@@ -1103,36 +1859,17 @@ export default function Home() {
               if (msg.role === "user") {
                 const isLatestUser = idx === lastUserIndex;
                 return (
-                  <div
+                  <UserMessageItem
                     key={msg.id}
-                    ref={isLatestUser ? latestTurnRef : null}
-                    className="flex items-start justify-end gap-2 sm:gap-3 group pt-1 scroll-mt-4"
-                  >
-                    <div className="flex flex-col items-end max-w-[90%] sm:max-w-lg">
-                      <div className="bg-[#0b0f19] text-white rounded-2xl sm:rounded-3xl px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm font-normal break-words leading-relaxed">
-                        {msg.content}
-                      </div>
-                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
-                        <button
-                          onClick={() => setInputText(msg.content)}
-                          className="flex items-center gap-1 hover:text-slate-600 transition"
-                        >
-                          <Pencil1Icon className="w-3 h-3" />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleSendMessage(msg.content)}
-                          className="flex items-center gap-1 hover:text-slate-600 transition"
-                        >
-                          <ReloadIcon className="w-3 h-3" />
-                          <span>Resend</span>
-                        </button>
-                      </div>
-                    </div>
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-600 text-white font-semibold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-                      S
-                    </div>
-                  </div>
+                    msg={msg}
+                    isLatestUser={isLatestUser}
+                    latestTurnRef={latestTurnRef}
+                    uiText={uiText}
+                    selectedLanguageCode={selectedLanguageCode}
+                    translationCache={translationCacheRef}
+                    setInputText={setInputText}
+                    handleSendMessage={handleSendMessage}
+                  />
                 );
               }
 
@@ -1152,8 +1889,8 @@ export default function Home() {
                           </span>
                           <span className="text-[11px] sm:text-xs font-medium text-slate-600">
                             {currentStepIndex >= ANALYSIS_STEPS.length
-                              ? "Evidence verified · Finalizing answer..."
-                              : "Analyzing legal evidence..."}
+                              ? (uiText.evidenceVerified || "Evidence verified · Finalizing answer...")
+                              : (uiText.analyzingEvidence || "Analyzing legal evidence...")}
                           </span>
                         </div>
                         {currentStepIndex < ANALYSIS_STEPS.length && (
@@ -1162,7 +1899,7 @@ export default function Home() {
                             className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-slate-200 text-[11px] text-slate-500 hover:bg-slate-50 transition"
                           >
                             <StopIcon className="w-3 h-3" />
-                            <span>Stop</span>
+                            <span>{uiText.stop || "Stop"}</span>
                           </button>
                         )}
                       </div>
@@ -1170,10 +1907,10 @@ export default function Home() {
                       <div className="border border-slate-100 rounded-2xl p-3 sm:p-4 bg-slate-50/50">
                         <div className="flex items-center justify-between mb-2.5">
                           <span className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-                            Evidence Analysis
+                            {uiText.evidenceAnalysis || "Evidence Analysis"}
                           </span>
                           <span className="text-[9px] sm:text-[10px] text-slate-400">
-                            Secure
+                            {uiText.secure || "Secure"}
                           </span>
                         </div>
 
@@ -1181,6 +1918,7 @@ export default function Home() {
                           {ANALYSIS_STEPS.map((stepText, idx) => {
                             const isDone = idx < currentStepIndex;
                             const isCurrent = idx === currentStepIndex;
+                            const localizedStep = uiText.analysisSteps?.[idx] || stepText;
 
                             return (
                               <div
@@ -1202,7 +1940,7 @@ export default function Home() {
                                       : "text-slate-300"
                                     }`}
                                 >
-                                  {stepText}
+                                  {localizedStep}
                                 </span>
                               </div>
                             );
@@ -1230,6 +1968,10 @@ export default function Home() {
                 );
               }
 
+              if (isTranslating) {
+                return <AssistantMessageSkeleton key={`skeleton-${msg.id}`} />;
+              }
+
               const answerLanguage = languageByCode(
                 msg.displayLanguageCode || "en",
               );
@@ -1246,19 +1988,21 @@ export default function Home() {
                       <div className="flex items-center gap-1.5 text-slate-500">
                         <ShieldIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase">
-                          Answer · {answerLanguage.label}
+                          {uiText.answer || "Answer"} · {answerLanguage.nativeLabel || answerLanguage.label}
                         </span>
                       </div>
                       {msg.confidence && (
                         <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold tracking-wide bg-slate-100 text-slate-600 border border-slate-200/60 uppercase shrink-0">
-                          {msg.confidence}
+                          {uiText.confidenceLevels?.[msg.confidence] || msg.confidence}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-[15px] leading-relaxed text-slate-800 font-normal break-words">
-                      {msg.answer}
-                    </p>
+                    <AssistantMessageText
+                      msg={msg}
+                      selectedLanguageCode={selectedLanguageCode}
+                      translationCache={translationCacheRef}
+                    />
 
                     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5 sm:pt-3">
                       <div className="flex flex-wrap gap-1.5 text-[9px] sm:text-[10px] font-medium text-slate-500">
@@ -1269,7 +2013,9 @@ export default function Home() {
                             </span>
                           )}
                         <span className="rounded-full border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-0.5 sm:py-1 text-emerald-700">
-                          {msg.citations?.length || 0} citations validated
+                          {typeof uiText.citationsValidated === "function"
+                            ? uiText.citationsValidated(msg.citations?.length || 0)
+                            : `${msg.citations?.length || 0} citations validated`}
                         </span>
                       </div>
                       <button
@@ -1285,29 +2031,17 @@ export default function Home() {
                           <SpeakerLoudIcon className="h-3.5 w-3.5 text-emerald-600" />
                         )}
                         {isSpeakingMessageId === msg.id
-                          ? "Stop audio"
-                          : `Listen · ${answerLanguage.label}`}
+                          ? (uiText.stopAudio || "Stop audio")
+                          : `${uiText.listenAnswer || "Listen"} · ${answerLanguage.nativeLabel || answerLanguage.label}`}
                       </button>
                     </div>
-
-                    {msg.caution && (
-                      <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 sm:p-3.5 flex items-start gap-2.5">
-                        <ExclamationTriangleIcon className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                        <div className="text-xs text-amber-800 space-y-0.5">
-                          <div className="font-semibold">
-                            {msg.caution.title}
-                          </div>
-                          <div className="opacity-90">{msg.caution.detail}</div>
-                        </div>
-                      </div>
-                    )}
 
                     {msg.evidence && msg.evidence.length > 0 && (
                       <div className="pt-2 border-t border-slate-100 space-y-2">
                         <div className="flex items-center gap-1.5 text-slate-400">
                           <FileTextIcon className="w-3.5 h-3.5" />
                           <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase">
-                            Sources
+                            {uiText.sources || "Sources"}
                           </span>
                         </div>
 
@@ -1317,6 +2051,9 @@ export default function Home() {
                               key={src.chunk_id || `${msg.id}-src-${sIdx}`}
                               src={src}
                               index={sIdx}
+                              uiText={uiText}
+                              selectedLanguageCode={selectedLanguageCode}
+                              translationCache={translationCacheRef}
                             />
                           ))}
                         </div>
@@ -1324,7 +2061,7 @@ export default function Home() {
                     )}
 
                     <p className="border-t border-slate-100 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] leading-relaxed text-slate-400">
-                      {msg.disclaimer || LEGAL_DISCLAIMER}
+                      {msg.caution?.detail || msg.disclaimer || uiText.legalDisclaimerText || LEGAL_DISCLAIMER}
                     </p>
                   </div>
                 </div>
@@ -1407,7 +2144,8 @@ export default function Home() {
 
                     <div className="flex flex-wrap items-center justify-between w-full pt-2 sm:pt-2.5 border-t border-slate-100 mt-2 gap-1.5">
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <div className="flex items-center gap-1 px-2 py-0.5 sm:py-1 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] text-slate-700">
+                        {/* Language Select Option (Glassmorphism Pill) */}
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/40 backdrop-blur-[9px] border border-white/60 text-[11px] text-slate-700 hover:bg-white/60 transition shadow-2xs">
                           <GlobeIcon className="w-3 h-3 text-emerald-600 shrink-0" />
                           <select
                             value={selectedLanguageCode}
@@ -1430,34 +2168,6 @@ export default function Home() {
                                 {language.label}
                               </option>
                             ))}
-                          </select>
-                        </div>
-
-                        <div className="flex items-center gap-1 px-2 py-0.5 sm:py-1 rounded-full bg-slate-100/90 border border-slate-200/70 text-[11px] text-slate-700">
-                          <SpeakerLoudIcon className="w-3 h-3 text-emerald-600 shrink-0" />
-                          <select
-                            value={selectedVoiceURI}
-                            onChange={(event) => setSelectedVoiceURI(event.target.value)}
-                            disabled={isGenerating || !speechSupported || matchingVoices.length === 0}
-                            className="bg-transparent border-none outline-none font-medium text-slate-800 cursor-pointer text-[11px] focus:ring-0 max-w-[110px] sm:max-w-[140px] truncate pr-1 py-0 disabled:opacity-50"
-                            aria-label="Select Voice"
-                          >
-                            {matchingVoices.length === 0 ? (
-                              <option value="" className="text-slate-800 bg-white">
-                                Default Voice
-                              </option>
-                            ) : (
-                              <>
-                                <option value="" className="text-slate-800 bg-white">
-                                  Default
-                                </option>
-                                {matchingVoices.map((voice) => (
-                                  <option key={voice.voiceURI} value={voice.voiceURI} className="text-slate-800 bg-white">
-                                    {voice.name}
-                                  </option>
-                                ))}
-                              </>
-                            )}
                           </select>
                         </div>
                       </div>
@@ -1500,7 +2210,7 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowGuide(false)}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+                className="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] transition-opacity"
               />
 
               <motion.div
@@ -1508,7 +2218,7 @@ export default function Home() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 12 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="relative w-full max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 z-10 overflow-hidden my-auto"
+                className="relative w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl shadow-emerald-950/10 border border-slate-200/90 z-10 overflow-hidden my-auto"
               >
                 <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-white">
                   <div className="flex items-center gap-2.5">
