@@ -350,6 +350,28 @@ function AssistantMessageSkeleton() {
   );
 }
 
+// Skeleton loader for user question during language translation
+function UserMessageSkeleton({ isLatestUser, latestTurnRef }) {
+  return (
+    <div
+      ref={isLatestUser ? latestTurnRef : null}
+      className="flex items-start justify-end gap-2 sm:gap-3 group pt-1 scroll-mt-4 animate-pulse"
+    >
+      <div className="flex flex-col items-end max-w-[90%] sm:max-w-lg w-full">
+        <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl px-4 sm:px-5 py-3.5 shadow-sm w-48 sm:w-72 space-y-2">
+          <div className="h-3.5 bg-slate-200/80 rounded-full w-full" />
+          <div className="h-3.5 bg-slate-200/70 rounded-full w-3/4 ml-auto" />
+        </div>
+        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-300">
+          <div className="h-3 w-10 bg-slate-200/60 rounded-full" />
+          <div className="h-3 w-12 bg-slate-200/60 rounded-full" />
+        </div>
+      </div>
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200/80 shrink-0" />
+    </div>
+  );
+}
+
 // Dedicated reactive component for user question with automatic language translation
 function UserMessageItem({
   msg,
@@ -360,37 +382,66 @@ function UserMessageItem({
   translationCache,
   setInputText,
   handleSendMessage,
+  isGlobalTranslating = false,
 }) {
   const raw = msg.originalContent || msg.content || "";
-  const [displayContent, setDisplayContent] = useState(msg.content || raw);
+  const [displayContent, setDisplayContent] = useState(() => {
+    if (!selectedLanguageCode || selectedLanguageCode === "en") return raw;
+    const cacheKey = `en->${selectedLanguageCode}::${raw.trim()}`;
+    const cache = translationCache?.current;
+    if (cache && cache.has(cacheKey)) return cache.get(cacheKey);
+    return "";
+  });
+  const [isTranslatingMsg, setIsTranslatingMsg] = useState(() => {
+    if (!selectedLanguageCode || selectedLanguageCode === "en") return false;
+    const cacheKey = `en->${selectedLanguageCode}::${raw.trim()}`;
+    const cache = translationCache?.current;
+    if (cache && cache.has(cacheKey)) return false;
+    return true;
+  });
 
   useEffect(() => {
     let cancelled = false;
     if (!selectedLanguageCode || selectedLanguageCode === "en") {
       setDisplayContent(raw);
-      return;
-    }
-    if (msg.content && msg.content !== raw) {
-      setDisplayContent(msg.content);
+      setIsTranslatingMsg(false);
       return;
     }
     const cacheKey = `en->${selectedLanguageCode}::${raw.trim()}`;
     const cache = translationCache?.current;
     if (cache && cache.has(cacheKey)) {
       setDisplayContent(cache.get(cacheKey));
+      setIsTranslatingMsg(false);
       return;
     }
 
-    translateBatch([raw], selectedLanguageCode, "en", cache).then(([translated]) => {
-      if (!cancelled && translated && translated !== raw) {
-        setDisplayContent(translated);
-      }
-    });
+    setIsTranslatingMsg(true);
+    translateBatch([raw], selectedLanguageCode, "en", cache)
+      .then(([translated]) => {
+        if (!cancelled) {
+          if (translated && translated !== raw) {
+            setDisplayContent(translated);
+          } else {
+            setDisplayContent(raw);
+          }
+          setIsTranslatingMsg(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDisplayContent(raw);
+          setIsTranslatingMsg(false);
+        }
+      });
 
     return () => {
       cancelled = true;
     };
   }, [msg.content, raw, selectedLanguageCode, translationCache]);
+
+  if (isGlobalTranslating || isTranslatingMsg) {
+    return <UserMessageSkeleton isLatestUser={isLatestUser} latestTurnRef={latestTurnRef} />;
+  }
 
   return (
     <div
@@ -399,7 +450,7 @@ function UserMessageItem({
     >
       <div className="flex flex-col items-end max-w-[90%] sm:max-w-lg">
         <div className="bg-white text-slate-800 border border-slate-200/80 rounded-2xl sm:rounded-3xl px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm font-normal break-words leading-relaxed">
-          {displayContent}
+          {displayContent || raw}
         </div>
         <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
           <button
@@ -514,11 +565,11 @@ export default function Home() {
   );
   const activeQuestions = uiText.demoQuestions || DEMO_QUESTIONS;
 
-  // Requirement 1: 1 second delay for Guide popup on startup
+  // 1.5 second delay for Guide popup on startup
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowGuide(true);
-    }, 1000);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -1121,6 +1172,14 @@ export default function Home() {
     }
   };
 
+  const handleClearConversation = () => {
+    if (activeSessionId) {
+      handleDeleteSession(activeSessionId);
+    } else {
+      handleStartNewChat();
+    }
+  };
+
   const stopGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -1597,6 +1656,7 @@ export default function Home() {
         onSelectSession={handleSelectSession}
         onNewChat={handleStartNewChat}
         onDeleteSession={handleDeleteSession}
+        onClearConversation={handleClearConversation}
         isTranslating={isTranslating}
       />
 
@@ -1767,7 +1827,7 @@ export default function Home() {
                                 >
                                   {LANGUAGES.map((language) => (
                                     <option key={language.code} value={language.code} className="text-slate-800 bg-white">
-                                      {language.label} · {language.nativeLabel}
+                                      {language.code === "en" ? language.label : `${language.label} · ${language.nativeLabel}`}
                                     </option>
                                   ))}
                                 </select>
@@ -1858,6 +1918,15 @@ export default function Home() {
 
               if (msg.role === "user") {
                 const isLatestUser = idx === lastUserIndex;
+                if (isTranslating) {
+                  return (
+                    <UserMessageSkeleton
+                      key={`skeleton-user-${msg.id}`}
+                      isLatestUser={isLatestUser}
+                      latestTurnRef={latestTurnRef}
+                    />
+                  );
+                }
                 return (
                   <UserMessageItem
                     key={msg.id}
@@ -1869,6 +1938,7 @@ export default function Home() {
                     translationCache={translationCacheRef}
                     setInputText={setInputText}
                     handleSendMessage={handleSendMessage}
+                    isGlobalTranslating={isTranslating}
                   />
                 );
               }
@@ -2235,16 +2305,6 @@ export default function Home() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowGuide(false);
-                        setGuideCompleted(true);
-                      }}
-                      className="text-xs text-slate-400 hover:text-slate-700 px-2.5 py-1 rounded-full border border-transparent hover:border-slate-200 hover:bg-slate-50 transition"
-                    >
-                      {uiText.skipIntro || "Skip"}
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setShowGuide(false)}
                       className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                       title="Close"
@@ -2277,22 +2337,36 @@ export default function Home() {
                           Search Indian Statutory Law
                         </h2>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                          IP-SAKTI provides citation-grounded statutory intelligence across Patents, Trade Marks, Copyright &amp; Biodiversity law. Answers are published only after citation and grounding checks against the configured corpus.
+                          Statutory intelligence and citation-grounded guidance across Patents, Trade Marks, Copyright, Biological Diversity, Designs, IP Rights, Drugs &amp; Cosmetics, and FSSAI regulations. Answers are published only after citation and grounding checks against the configured corpus.
                         </p>
-                        <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                          <div className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/60">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <BookmarkIcon className="w-3 h-3 text-emerald-600" />
-                              <span className="font-semibold text-slate-800 text-[11px]">4 Official Acts</span>
+                        <div className="pt-1 text-xs">
+                          <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 w-full space-y-2">
+                            <div className="flex items-center gap-1.5">
+                              <BookmarkIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="font-semibold text-slate-800 text-xs">Multiple Official Acts &amp; Regulations</span>
                             </div>
-                            <span className="text-[10px] text-slate-400">Patents, Trade Marks, Copyright &amp; Biodiversity.</span>
-                          </div>
-                          <div className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/60">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <ShieldIcon className="w-3 h-3 text-emerald-600" />
-                              <span className="font-semibold text-slate-800 text-[11px]">Verified or Silent</span>
+                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                              Statutory intelligence and citation-grounded guidance across Patents, Trade Marks, Copyright, Biological Diversity, Designs, IP Rights, Drugs &amp; Cosmetics, and FSSAI regulations.
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
+                              {[
+                                "Patents Act",
+                                "Trade Marks Act",
+                                "Copyright Act",
+                                "Biological Diversity Act",
+                                "Designs Act",
+                                "IP Rights",
+                                "Drugs & Cosmetics",
+                                "FSSAI Regulations & More",
+                              ].map((act) => (
+                                <span
+                                  key={act}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                                >
+                                  {act}
+                                </span>
+                              ))}
                             </div>
-                            <span className="text-[10px] text-slate-400">Requires statutory evidence or abstains safely.</span>
                           </div>
                         </div>
                       </div>
