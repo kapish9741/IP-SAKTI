@@ -31,7 +31,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "Ready to Navigate",
     indianIpStatutoryLaw: "Indian IP & Statutory Law?",
     statutoryIntelligenceDesc:
-      "Statutory intelligence and citation-grounded guidance across Patents, Trade Marks, Copyright & Biodiversity law.",
+      "Statutory intelligence and citation-grounded guidance across Indian laws, acts, and regulations.",
     suggestedInquiries: "Suggested Legal Inquiries",
     inputPlaceholder: "Ask about Indian Patent, Trademark, Copyright, or GI law...",
     shiftReturnHint: "Shift + Return for new line",
@@ -88,7 +88,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "तैयार हैं जानने के लिए",
     indianIpStatutoryLaw: "भारतीय आईपी एवं वैधानिक कानून?",
     statutoryIntelligenceDesc:
-      "पेटेंट, ट्रेडमार्क, कॉपीराइट और जैव विविधता कानून पर प्रमाण-आधारित वैधानिक मार्गदर्शन।",
+      "भारतीय कानूनों, अधिनियमों और विनियमों पर प्रमाण-आधारित वैधानिक मार्गदर्शन।",
     suggestedInquiries: "सुझाए गए कानूनी प्रश्न",
     inputPlaceholder: "भारतीय पेटेंट, ट्रेडमार्क, कॉपीराइट या जीआई कानून के बारे में पूछें...",
     shiftReturnHint: "नई पंक्ति के लिए Shift + Enter",
@@ -145,7 +145,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "ஆராயத் தயாரா",
     indianIpStatutoryLaw: "இந்திய ஐபி மற்றும் சட்ட விதிமுறைகள்?",
     statutoryIntelligenceDesc:
-      "காப்புரிமைகள், வர்த்தக முத்திரைகள், பதிப்புரிமை & பல்லுயிர் சட்டம் குறித்த ஆதார அடிப்படையிலான சட்ட வழிகாட்டுதல்.",
+      "இந்திய சட்டங்கள், சட்டப்பிரிவுகள் மற்றும் விதிமுறைகள் முழுவதும் மேற்கோள் அடிப்படையிலான சட்ட வழிகாட்டுதல்.",
     suggestedInquiries: "பரிந்துரைக்கப்பட்ட சட்டக் கேள்விகள்",
     inputPlaceholder: "இந்திய காப்புரிமை, வர்த்தக முத்திரை அல்லது பதிப்புரிமை பற்றி கேளுங்கள்...",
     shiftReturnHint: "புதிய வரிக்கு Shift + Enter",
@@ -201,7 +201,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "తెలుసుకోవడానికి సిద్ధంగా ఉన్నారా",
     indianIpStatutoryLaw: "భారతీయ ఐపీ & చట్టపరమైన నిబంధనలు?",
     statutoryIntelligenceDesc:
-      "పేటెంట్లు, ట్రేడ్‌మార్క్‌లు, కాపీరైట్ మరియు జీవవైవిధ్య చట్టాలపై సాక్ష్యాలతో కూడిన మార్గదర్శకత్వం.",
+      "భారతీయ చట్టాలు, నిబంధనలు మరియు శాసనాలపై ఆధారాలతో కూడిన చట్టపరమైన మార్గదర్శకత్వం.",
     suggestedInquiries: "సూచించబడిన చట్టపరమైన ప్రశ్నలు",
     inputPlaceholder: "భారతీయ పేటెంట్, ట్రేడ్‌మార్క్ లేదా కాపీరైట్ చట్టం గురించి అడగండి...",
     shiftReturnHint: "కొత్త లైన్ కోసం Shift + Enter",
@@ -256,7 +256,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "मार्गक्रमण करण्यास सज्ज आहात",
     indianIpStatutoryLaw: "भारतीय आयपी आणि वैधानिक कायदा?",
     statutoryIntelligenceDesc:
-      "पेटंट, ट्रेडमार्क, कॉपीराइट आणि जैवविविधता कायद्यावर पुरावे-आधारित वैधानिक मार्गदर्शन.",
+      "भारतीय कायदे, अधिनियम आणि नियमांवर पुराव्यावर आधारित वैधानिक मार्गदर्शन.",
     suggestedInquiries: "सुचवलेले कायदेशीर प्रश्न",
     inputPlaceholder: "भारतीय पेटंट, ट्रेडमार्क किंवा कॉपीराइट कायद्याबद्दल विचारा...",
     shiftReturnHint: "नवीन ओळीसाठी Shift + Enter",
@@ -311,7 +311,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "অনুসন্ধান করতে প্রস্তুত",
     indianIpStatutoryLaw: "ভারতীয় আইপি ও বিধিবদ্ধ আইন?",
     statutoryIntelligenceDesc:
-      "পেটেন্ট, ট্রেডমার্ক, কপিরাইট ও জীববৈচিত্র্য আইনের উপর প্রমাণ-ভিত্তিক আইনি নির্দেশনা।",
+      "ভারতীয় আইন, অধিনিয়ম ও প্রবিধান জুড়ে তথ্যসূত্র-ভিত্তিক বিধিবদ্ধ নির্দেশনা।",
     suggestedInquiries: "প্রস্তাবিত আইনি প্রশ্ন",
     inputPlaceholder: "ভারতীয় পেটেন্ট, ট্রেডমার্ক বা কপিরাইট আইন সম্পর্কে জিজ্ঞাসা করুন...",
     shiftReturnHint: "নতুন লাইনের জন্য Shift + Enter",
@@ -366,7 +366,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "જાણવા માટે તૈયાર છો",
     indianIpStatutoryLaw: "ભારતીય આઈપી અને કાયદાકીય નિયમો?",
     statutoryIntelligenceDesc:
-      "પેટન્ટ, ટ્રેડમાર્ક, કૉપિરાઇટ અને જૈવવિવિધતા કાયદા પર પુરાવા-આધારિત કાનૂની માર્ગદર્શન.",
+      "ભારતીય કાયદાઓ, અધિનિયમો અને નિયમો પર પુરાવા-આધારિત વૈધાનિક માર્ગદર્શન.",
     suggestedInquiries: "સૂચવેલા કાનૂની પ્રશ્નો",
     inputPlaceholder: "ભારતીય પેટન્ટ, ટ્રેડમાર્ક અથવા કૉપિરાઇટ કાયદા વિશે પૂછો...",
     shiftReturnHint: "નવી લાઇન માટે Shift + Enter",
@@ -421,7 +421,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "ಅನ್ವೇಷಿಸಲು ಸಿದ್ಧರಿದ್ದೀರಾ",
     indianIpStatutoryLaw: "ಭಾರತೀಯ ಐಪಿ ಮತ್ತು ಶಾಸನಬದ್ಧ ಕಾನೂನು?",
     statutoryIntelligenceDesc:
-      "ಪೇಟೆಂಟ್‌ಗಳು, ಟ್ರೇಡ್‌ಮಾರ್ಕ್‌ಗಳು, ಹಕ್ಕುಸ್ವಾಮ್ಯ ಮತ್ತು ಜೈವಿಕ ವೈವಿಧ್ಯತೆಯ ಕಾನೂನುಗಳ ಕುರಿತು ಸಾಕ್ಷ್ಯ-ಆಧಾರಿತ ಮಾರ್ಗದರ್ಶನ.",
+      "ಭಾರತೀಯ ಕಾನೂನುಗಳು, ಅಧಿನಿಯಮಗಳು ಮತ್ತು ನಿಯಮಾವಳಿಗಳ ಕುರಿತು ಆಧಾರ-ಆಧಾರಿತ ಶಾಸನಬದ್ಧ ಮಾರ್ಗದರ್ಶನ.",
     suggestedInquiries: "ಸೂಚಿಸಲಾದ ಕಾನೂನು ಪ್ರಶ್ನೆಗಳು",
     inputPlaceholder: "ಭಾರತೀಯ ಪೇಟೆಂಟ್, ಟ್ರೇಡ್‌ಮಾರ್ಕ್ ಅಥವಾ ಹಕ್ಕುಸ್ವಾಮ್ಯ ಕಾನೂನಿನ ಬಗ್ಗೆ ಕೇಳಿ...",
     shiftReturnHint: "ಹೊಸ ಸಾಲಿಗಾಗಿ Shift + Enter",
@@ -476,7 +476,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "ਜਾਣਨ ਲਈ ਤਿਆਰ ਹੋ",
     indianIpStatutoryLaw: "ਭਾਰਤੀ ਆਈਪੀ ਅਤੇ ਵਿਧਾਨਕ ਕਾਨੂੰਨ?",
     statutoryIntelligenceDesc:
-      "ਪੇਟੈਂਟ, ਟਰੇਡਮਾਰਕ, ਕਾਪੀਰਾਈਟ ਅਤੇ ਜੈਵਿਕ ਵਿਭਿੰਨਤਾ ਕਾਨੂੰਨ 'ਤੇ ਸਬੂਤ-ਅਧਾਰਤ ਮਾਰਗਦਰਸ਼ਨ।",
+      "ਭਾਰਤੀ ਕਾਨੂੰਨਾਂ, ਅਧਿਨਿਯਮਾਂ ਅਤੇ ਨਿਯਮਾਂ 'ਤੇ ਹਵਾਲਾ-ਅਧਾਰਿਤ ਕਾਨੂੰਨੀ ਮਾਰਗਦਰਸ਼ਨ।",
     suggestedInquiries: "ਸੁਝਾਏ ਗਏ ਕਾਨੂੰਨੀ ਸਵਾਲ",
     inputPlaceholder: "ਭਾਰਤੀ ਪੇਟੈਂਟ, ਟਰੇਡਮਾਰਕ ਜਾਂ ਕਾਪੀਰਾਈਟ ਕਾਨੂੰਨ ਬਾਰੇ ਪੁੱਛੋ...",
     shiftReturnHint: "ਨਵੀਂ ਲਾਈਨ ਲਈ Shift + Enter",
@@ -531,7 +531,7 @@ export const UI_TRANSLATIONS = {
     readyToNavigate: "अन्वेषणाय सज्जः",
     indianIpStatutoryLaw: "भारतीय बौद्धिकसम्पदा विधिकनियमाश्च?",
     statutoryIntelligenceDesc:
-      "पेटेन्ट, व्यापारचिह्न, प्रतिलिप्यधिकार, जैवविविधताविधिषु प्रमाणसहितं विधिकमार्गदर्शनम्।",
+      "भारतीयविधिषु अधिनियमेषु नियमेषु च प्रमाणबद्धं वैधानिकं मार्गदर्शनम्।",
     suggestedInquiries: "प्रस्ताविताः विधिकप्रश्नाः",
     inputPlaceholder: "भारतीय पेटेन्ट, व्यापारचिह्न अथवा प्रतिलिप्यधिकारविषये पृच्छतु...",
     shiftReturnHint: "नूतनपङ्क्तये Shift + Enter",

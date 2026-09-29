@@ -112,7 +112,7 @@ export default function Stepper({
 
         {!isCompleted && (
           <div className={`footer-container ${footerClassName}`}>
-            <div className={`footer-nav ${onSkip || showSkipButton || currentStep !== 1 ? 'spread' : 'end'}`}>
+            <div className={`footer-nav ${((onSkip || showSkipButton) && !isLastStep) || currentStep !== 1 ? 'spread' : 'end'}`}>
               <div className="flex items-center gap-2">
                 {currentStep !== 1 && (
                   <button
@@ -124,7 +124,7 @@ export default function Stepper({
                     {backButtonText}
                   </button>
                 )}
-                {(onSkip || showSkipButton) && (
+                {(onSkip || showSkipButton) && !isLastStep && (
                   <button
                     type="button"
                     onClick={onSkip}
