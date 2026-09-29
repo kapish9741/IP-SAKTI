@@ -2513,7 +2513,7 @@ export default function Home() {
                           Search Indian Statutory Law
                         </h2>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                          Statutory intelligence and citation-grounded guidance across Patents, Trade Marks, Copyright, Biological Diversity, Designs, IP Rights, Drugs &amp; Cosmetics, and FSSAI regulations. Answers are published only after citation and grounding checks against the configured corpus.
+                          {uiText.statutoryIntelligenceDesc || "Statutory intelligence and citation-grounded guidance across Indian laws, acts, and regulations."}
                         </p>
                         <div className="pt-1 text-xs">
                           <div className="p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 w-full space-y-2">
@@ -2521,9 +2521,6 @@ export default function Home() {
                               <BookmarkIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                               <span className="font-semibold text-slate-800 text-xs">Multiple Official Acts &amp; Regulations</span>
                             </div>
-                            <p className="text-[11px] text-slate-500 leading-relaxed">
-                              Statutory intelligence and citation-grounded guidance across Patents, Trade Marks, Copyright, Biological Diversity, Designs, IP Rights, Drugs &amp; Cosmetics, and FSSAI regulations.
-                            </p>
                             <div className="flex flex-wrap gap-1.5 pt-0.5">
                               {[
                                 "Patents Act",
@@ -2533,7 +2530,8 @@ export default function Home() {
                                 "Designs Act",
                                 "IP Rights",
                                 "Drugs & Cosmetics",
-                                "FSSAI Regulations & More",
+                                "FSSAI Regulations",
+                                "& More",
                               ].map((act) => (
                                 <span
                                   key={act}
