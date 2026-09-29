@@ -26,6 +26,13 @@ export async function POST(request) {
       });
     }
 
+    const language = body?.language || "English";
+
+    const systemPrompt =
+      language && language !== "English"
+        ? `You are a concise title generator. Generate a 3-5 word title summarizing the user query for a sidebar chat list. The title MUST be written in ${language}. Return ONLY the title text without quotes, markdown, or punctuation at the end.`
+        : "You are a concise title generator. Generate a 3-5 word title summarizing the user query for a sidebar chat list. Return ONLY the title text without quotes, markdown, or punctuation at the end.";
+
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -37,8 +44,7 @@ export async function POST(request) {
         messages: [
           {
             role: "system",
-            content:
-              "You are a concise title generator. Generate a 3-5 word title summarizing the user query for a sidebar chat list. Return ONLY the title text without quotes, markdown, or punctuation at the end.",
+            content: systemPrompt,
           },
           { role: "user", content: question },
         ],
